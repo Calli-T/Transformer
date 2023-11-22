@@ -38,3 +38,8 @@ t값의 크기를 통해 가설을 평가, 표본과 귀무 가설의 차이의 
 https://blog.minitab.com/ko/adventures-in-statistics-2/understanding-t-tests-t-values-and-t-distributions
 
 머신러닝은 변수들의 샘플 데이터가 독립 항등 분포를 따르므로 비쌍체 t-검정이 적합하다.
+
+https://ddiri01.tistory.com/20
+비쌍체 t-검정은 2 sample t -test라고도 하며
+어떤 집단들의 평균을 기준으로 비교하여
+어떤 집단이 다른 집단에 비해 의미있는 구분점(차이)를 가지는지 알아보는것이다.
