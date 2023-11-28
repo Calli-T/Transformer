@@ -85,6 +85,21 @@ for epoch in range(10000):
     if (epoch + 1) % 1000 == 0:
         print(f'Epoch: {epoch + 1:4d}, Model: {list(model.parameters())}, Cost: {cost:3f}')
 
+    '''
+     # validation set
+    with torch.no_grad():
+        model.eval()
+        for x, y in validation_dataloader:
+            x = x.to(device)
+            y = y.to(device)
+
+            outputs = model(x)
+            print(f'x: {x}')
+            print(f'y: {y}')
+            print(f'outputs: {outputs}')
+            print('--------------------------------')
+    '''
+
 # with torch.no_grad()와 함께라면, 자동미분 없는 검증 가능
 with torch.no_grad():
     model.eval()
@@ -100,9 +115,8 @@ with torch.no_grad():
         print('--------------------------------')
 
 # 모델 저장과 특정 시점의 모델 저장
-'''
-torch.save(model, './models/model_14.pt')
-torch.save(model.state_dict(), './models/modeL-14_state_dict.pt')
-'''
 
-# 108p
+torch.save(model, './models/model_15.pt')
+torch.save(model.state_dict(), './models/model-15_state_dict.pt')
+
+# 109p~
