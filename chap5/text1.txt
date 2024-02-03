@@ -55,3 +55,9 @@ OOV(Out of Vocab)이라 하여 없는 단어가 존재할 수 있으며 이를 �
 
 238p
 KoNLPy/NLTK/spaCy 라이브러리를 활용해 형태소 단위의 토큰화가 가능하다
+
+241p
+Okt보단 Kkma가 좀 더 자세하게 분리하는듯
+
+242p
+NLPK의 품사 태깅에는 Punkt나 Averaged Perception Tagger
