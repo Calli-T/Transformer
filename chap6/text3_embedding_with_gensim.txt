@@ -2,7 +2,7 @@
 젠심의 word2vec 클래스는 gensim.models.Word2Vec에 있다
 word2vec = gensim.models.Word2Vec(
 sentences=None, # 토큰 리스트로 표현된 문장의 리스트, 학습데이터를 이중 리스트로 표현할 경우
-corpus=file=None, # 말뭉치, 학습데이터를 파일로 입력할 경우
+corpus_file=None, # 말뭉치, 학습데이터를 파일로 입력할 경우
 vector_size=100, # 임베딩 벡터크기
 alpha=0.025, # 학습률
 window=5, # 학습데이터에 들어가는 창문크기
