@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 
@@ -6,7 +7,11 @@ class SentenceClassifier(nn.Module):
                  bidirectional=True, model_type="lstm", pretrained_embedding=None):
         super().__init__()
 
-        self.embedding = nn.Embedding(num_embeddings=_n_vocab, embedding_dim=_embedding_dim, padding_idx=0)
+        # 사전 학습된 임베딩 처리
+        if pretrained_embedding is None:
+            self.embedding = nn.Embedding(num_embeddings=_n_vocab, embedding_dim=_embedding_dim, padding_idx=0)
+        else:
+            self.embedding = nn.Embedding.from_pretrained(torch.tensor(pretrained_embedding, dtype=torch.float32))
 
         if model_type == "rnn":
             self.model = nn.RNN(input_size=_embedding_dim,
