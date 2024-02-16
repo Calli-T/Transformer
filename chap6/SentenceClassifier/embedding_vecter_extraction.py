@@ -21,6 +21,7 @@ classifier = SentenceClassifier(_n_vocab=n_vocab, _hidden_dim=hidden_dim, _embed
 
 # 이 부분에서 모델 params를 가져온다
 model_state_dict = torch.load('./models/model_random_init_state_dict.pt', map_location=dml)
+#model_state_dict = torch.load('./models/model_word2vec_init_state_dict.pt')#, map_location=dml) #cpu로 학습한거라 dml안붙임
 classifier.load_state_dict(model_state_dict)
 
 # -------------------------------------------------------------------------------
@@ -36,7 +37,6 @@ token = vocab[1000]
 print(token, token_to_embedding)
 '''
 
-'''
+
 for i in range(50):
     print(f"{vocab[i]}: 시작 5개: {token_to_embedding[vocab[i]][:5]}, 끝 5개: {token_to_embedding[vocab[i]][-5:]}")
-'''
