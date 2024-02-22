@@ -98,3 +98,37 @@ v_t가 연결을 통해 (은닉 상태 크기*2,1)의 크기가 되었기 때문
 ※6-2) context vector를 decoder에 넣는(feed) 방법은 아키텍쳐 설계에 따라 다르다고 한다.
 ※6-3) 예시로 든 아키텍쳐에서는 ~s_t를 출력층의 입력으로 넣고 돌아가면서 자연스럽게 은닉층이 갱신되는듯
 4번의 추가 설명과 궤를 같이하는듯하다
+
+-------
+0222
+어텐션 메커니즘의 일반화
+
+Attention(query, key, value)
+어텐션 매커니즘은 query, key, value로 일반화 할 수 있다고 한다
+
+1. 유사도(similarity) 계산: 스코어 함수를 이용하여 query와 각 key 간에 attention score 계산
+2. 정규화(Normalization): softmax 함수로 query와 각 key 간에 attention score를 attention distribution으로 변환
+3. 가중합(Weight sum) 계산: attention distribution을 가지고 각 value들의 가중합을 구한다
+
+즉, 어텐션 연산은 query에 대해 value를 요약(= 집중)하는것이다
+연산이 끝나면 중요한(= query와 유사도가 높은 key를 가진) value에 더 '집중' 하는것이다
+
+Seq2Seq + Attention 모델의 어텐션 연산은
+query로 디코더의 은닉 상태를,
+key와 value로 인코더의 모든 은닉 상태를 사용한 것이다
+
+---
+'완화된' Dictionary 구조에 관하여
+query랑 같은 key가 없더라도 값을 반환할 수 있다
+1. 찾고 싶은 값(query)가 들어옴
+2. 각 key와 query의 유사도를 구함
+3. 유사도를 확률로 변환
+4. 확률과 각 key에 해당하는 value를 가중합으로 더하여 반환
+
+-> attention mechanism과 흡사하다
+---
+cross attention: query != key = value
+self attention: query = key = value
+
+cross는 트랜스포머 디코더에
+self는 트랜스포머 인코더에 사용한다고한다
