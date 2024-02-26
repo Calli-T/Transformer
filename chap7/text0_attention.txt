@@ -132,3 +132,10 @@ self attention: query = key = value
 
 cross는 트랜스포머 디코더에
 self는 트랜스포머 인코더에 사용한다고한다
+
+self attention에 대한 보다 자세한 설명
+https://velog.io/@jhbale11/%EC%96%B4%ED%85%90%EC%85%98-%EB%A7%A4%EC%BB%A4%EB%8B%88%EC%A6%98Attention-Mechanism%EC%9D%B4%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80
+
+self-attention은 입력 문장 내의 단어들끼리 유사도를 파악하여 연관될 확률을 찾아낸다
+ex) The animal didn't cross the street because it was too tired. 라는 문장에서
+animal과 it은 연관성이 높은 단어임을 알아냄
