@@ -1,4 +1,6 @@
 pip install torch==2.0.0 torchvision==0.15.1 torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cpu
 pip install torch-directml
 
- pip install torch-directml==0.2.0.dev230426
+pip install torchdata==0.6.0 torchtext==0.15.0 portalocker
+
+pip install torch-directml==0.2.0.dev230426
