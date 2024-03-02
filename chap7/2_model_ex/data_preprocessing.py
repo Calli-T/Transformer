@@ -42,7 +42,7 @@ for language in [SRC_LANGUAGE, TGT_LANGUAGE]:
 for language in [SRC_LANGUAGE, TGT_LANGUAGE]:
     vocab_transform[language].set_default_index(UNK_IDX)
 
-'''print("Vocab Transform:")
-print(vocab_transform)'''
+print("Vocab Transform:")
+print(vocab_transform)
 
 # --------------------------------------------------------------------------------------
