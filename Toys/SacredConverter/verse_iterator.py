@@ -44,8 +44,10 @@ class VerseIterator:
         self.line_count += 1
 
         if self.split == "train":
-            if self.line_count == 27:
-                self.line_count = 0
+            if self.line_count > 28944:
+                raise StopIteration
+
+            if self.line_count % 29 == 27:
                 _ = self.get_one_verse()
                 _ = self.get_one_verse()
 
@@ -53,7 +55,7 @@ class VerseIterator:
 
         elif self.split == "valid":
             if self.line_count > 1072:
-                return []
+                raise StopIteration
 
             if self.line_count == 1:
                 for i in range(27):
@@ -66,8 +68,21 @@ class VerseIterator:
 
         elif self.split == "test":
             if self.line_count > 1072:
-                return []
+                raise StopIteration
 
             for i in range(28):
                 _ = self.get_one_verse()
             return self.get_one_verse()
+
+
+c = 0
+a = VerseIterator("train")
+while True:
+    try:
+        b = next(a)
+        print(b)
+        c += 1
+    except:
+        break
+
+print(c)
