@@ -58,7 +58,4 @@ for name in name_list1:
 
 print(max_seq)
 
-'''
-    if name == "01 창세기.txt":
-    break
-'''
+x

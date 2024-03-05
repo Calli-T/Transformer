@@ -17,3 +17,31 @@ chap 7의 389p까지의 내용에 기반함
 되면 그대로쓰고
 아니면 dataloader를 직접 작성할 방법을 찾아야한다.
 이 경우, 특수 토큰들의 인덱스를 어떻게 지정할지를 생각해봐야한다
+
+sentence_piece의 경우 사용자 정의 기호 지원함
+https://github.com/google/sentencepiece/blob/master/doc/special_symbols.md
+
+https://pytorch.org/text/stable/_modules/torchtext/data/utils.html#get_tokenizer
+에서 확인해보면 지원하는건 spacy moses toktok revtok 밖에없다
+spacy에 한글 있긴한데 성능이 뭐 어캐되려나
+
+https://keep-steady.tistory.com/37
+
+문제가 있는데
+1. 고유명사 - 어휘 사전에 '없는' 단어가 튀어나올 수는 없으니 생각해볼것
+2. 단어사전을 성경 내용으로만 구축하면 없는 단어가 너무 많으니 단어장을 추가하던지,
+3. spaCy를 쓰던지,
+4. 여러 단어장을 같이 쓰던지
+5. 그대로 넘기던지 하는 방법을 써보자
+
+일단 spaCy쓰고, 그 다음에 개조
+
+---
+
+데이터로더 제작해야함
+
+build_from 어쩌고에 넣을 iterator의 split mode즉
+train/validate/test는
+총 요절이 31088개(일부 후처리되서 숫자가 줄어든 부분 있음)
+이는 2^4 * 29 * 67개
+따라서 27/29와 1/29와 1/29를 각각 train/valid/test로 설정
