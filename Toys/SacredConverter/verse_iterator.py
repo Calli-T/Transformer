@@ -15,10 +15,7 @@ class VerseIterator:
         self.split = split
         self.line_count = 0
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
+    def get_one_verse(self):
         verse1 = self.f_from.readline()
         verse2 = self.f_to.readline()
 
@@ -39,3 +36,38 @@ class VerseIterator:
                 return []
 
         return [verse1.rstrip(), verse2.rstrip()]
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.line_count += 1
+
+        if self.split == "train":
+            if self.line_count == 27:
+                self.line_count = 0
+                _ = self.get_one_verse()
+                _ = self.get_one_verse()
+
+            return self.get_one_verse()
+
+        elif self.split == "valid":
+            if self.line_count > 1072:
+                return []
+
+            if self.line_count == 1:
+                for i in range(27):
+                    _ = self.get_one_verse()
+            else:
+                for i in range(28):
+                    _ = self.get_one_verse()
+
+            return self.get_one_verse()
+
+        elif self.split == "test":
+            if self.line_count > 1072:
+                return []
+
+            for i in range(28):
+                _ = self.get_one_verse()
+            return self.get_one_verse()
