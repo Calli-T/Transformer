@@ -2,3 +2,5 @@
 /chap6/models/*.npy
 
 Toys/SacredConverter/source
+Toys/SacredConverter/BiblifyCode
+Toys/SacredConverter/models/

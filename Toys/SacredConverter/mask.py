@@ -1,4 +1,4 @@
-from dataloader import *
+from model import *
 
 
 def generate_square_subsequent_mask(s):
@@ -23,13 +23,14 @@ def create_mask(src, tgt):
     return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
 
 
-target_input = target_tensor[:-1, :]
+'''target_input = target_tensor[:-1, :]
 target_out = target_tensor[1:, :]
 
 source_mask, target_mask, source_padding_mask, target_padding_mask = create_mask(
     source_tensor, target_input
-)
+)'''
 
+'''
 print("source_mask:", source_mask.shape)
 print(source_mask)
 print("target_mask:", target_mask.shape)
@@ -39,4 +40,5 @@ print(source_padding_mask)
 print("target_padding_mask:", target_padding_mask.shape)
 print(target_padding_mask)
 
+'''
 # 4

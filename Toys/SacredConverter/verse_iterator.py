@@ -74,15 +74,14 @@ class VerseIterator:
                 _ = self.get_one_verse()
             return self.get_one_verse()
 
+    def __len__(self):
+        if self.split == "train":
+            return 1072 * 27
+        else:
+            return 1072
 
-c = 0
-a = VerseIterator("train")
-while True:
-    try:
-        b = next(a)
-        print(b)
-        c += 1
-    except:
-        break
+    def __getitem__(self, item):
+        return self.__next__()
 
-print(c)
+
+# 1

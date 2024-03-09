@@ -1,16 +1,23 @@
-from create_masks import *
+from mask import *
+
 
 def run(_model, _optimizer, _criterion, split):
     _model.train() if split == "train" else _model.eval()
-    data_iter = Multi30k(split=split, language_pair=(SRC_LANGUAGE, TGT_LANGUAGE))
-    _dataloader = DataLoader(data_iter, batch_size=BATCH_SIZE, collate_fn=collator)
+    _data_iter = VerseIterator(split=split)
+    _dataloader = DataLoader(_data_iter, batch_size=BATCH_SIZE, collate_fn=collator)
 
     losses = 0
 
-    # count = 0
+    count = 0
     for source_batch, target_batch in _dataloader:
         source_batch = source_batch.to(DEVICE)
         target_batch = target_batch.to(DEVICE)
+        '''
+        print('-----------------')
+        print(source_batch)
+        print('-----------------')
+        print(target_batch)
+        '''
 
         target_input = target_batch[:-1, :]
         target_output = target_batch[1:, :]
@@ -35,19 +42,20 @@ def run(_model, _optimizer, _criterion, split):
             loss.backward()
             _optimizer.step()
         losses += loss.item()
-        # count += 1
-        # print(count*128)
+
+        count += 1
+        print(count * 16)
+
+    if split == "train":
+        return losses / 1809  # len(list(_dataloader))
+    else:
+        return losses / 67
 
 
-    return losses / len(list(_dataloader))
-
-
-for epoch in range(5):
+for epoch in range(100):
     train_loss = run(model, optimizer, criterion, "train")
     val_loss = run(model, optimizer, criterion, "valid")
     print(f"Epoch: {epoch + 1}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}")
-
-# 도대체 토치(에서 쓰는 피클)은 왜 또 버그를 발생시키는가? 빈파일이 생성된다
-# torch.save(model, f"./models/de2en_transformer_{DEVICE}.pt")
+    torch.save(model.state_dict(), f'./models/{epoch}sentence2bible.pt')
 
 # 5
