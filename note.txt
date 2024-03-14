@@ -17,3 +17,8 @@ git rm -r --cached .
 
 0309일추가
 GPT3부터는 오픈소스가 아니므로 마소의 파이-1.5등을 찾아보자
+
+0314일추가
+트랜스포머 모델 족보
+https://amatriain.net/blog/transformer-models-an-introduction-and-catalog-2d1e9039f376/
+https://amatriain.net/blog/images/02-06.png
