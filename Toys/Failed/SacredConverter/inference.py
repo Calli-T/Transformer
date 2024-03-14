@@ -7,12 +7,12 @@ def greedy_decode(_model, source_tensor, source_mask, max_len, start_symbol):
 
     memory = _model.encode(source_tensor, source_mask)
     ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
-    print(memory)
+    #print(memory)
     for i in range(max_len - 1):
         memory = memory.to(DEVICE)
-        for i in memory:
+        '''for i in memory:
             for ii in i:
-                print(ii[:10])
+                print(ii[:10])'''
 
         target_mask = generate_square_subsequent_mask(ys.size(0))
         target_mask = target_mask.type(torch.bool).to(DEVICE)
@@ -49,11 +49,11 @@ def translate(_model, source_sentence):
     return " ".join(output)
 
 
-model_state_dict = torch.load('./models/5sentence2bible.pt', map_location=DEVICE)
-model.load_state_dict(model_state_dict)
+model_state_dict = torch.load('./models/10sentence2bible.pt', map_location=DEVICE)
+# model.load_state_dict(model_state_dict)
 
 print('---------------------------------------')
-output = translate(model, "떠나는 길에 네가 내게 말했지 너는 바라는 게 너무나 많아")
+output = translate(model, "떠나는 길에 네가 내게 말했지 너는 바라는 게 너무나 많아 잠깐이라도 널 안 바라보면 머리에 불이 나버린다니까")
 print(output)
 print(len(output))
 print('---------------------------------------')

@@ -52,7 +52,7 @@ def run(_model, _optimizer, _criterion, split):
         return losses / 67
 
 
-for epoch in range(100):
+for epoch in range(1):
     train_loss = run(model, optimizer, criterion, "train")
     val_loss = run(model, optimizer, criterion, "valid")
     print(f"Epoch: {epoch + 1}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}")
