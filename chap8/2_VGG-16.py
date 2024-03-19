@@ -89,6 +89,9 @@ model = model.to(device)
 criterion = nn.CrossEntropyLoss().to(device)
 optimizer = optim.SGD(model.parameters(), lr=hyperparams["learning_rate"])
 
+#####
+# model.load_state_dict(torch.load("models/VGG16.pt"))
+
 # 학습
 for epoch in range(hyperparams["epochs"]):
     cost = 0.0
@@ -122,9 +125,13 @@ with torch.no_grad():
         probs = nn.functional.softmax(outputs, dim=-1)
         outputs_classes = torch.argmax(probs, dim=-1)
 
+        print(torch.eq(classes, outputs_classes))
+
         accuracy += int(torch.eq(classes, outputs_classes).sum())
 
-    print(f"acc@1 : {accuracy / (len(test_dataset) * hyperparams['batch_size']) * 100:.2f}%")
+    # 책의 방식과는 라이브러리가 약간 달라진듯
+    # print(f"acc@1 : {accuracy / (len(test_dataset) * hyperparams['batch_size']) * 100:.2f}%")
+    print(f"acc@1 : {accuracy / len(test_dataset) * 100:.2f}%")
 
-torch.save(model.state_dict(), "./models/VGG16.pt")
+torch.save(model.state_dict(), "models/VGG16.pt")
 print("Saved the model weights")
