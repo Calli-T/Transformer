@@ -1,6 +1,11 @@
 /chap5/corpus.txt
 /chap6/models/*.npy
+/chap8/source/*.jpg
+/chap8/source
 
 Toys/Failed/SacredConverter/source
 Toys/Failed/SacredConverter/BiblifyCode
 Toys/Failed/SacredConverter/models/
+
+# 모델 파일은 싹 올리지말자 너무 크다
+*.pt
