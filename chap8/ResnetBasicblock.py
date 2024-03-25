@@ -19,6 +19,7 @@ class BasicBlock(nn.Module):
         )
         self.bn2 = nn.BatchNorm2d(planes)
 
+        # 빈 시퀀셜, 그러나 입출력 차원이 다른경우 W_s를 합성곱 계층을 사용해 구현
         self.shortcut = nn.Sequential()
         if stride != 1 or inplanes != self.expansion * planes:
             self.shortcut = nn.Sequential(
@@ -35,6 +36,6 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
         out += self.shortcut(x)
-        out = self.relu(out)
+        out = self.relu(out) # 활성화 함수는 값을 잔차연결 값을 더하고 '나서' 적용 
 
         return out
