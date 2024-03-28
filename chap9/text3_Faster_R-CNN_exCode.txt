@@ -2,3 +2,6 @@
 MS COCO 데이터셋은 경계 상자 탐지 및 객체 분할을 위한 정보 제공
 JSON으로데이터 주석파일 제공
 카테고리 이미지 어노테이션 등등
+
+cython과 pycocotools 설치
+coco api는 c++로 작성되었고 이는
