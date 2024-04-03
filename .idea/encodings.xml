@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/Tokenizer/genesis.txt" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/source/from/01 창세기.txt" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/source/from/02 출애굽기.txt" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/source/from/65 유다서.txt" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/source/from/66 요한계시록.txt" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Toys/SacredConverter/source/개역개정/01 창세기.txt" charset="x-windows-949" />
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+</project>

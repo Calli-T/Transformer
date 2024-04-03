@@ -1,0 +1,77 @@
+chap 7의 389p까지의 내용에 기반함
+
+파일명 다듬기 ->
+내용 형식 손질하기 ->
+토크나이저 어휘사전 구축
+
+구축 단계에서, build_vocab_from_iterator가 뭔가?
+1. 해야할일, get_tokenizer로 가져올 토크나이저 선택, 토크나이저의 성능을 확인해야함
+2. build_vocab_from_iterator의 알고리즘 확인 (bpe인가? wordpiece인가?)
+3. iterator의 형식을 확인할것
+
+알아낸거 1. 모델에는 텐서를 넣으면 되므로 굳이 2_model_ex/data_processing를 따를
+필요는 없다
+2. get_tokenizer는 사전 학습된 모델을 가져온다/(정확하진 않지만 어휘 사전 객체를 생성해주는거지
+따로 학습을 하는건아닌듯)
+3. 그렇다면 get_tokenizer로 내가 쓸 토크나이저(sentencepiece등)과 호환이 되는지를 생각해보고
+되면 그대로쓰고
+아니면 dataloader를 직접 작성할 방법을 찾아야한다.
+이 경우, 특수 토큰들의 인덱스를 어떻게 지정할지를 생각해봐야한다
+
+sentence_piece의 경우 사용자 정의 기호 지원함
+https://github.com/google/sentencepiece/blob/master/doc/special_symbols.md
+
+https://pytorch.org/text/stable/_modules/torchtext/data/utils.html#get_tokenizer
+에서 확인해보면 지원하는건 spacy moses toktok revtok 밖에없다
+spacy에 한글 있긴한데 성능이 뭐 어캐되려나
+
+https://keep-steady.tistory.com/37
+
+문제가 있는데
+1. 고유명사 - 어휘 사전에 '없는' 단어가 튀어나올 수는 없으니 생각해볼것
+2. 단어사전을 성경 내용으로만 구축하면 없는 단어가 너무 많으니 단어장을 추가하던지,
+3. spaCy를 쓰던지,
+4. 여러 단어장을 같이 쓰던지
+5. 그대로 넘기던지 하는 방법을 써보자
+
+일단 spaCy쓰고, 그 다음에 개조
+
+---
+
+데이터로더 제작해야함
+
+build_from 어쩌고에 넣을 iterator의 split mode즉
+train/validate/test는
+총 요절이 31088개(일부 후처리되서 숫자가 줄어든 부분 있음)
+이는 2^4 * 29 * 67개
+따라서 27/29와 1/29와 1/29를 각각 train/valid/test로 설정
+
+__len__과 __getitem__이 필요한데
+__len__의 구현은 쉬우나
+
+__getitem__의 내부 구현은 알 수가 없음
+self.__next__()로 그냥 보내주면 되긴한데 나중에 내부구조 알아볼것
+
+---
+
+모델은 거의 그대로 가져옴, BATCH_SIZE 삭제
+
+
+---
+???
+seq 최대 길이 매개변수와, 내부 구조에 관해
+생각하다가 머리아파서 뒤로 보류함
+생각해보니 seq 길이는 크게 상관없는듯, 보통 512로 끊는다 (max_len parameter)
+구조만 나중에 다시 보자
+
+-----------
+해당 프로젝트는 잠정 실패로 냅둡니다...
+단어사전에 어떻게 들어가는지(원래 사전에 단어를 추가하는법 연구하고)가 필요할듯
+학습한게 어째서인지 죄다 EOS만 바로 내뱉고
+단어 임베딩은 몰라도 인코더를 들어가면 모두 다 같은 값을 내뱉는다(그나마 학습을 거의 안한놈은 좀 덜한편)
+pretrained한 모델을 손보는것이 나은가?
+pretrained한 단어 사전이 필요한가?
+얼마나 큰 사전이 필요한가? LLM은 256000크기의 단어 사전도 쓴다는데 이건 어디서 구하나
+인코더만/인코더-디코더/디코더만
+뭘 어떻게 써야하나?
+더 많은 정보가 필요하고 그 때 돌아와서 프로젝트를 완수해야겠다

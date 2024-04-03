@@ -1,0 +1,20 @@
+296p
+젠심의 word2vec 클래스는 gensim.models.Word2Vec에 있다
+word2vec = gensim.models.Word2Vec(
+sentences=None, # 토큰 리스트로 표현된 문장의 리스트, 학습데이터를 이중 리스트로 표현할 경우
+corpus_file=None, # 말뭉치, 학습데이터를 파일로 입력할 경우
+vector_size=100, # 임베딩 벡터크기
+alpha=0.025, # 학습률
+window=5, # 학습데이터에 들어가는 창문크기
+min_count=5, # 최소빈도, 이만큼 말뭉치에 전체 말뭉치에 없으면 자르는듯
+workers=3, # 병렬학습 스레드 개수인듯
+sg=0, # 스킵그램 모델 사용여부, 1이면 skip-gram, 0이면 CBoW
+hs=0, # 계층적 소프트맥스 사용여부
+cbow_mean=1, # CBoW 모델 쓸 때, 중심 단어와 주변 단어를 합쳐서 하나의 벡터로 만들 때 평균화를 하는지의 여부이다. 1이면 하고0이면 평균화 x 합산 o
+negative=5, # 네거티브 샘플링 단어수
+ns_exponent=0.75, # 네거티브 샘플링 확률의 지수, 0.75제곱이 기본
+max_final_vocab=None # ??? 지정된 min_count? 계산된 min_count? 자동으로 매칭된? https://radimrehurek.com/gensim/models/word2vec.html
+epochs=5, # 반복수
+batch_words=10000 # 몇 개의 단어로 학습 배치를 구성할건지 결정
+)
+6번 코드에 실습
