@@ -1,3 +1,0 @@
-export DOCKER_ID_USER="$username"
-docker tag myapp:newimage $DOCKER_ID_USER/myapp:newimage
-docker images

@@ -1,2 +1,0 @@
-docker commit mycontainer myapp:newimage
-docker images
