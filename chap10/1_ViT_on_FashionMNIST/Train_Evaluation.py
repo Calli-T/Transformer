@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 device = device()
 for key in os.environ.keys():
     print(key)'''
+from device_converter import device
 
 # --- set hyper parameters & set Trainer ---
 args = TrainingArguments(

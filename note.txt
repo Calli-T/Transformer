@@ -22,3 +22,17 @@ GPT3부터는 오픈소스가 아니므로 마소의 파이-1.5등을 찾아보�
 트랜스포머 모델 족보
 https://amatriain.net/blog/transformer-models-an-introduction-and-catalog-2d1e9039f376/
 https://amatriain.net/blog/images/02-06.png
+
+- 깃허브 토큰 문제 -
+https://hyeo-noo.tistory.com/184
+https://bgpark.tistory.com/46
+
+- rocm 실행문제 -
+터미널에
+export HSA_OVERRIDE_GFX_VERSION=10.3.0
+하고나서 할것
+실행 버튼 옆에 세로 3점을 눌러 세팅 들어간다음
+실행/디버그 구성에 환경변수를 새로 추가해도 똑같이 동작한다
+
+- 윈/리 requiments.txt 문제 -
+리눅스에서 pip freeze는 _ubuntu붙여서 한다
