@@ -1,3 +1,5 @@
+import os
+
 from setModel import *
 from FashionMNIST_Dataloader import *
 from setMetric import *
@@ -7,6 +9,12 @@ from transformers import TrainingArguments, Trainer
 # -
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+#
+from torch_directml import device
+device = device()
+for key in os.environ.keys():
+    print(key)
 
 # --- set hyper parameters & set Trainer ---
 args = TrainingArguments(
@@ -23,10 +31,11 @@ args = TrainingArguments(
     logging_dir="logs",
     logging_steps=125,
     remove_unused_columns=False,
-    seed=42
+    seed=42,
 )
+
 trainer = Trainer(
-    model_init=lambda x: get_model(classes, class_to_idx),
+    model_init=lambda x: get_model(classes, class_to_idx).to(device),
     args=args,
     train_dataset=subset_train_dataset,
     eval_dataset=subset_test_dataset,
