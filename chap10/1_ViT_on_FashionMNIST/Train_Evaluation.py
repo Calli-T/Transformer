@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 #
-from torch_directml import device
+'''from torch_directml import device
 device = device()
 for key in os.environ.keys():
-    print(key)
+    print(key)'''
 
 # --- set hyper parameters & set Trainer ---
 args = TrainingArguments(
