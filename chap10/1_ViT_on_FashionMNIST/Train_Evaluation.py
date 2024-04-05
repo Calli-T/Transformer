@@ -1,39 +1,21 @@
 import os
 
-from setModel import *
+# 모델 스위치하려면 FashionMNIST_Dataloader.py의 image_processor도 스왑할것
+# from setModel import *
+from setSwinModel import *
 from FashionMNIST_Dataloader import *
 from setMetric import *
 
-from transformers import TrainingArguments, Trainer
+from transformers import Trainer
 
 # -
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
-#
-'''from torch_directml import device
-device = device()
-for key in os.environ.keys():
-    print(key)'''
+# set device
 from device_converter import device
 
-# --- set hyper parameters & set Trainer ---
-args = TrainingArguments(
-    output_dir="./models/ViT-FashionMNIST",
-    save_strategy="epoch",
-    evaluation_strategy="epoch",
-    learning_rate=1e-5,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
-    num_train_epochs=3,
-    weight_decay=3,
-    load_best_model_at_end=True,
-    metric_for_best_model="f1",  # 매크로 평균 F1원 점수
-    logging_dir="logs",
-    logging_steps=125,
-    remove_unused_columns=False,
-    seed=42,
-)
+# -
 
 trainer = Trainer(
     model_init=lambda x: get_model(classes, class_to_idx).to(device),

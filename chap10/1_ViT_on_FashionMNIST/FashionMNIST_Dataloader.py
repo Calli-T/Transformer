@@ -52,8 +52,11 @@ print(train_dataset[0])'''
 # --- image preprocessing ---
 
 # 허깅 페이스의 이미지 처리기 프로세스를 전처리에 사용, crop이나 resize 등 사용가능
-image_processor = AutoImageProcessor.from_pretrained(
+'''image_processor = AutoImageProcessor.from_pretrained(
     pretrained_model_name_or_path="google/vit-base-patch16-224-in21k"  # 224 size, 16 image patch
+)'''
+image_processor = AutoImageProcessor.from_pretrained(
+    pretrained_model_name_or_path="microsoft/swin-tiny-patch4-window7-224"  # 224 size, 16 image patch
 )
 
 transform = transforms.Compose(

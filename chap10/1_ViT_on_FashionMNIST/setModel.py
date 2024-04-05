@@ -1,6 +1,4 @@
-from transformers import ViTForImageClassification
-
-
+from transformers import ViTForImageClassification, TrainingArguments
 # --- set model ---
 def get_model(classes, class_to_idx):
     model = ViTForImageClassification.from_pretrained(
@@ -25,4 +23,21 @@ print("image shape: ", batch["pixel_values"].shape)
 print("patch embeddings shape: ", model.vit.embeddings.patch_embeddings(batch["pixel_values"]).shape)
 print("[CLS] + patch embeddings shape :", model.vit.embeddings(batch["pixel_values"]).shape)'''
 
-# --- set hyper parameter & etc ---
+
+# --- set hyper parameters  ---
+args = TrainingArguments(
+    output_dir="./models/ViT-FashionMNIST",
+    save_strategy="epoch",
+    evaluation_strategy="epoch",
+    learning_rate=1e-5,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    num_train_epochs=3,
+    weight_decay=3,
+    load_best_model_at_end=True,
+    metric_for_best_model="f1",  # 매크로 평균 F1원 점수
+    logging_dir="logs",
+    logging_steps=125,
+    remove_unused_columns=False,
+    seed=42,
+)
