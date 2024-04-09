@@ -2,7 +2,8 @@ import os
 
 # 모델 스위치하려면 FashionMNIST_Dataloader.py의 image_processor도 스왑할것
 # from setModel import *
-from setSwinModel import *
+# from setSwinModel import *
+from setCvTModel import *
 from FashionMNIST_Dataloader import *
 from setMetric import *
 

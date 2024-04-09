@@ -41,8 +41,33 @@ QKV에서 Q와 KV에서, stride를 다르게 하여 패치 길이를 각각 9와
 https://velog.io/@kiolke/CvT-Introducing-Convolutions-to-Vision-Transformers-%EC%A0%9C5%EB%B6%80
 여긴 Q/KV가 16/4
 
+2D 합성곱 기반의 축소된 어텐션 임베딩 Squeezed Convolutional Projection)
+{
 Q/KV의 길이가 다르더라도 (K와 V는 같아야함) 어텐션의 입출력 길이는 같게되는 이유는
 Q*transpose(K)*V에서
 임베딩을 거친이후 Q가 a*1/KV가 b*1일 때,
 Q*transpose(K)는 a*b크기 벡터, 이를 다시 V와 곱하면 a*b * b*1이므로 a*1의크기 즉 원래 벡터길이다
-이게 맵, 스코어, 등등 어텐션의 어떤 요소와 엮여있는지부터 다시 시작
+
+QK 내적하면 attention distribution이 담긴 attention map, 즉 패치 임베딩에 대한 중요도 계산
+attention map과 value의 곱으로 가중합을 구하고 중요한 패치를 확인하는듯
+}
+
+649p
+CvT 모델은 계층이 깊어지면
+패치 크기를 축소하는 대신에
+임베딩 벡터의 차원을 증가시킨다(커널 개수를 늘린다는 소린가?)
+
+이미지 패치가 줄어든 만큼
+임베딩 차원을 늘려
+네트워크 안정성을 향상시키고 모델설계를 단순화 < ???
+
+650p
+실전 코드에 관하여
+CvT는 기존 ViT나 Swin과 달리 높이나 너비를 이미지 프로세서에서 가져오는거 말고
+shortest_edge즉 이미지의 min(너비, 높이)를 의미
+microsoft/cvt-21 모델의 특징이 짧은 쪽으로 정규화한다
+
+651p
+마소 cvt 21모델의 구조에서 분류기 이전에 풀링이 없는 이유를
+전역 특징과 지역 특징을 conv 층에서 파악했기 때문이라고...한다
+(CNN은 같이 쓰지않나???, 패러미터 줄이는게 목적이 아닌가?, 전역 풀링이라도 쓰나???)

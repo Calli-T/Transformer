@@ -55,7 +55,7 @@ print(train_dataset[0])'''
 '''image_processor = AutoImageProcessor.from_pretrained(
     pretrained_model_name_or_path="google/vit-base-patch16-224-in21k"  # 224 size, 16 image patch
 )'''
-image_processor = AutoImageProcessor.from_pretrained(
+'''image_processor = AutoImageProcessor.from_pretrained(
     pretrained_model_name_or_path="microsoft/swin-tiny-patch4-window7-224"  # 224 size, 16 image patch
 )
 
@@ -66,6 +66,28 @@ transform = transforms.Compose(
             size=(
                 image_processor.size["height"],
                 image_processor.size["width"]
+            )
+        ),
+        transforms.Lambda(
+            lambda x: torch.cat([x, x, x], 0)  # 단일채널복제, 다중 채널로 변환
+        ),
+        transforms.Normalize(
+            mean=image_processor.image_mean,
+            std=image_processor.image_std
+        )
+    ]
+)'''
+image_processor = AutoImageProcessor.from_pretrained(
+    pretrained_model_name_or_path='microsoft/cvt-21'
+)
+
+transform = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        transforms.Resize(
+            size=(
+                image_processor.size["shortest_edge"],
+                image_processor.size["shortest_edge"]
             )
         ),
         transforms.Lambda(
