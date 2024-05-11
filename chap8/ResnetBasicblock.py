@@ -20,6 +20,7 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
 
         # 빈 시퀀셜, 그러나 입출력 차원이 다른경우 W_s를 합성곱 계층을 사용해 구현
+        ## 05/11 추가, 저거 inplane plane은 '채널'임
         self.shortcut = nn.Sequential()
         if stride != 1 or inplanes != self.expansion * planes:
             self.shortcut = nn.Sequential(

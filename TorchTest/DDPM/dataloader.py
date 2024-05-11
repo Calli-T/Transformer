@@ -30,20 +30,29 @@ def getImgsFromDir(path):
 
 
 def preprocess(_imgs, _DATASET_REPETITIONS=1):
-    _imgs = np.float32(_imgs) / 255.0
+    # torch 텐서 순서는 (N,C,H,W), 읽어온건 (N,H,W,C) 따라서 swapaxes함수로 축 변경
+    # 축 변경은 torch의 .permute로도 가능, 그게 더 편함
+    # 시드 고정하고 확인 해보니 결과는 똑같음
+    # float 32로 바꾸고 [0, 1]로 스케일링
+    _imgs = np.float32(_imgs).swapaxes(3, 1).swapaxes(2, 3) / 255.0
+    # _imgs = np.float32(_imgs) / 255.0
+
     origin = np.copy(_imgs)
     for _ in range(_DATASET_REPETITIONS - 1):
         origin = np.concatenate((origin, _imgs), axis=0)
 
     return origin
 
+# 고정 시드
+torch.manual_seed(42)
+
 
 def getDataLoader(img_path):
-    imgs = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
+    # imgs = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
+    imgs = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
     # imgs = preprocess(getImgsFromDir('./datasets'), DATASET_REPETITIONS)
-    # imgs = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
     # print(imgs.shape)
-    train_dataset = torch.FloatTensor(imgs)
+    train_dataset = torch.FloatTensor(imgs) #.permute(0, 3, 1, 2)
     train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
     print(train_dataset.shape)
     # print(len(train_dataloader))
@@ -53,3 +62,5 @@ def getDataLoader(img_path):
     # img = cv2.resize(cv2.imread("./image_06734.jpg"), dsize=(IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
 
     return train_dataloader
+
+# - 1 -
