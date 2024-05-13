@@ -36,7 +36,7 @@ class UNet(nn.Module):
         # 이하 레이어
         # 각 계층들, upblock의 resiblock은 최초 1회 downblock에 의해 정해진다
         self.upsampling = nn.Upsample(scale_factor=IMAGE_SIZE, mode='bilinear', align_corners=True)
-        self.conv = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=1, stride=1, padding="same")
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=1, stride=1, padding="same")
 
         self.down1 = DownBlock(64, 32, 2)
         self.down2 = DownBlock(32, 64, 2)
@@ -50,6 +50,8 @@ class UNet(nn.Module):
         self.up2 = UpBlock([160, 128], 64, 2)
         self.up3 = UpBlock([96, 64], 32, 2)
 
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding="same")
+
     def forward(self, noise_variances, noisy_images):
         '''
         print("noise_variance: " + str(len(noise_variances)))
@@ -58,10 +60,9 @@ class UNet(nn.Module):
         print("noisy images: " + str(noisy_images.shape))
         print("noise images feature map: " + str(self.conv(noisy_images).shape))
         '''
-        x = torch.concat(
-            [self.upsampling(nchw_tensor_sinusoidal_embedding(noise_variances)),
-             self.conv(noisy_images)],
-            dim=1)
+        upampled = self.upsampling(nchw_tensor_sinusoidal_embedding(noise_variances))
+        convoluted_noisy = self.conv1(noisy_images)
+        x = torch.concat([upampled, convoluted_noisy], dim=1)
 
         x = self.down1(x)
         x = self.down2(x)
@@ -82,27 +83,23 @@ class UNet(nn.Module):
         x = self.up2(x)
         x = self.up3(x)
 
+        x = self.conv2(x)
+
         return x
 
 
 # print(nchw_tensor_sinusoidal_embedding(torch.rand(5)).shape)
+
+
 '''
 unet = UNet()
-train_dataloader = getDataLoader("./datasets")
+train_dataloader, _, _ = getDataLoader("./datasets")
 for batch in train_dataloader:
     variances = [random.random() for _ in range(5)]
-    unet.forward(variances, batch)
+    print(unet.forward(variances, batch).shape)
     # print(variances)
     # print(unet.forward(variances, batch))
 '''
-
-'''
-unet = UNet()
-train_dataloader = getDataLoader("./datasets")
-for batch in train_dataloader:
-    print(unet.forward(batch, None, None))
-'''
-
 # class DDPM(nn.Module):
 #     def __init__(self):
 #         super().__init__()

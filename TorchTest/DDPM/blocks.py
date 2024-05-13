@@ -5,19 +5,8 @@ from dataloader import *
 
 # 긴 소수점 표기용
 # torch.set_printoptions(precision=8)
-def offset_cosine_diffusion_schedule(diffusion_times):
-    min_signal_rate = 0.02
-    max_signal_rate = 0.95
 
-    start_angle = torch.acos(torch.Tensor([max_signal_rate]))
-    end_angle = torch.acos(torch.Tensor([min_signal_rate]))
 
-    diffusion_angles = start_angle + diffusion_times * (end_angle - start_angle)
-
-    signal_rates = torch.cos(diffusion_angles)
-    noise_rates = torch.sin(diffusion_angles)
-
-    return noise_rates, signal_rates
 
 
 # --------------------blocks--------------------

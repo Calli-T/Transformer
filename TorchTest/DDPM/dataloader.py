@@ -37,30 +37,46 @@ def preprocess(_imgs, _DATASET_REPETITIONS=1):
     _imgs = np.float32(_imgs).swapaxes(3, 1).swapaxes(2, 3) / 255.0
     # _imgs = np.float32(_imgs) / 255.0
 
+    # 그냥 따로 함수 만들지말고 mean std 반환까지 n회 반복 이전에 그대로!
+    _mean = np.mean(_imgs, axis=0)
+    _std = np.std(_imgs, axis=0)
+
     origin = np.copy(_imgs)
     for _ in range(_DATASET_REPETITIONS - 1):
         origin = np.concatenate((origin, _imgs), axis=0)
 
-    return origin
+    return origin, _mean, _std
+
 
 # 고정 시드
 torch.manual_seed(42)
 
 
 def getDataLoader(img_path):
-    # imgs = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
-    imgs = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
+    # imgs, _mean, _std = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
+    imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
     # imgs = preprocess(getImgsFromDir('./datasets'), DATASET_REPETITIONS)
     # print(imgs.shape)
-    train_dataset = torch.FloatTensor(imgs) #.permute(0, 3, 1, 2)
+    train_dataset = torch.FloatTensor(imgs)  # .permute(0, 3, 1, 2)
     train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
-    print(train_dataset.shape)
+    # print(train_dataset.shape)
     # print(len(train_dataloader))
     # print(len(imgs))
     # print(imgs[:1])
     # print(imgs.shape)
     # img = cv2.resize(cv2.imread("./image_06734.jpg"), dsize=(IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
 
-    return train_dataloader
+    return train_dataloader, _mean, _std
+
+
+'''
+_, mean, std = getDataLoader('./datasets')
+print(mean.shape)
+print(std.shape)
+print(std)
+'''
+
+# def get_mean_std():
+
 
 # - 1 -
