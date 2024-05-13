@@ -77,20 +77,23 @@ class DownBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    def __init__(self, out_channels, block_depth, skips=None):
+    def __init__(self, concat_input_channels, out_channels, block_depth):
         super().__init__()
 
         self.block_depth = block_depth
-        self.out_channels = out_channels
+        self.skips = []
 
-        self.additional_channels = []
-        self.residuals = []
-        self.skips = skips
-        if skips is None:
-            skips = []
+        # self.out_channels = out_channels
+        # self.additional_channels = []
 
         # 업샘플링
         self.upsampling = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)  # keras에서는 align옵션이 따로 있는지모름
+
+        # 잔차블럭
+        self.residuals = []
+        for idx, c in enumerate(concat_input_channels):
+            # self.residuals.append(ResidualBlock(out_channels + c, out_channels))
+            self.residuals.append(ResidualBlock(c, out_channels))
 
     def forward(self, x):
         x = self.upsampling(x)
@@ -103,16 +106,19 @@ class UpBlock(nn.Module):
     def set_skips(self, skips):
         self.skips = skips
 
+        '''
+        # legacy 코드는 forward 도중에 upblock 모양을 맞춰줬어야했었음
         # 잔차 블럭들 추가 전에 concat 이후 채널 값을 맞춰줄 채널 개수 가져옴
-
         for i in range(self.block_depth):
             # print(str(i) + " " + str(skips[i].shape[1]))
             self.additional_channels.append(skips[i].shape[1])  # NCHW format에 의거한 채널의 위치
         self.additional_channels.reverse()
-
+        
         # 잔차 블럭들 추가
         for idx, c in enumerate(self.additional_channels):
             self.residuals.append(ResidualBlock(self.out_channels + c, self.out_channels))
+        '''
+
 
 # down block의 구현을 어떻게 할 것인가 생각해보자
 # 파이토치의 클래스식 잔차블럭을 그대로 가져다 업 다운 블럭에 박을 수 있을것인가?
