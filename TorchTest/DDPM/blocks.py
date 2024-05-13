@@ -80,24 +80,17 @@ class UpBlock(nn.Module):
     def __init__(self, out_channels, block_depth, skips=None):
         super().__init__()
 
+        self.block_depth = block_depth
+        self.out_channels = out_channels
+
+        self.additional_channels = []
+        self.residuals = []
+        self.skips = skips
         if skips is None:
             skips = []
-        self.block_depth = block_depth
-        self.skips = skips
 
         # 업샘플링
         self.upsampling = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)  # keras에서는 align옵션이 따로 있는지모름
-
-        # 잔차 블럭들 추가 전에 concat 이후 채널 값을 맞춰줄 채널 개수 가져옴
-        self.additional_channels = []
-        for i in range(block_depth):
-            self.additional_channels.append(skips[i].shape[1])  # NCHW format에 의거한 채널의 위치
-        self.additional_channels.reverse()
-
-        # 잔차 블럭들 추가
-        self.residuals = []
-        for idx, c in enumerate(self.additional_channels):
-            self.residuals.append(ResidualBlock(out_channels + c, out_channels))
 
     def forward(self, x):
         x = self.upsampling(x)
@@ -110,10 +103,37 @@ class UpBlock(nn.Module):
     def set_skips(self, skips):
         self.skips = skips
 
+        # 잔차 블럭들 추가 전에 concat 이후 채널 값을 맞춰줄 채널 개수 가져옴
+
+        for i in range(self.block_depth):
+            # print(str(i) + " " + str(skips[i].shape[1]))
+            self.additional_channels.append(skips[i].shape[1])  # NCHW format에 의거한 채널의 위치
+        self.additional_channels.reverse()
+
+        # 잔차 블럭들 추가
+        for idx, c in enumerate(self.additional_channels):
+            self.residuals.append(ResidualBlock(self.out_channels + c, self.out_channels))
 
 # down block의 구현을 어떻게 할 것인가 생각해보자
 # 파이토치의 클래스식 잔차블럭을 그대로 가져다 업 다운 블럭에 박을 수 있을것인가?
 # d = DownBlock(3, 64, 2)
 # u = UpBlock(64, 2, torch.tensor([[[[2]]], [[[2]]]]))
+'''
+train_dataloader = getDataLoader("./datasets")
+test_block = ResidualBlock(3, 64)
+for batch in train_dataloader:
+    print(test_block.forward(batch))
+'''
+
+'''
+# 오프셋 코사인 확산 스케줄 테스트용(전체 step 수 1000으로 설정)
+T = 1000
+diffusion_times = torch.FloatTensor([x / T for x in range(T)])
+
+(offset_cosine_noise_rates, offset_cosine_signal_rates,
+ ) = offset_cosine_diffusion_schedule(diffusion_times)
+
+print(offset_cosine_noise_rates)
+'''
 
 # - 2 -

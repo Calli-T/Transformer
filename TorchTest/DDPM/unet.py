@@ -1,5 +1,6 @@
 from blocks import *
 
+
 # --------------------U-Net--------------------
 
 class UNet(nn.Module):
@@ -39,22 +40,13 @@ class UNet(nn.Module):
         x = self.up3(x)
 
         return x
+
+
 '''
+unet = UNet()
 train_dataloader = getDataLoader("./datasets")
-test_block = ResidualBlock(3, 64)
 for batch in train_dataloader:
-    print(test_block.forward(batch))
-'''
-
-'''
-# 오프셋 코사인 확산 스케줄 테스트용(전체 step 수 1000으로 설정)
-T = 1000
-diffusion_times = torch.FloatTensor([x / T for x in range(T)])
-
-(offset_cosine_noise_rates, offset_cosine_signal_rates,
- ) = offset_cosine_diffusion_schedule(diffusion_times)
-
-print(offset_cosine_noise_rates)
+    print(unet.forward(batch))
 '''
 
 # class DDPM(nn.Module):
