@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 
 from dataloader import *
@@ -78,9 +77,11 @@ class DownBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    def __init__(self, out_channels, block_depth, skips):
+    def __init__(self, out_channels, block_depth, skips=None):
         super().__init__()
 
+        if skips is None:
+            skips = []
         self.block_depth = block_depth
         self.skips = skips
 
@@ -104,31 +105,15 @@ class UpBlock(nn.Module):
             x = torch.concat([x, self.skips.pop()], dim=1)
             x = self.residuals[i](x)
 
+        return x
+
+    def set_skips(self, skips):
+        self.skips = skips
+
 
 # down block의 구현을 어떻게 할 것인가 생각해보자
 # 파이토치의 클래스식 잔차블럭을 그대로 가져다 업 다운 블럭에 박을 수 있을것인가?
 # d = DownBlock(3, 64, 2)
 # u = UpBlock(64, 2, torch.tensor([[[[2]]], [[[2]]]]))
-# --------------------U-Net--------------------
 
-'''
-train_dataloader = getDataLoader("./datasets")
-test_block = ResidualBlock(3, 64)
-for batch in train_dataloader:
-    print(test_block.forward(batch))
-'''
-
-'''
-# 오프셋 코사인 확산 스케줄 테스트용(전체 step 수 1000으로 설정)
-T = 1000
-diffusion_times = torch.FloatTensor([x / T for x in range(T)])
-
-(offset_cosine_noise_rates, offset_cosine_signal_rates,
- ) = offset_cosine_diffusion_schedule(diffusion_times)
-
-print(offset_cosine_noise_rates)
-'''
-
-# class DDPM(nn.Module):
-#     def __init__(self):
-#         super().__init__()
+# - 2 -
