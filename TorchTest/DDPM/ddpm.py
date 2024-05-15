@@ -66,7 +66,23 @@ class DDPM(nn.Module):
         pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
                                 signal_rates.view([-1, 1, 1, 1]))
 
-        return pred_images
+        return pred_noises, pred_images
+
+    # 역방향 확산의 반복부터 다시 시작하면된다
+    def reverse_diffusion(self, initial_noise, diffusion_steps):
+        num_images = initial_noise.shape[0]
+        step_size = 1.0 / diffusion_steps
+        current_images = initial_noise
+
+        for step in range(diffusion_steps):
+            diffusion_times = [1 - step * step_size for _ in range(num_images)]
+            noise_rates, signal_rates = self.diffusion_schedule(torch.FloatTensor(diffusion_times))
+
+            pred_noises, pred_images = self.denoise(
+                current_images, noise_rates, signal_rates, training=False
+            )
+            # print(pred_noises.shape)
+            # print(pred_images.shape)
 
     '''
     def denoise_test(self):
@@ -76,11 +92,13 @@ class DDPM(nn.Module):
 
         # 확산 스케줄 뽑아내기
         diffusion_times = torch.FloatTensor([0.5, 0.5, 0.5, 0.5, 0.5])
-        signal_rates, noise_rates = offset_cosine_diffusion_schedule(diffusion_times)
+        signal_rates, noise_rates = self.diffusion_schedule(diffusion_times)
         # print(signal_rates)
 
         for batch in train_dataloader:
-            print(self.denoise(batch, noise_rates, signal_rates, training=True).shape)    
+            _, __ = self.denoise(batch, noise_rates, signal_rates, training=True)
+            print(_.shape)
+            print(__.shape)
     '''
 
     # print(element.shape)
@@ -98,12 +116,22 @@ class DDPM(nn.Module):
             return self.normalizer(batch)
     '''
 
-    # 정방향 확산 프로세스, 역방향 확산 프로세스, 생성 함수
+    # 정방향 확산 프로세스(이건 함수가 따로 필요없고 훈련 때 바로 생성하는것도 가능함)
+    # 역방향 확산 프로세스(denoise함수 생성 완료, 그걸이용하는 reverse diffusion 함수 만들것)
+    # 생성 함수
     # 그리고 pytorch의 손실함수 선택, 최적화 알고리즘적용, 오차 역전파등의 학습과정
 
 
 ddpm = DDPM()
-ddpm.denoise_test()
+
+# ddpm.reverse_diffusion(torch.FloatTensor([[[[1]]], [[[1]]], [[[1]]], [[[1]]], [[[1]]]]), 20)
+# 무작위 잡음의 생성은, [N, 3채널, 1, 1]를 생성하도록 함
+reverse_test_random_tensor = torch.rand([5, 3, 64, 64])
+# print(reverse_test_random_tensor.shape)
+# print(reverse_test_random_tensor)
+ddpm.reverse_diffusion(reverse_test_random_tensor, 20)
+
+# ddpm.denoise_test()
 
 '''
 # normalize_test와 denormalize코드 테스트용
