@@ -21,9 +21,15 @@ def sinusoidal_embedding(var):
 
 # 얘는 float list를 받습니다
 def nchw_tensor_sinusoidal_embedding(variances):
+    if torch.is_tensor(variances):
+        variances = variances.numpy()
+
     embeddings = []
     for var in variances:
+        # print(var.shape)
         embeddings.append(sinusoidal_embedding(torch.tensor([[[var]]], dtype=torch.float32)))
+        # embeddings.append(sinusoidal_embedding(torch.tensor([[[var]]], dtype=torch.float32)))
+    # print (torch.stack(embeddings, dim=0).shape)
 
     return torch.stack(embeddings, dim=0)
 
@@ -60,9 +66,12 @@ class UNet(nn.Module):
         print("noisy images: " + str(noisy_images.shape))
         print("noise images feature map: " + str(self.conv(noisy_images).shape))
         '''
-        upampled = self.upsampling(nchw_tensor_sinusoidal_embedding(noise_variances))
+
+        upsampled = self.upsampling(nchw_tensor_sinusoidal_embedding(noise_variances))
         convoluted_noisy = self.conv1(noisy_images)
-        x = torch.concat([upampled, convoluted_noisy], dim=1)
+        # print(convoluted_noisy.shape)
+        # print(upsampled.shape)
+        x = torch.concat([upsampled, convoluted_noisy], dim=1)
 
         x = self.down1(x)
         x = self.down2(x)
