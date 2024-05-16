@@ -1,3 +1,5 @@
+import tqdm
+
 from unet import *
 
 from torch import optim
@@ -27,6 +29,8 @@ class DDPM:
         self.network = UNet().to(device)
         self.ema_network = UNet().to(device)
         self.diffusion_schedule = offset_cosine_diffusion_schedule
+
+        self.loss = 0.0
 
         # hyper
         self.EMA = 0.999
@@ -85,6 +89,10 @@ class DDPM:
         pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
                                 signal_rates.view([-1, 1, 1, 1]))
 
+        # print('--------------------------')
+        # print(noise_rates.device)
+        # print(noisy_images.device)
+
         return pred_noises, pred_images
 
     # 역방향 확산의 반복부터 다시 시작하면된다
@@ -101,6 +109,8 @@ class DDPM:
             noise_rates, signal_rates = self.diffusion_schedule(
                 torch.FloatTensor(diffusion_times)
             )
+            noise_rates = noise_rates.to(device)
+            signal_rates = signal_rates.to(device)
 
             pred_noises, pred_images = self.denoise(
                 current_images, noise_rates, signal_rates, training=False
@@ -113,6 +123,8 @@ class DDPM:
             next_noise_rates, next_signal_rates = self.diffusion_schedule(
                 torch.FloatTensor(next_diffusion_times)
             )
+            next_noise_rates = next_noise_rates.to(device)
+            next_signal_rates = next_signal_rates.to(device)
 
             '''
             print(next_signal_rates.shape)
@@ -128,7 +140,8 @@ class DDPM:
 
     def generate(self, num_images, diffusion_steps, initial_noise=None):
         if initial_noise is None:
-            initial_noise = torch.randn(num_images, 3, IMAGE_SIZE, IMAGE_SIZE)
+            initial_noise = torch.randn(num_images, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
+
         generated_images = self.reverse_diffusion(initial_noise, diffusion_steps)
         # print(generated_images.shape)
         generated_images = self.denomalize(generated_images)
@@ -139,15 +152,15 @@ class DDPM:
     # 데이터로더, 평균, 표준 편차 모두 여기서 세팅
     def set_datasets_from_path(self, path):
         train_dataloader, mean, std = getDataLoader(path)
-        self.mean = torch.FloatTensor(mean)
-        self.std = torch.FloatTensor(std)
+        self.mean = torch.FloatTensor(mean).to(device)
+        self.std = torch.FloatTensor(std).to(device)
         self.train_dataloader = train_dataloader
 
     # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
         cost = 0.0
 
-        for batch in self.train_dataloader:
+        for batch in tqdm.tqdm(self.train_dataloader):
             batch = batch.to(device)
             # 이미지를 정규화하고 무작위 잡음을 뽑아낸다
             images = self.normalizer(batch)
@@ -170,15 +183,14 @@ class DDPM:
 
             # u-net을 통한 잡음 예측
             pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
-            loss = self.criterion(noises, pred_images)
+            self.loss = self.criterion(noises, pred_images)
 
             # 이거 제대로 되긴 하는가? self 달아 줘야 할 지도 모른다?
             self.optimizer.zero_grad()
-            loss.backward()
+            self.loss.backward()
             self.optimizer.step()
             # print(loss)
-            cost += loss
-            # print(cost)
+            cost += self.loss
 
         # ema 신경망에 카피
         with torch.no_grad():
@@ -198,9 +210,17 @@ class DDPM:
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
 
-            if epoch % 10 == 0:
-                torch.save(self.network.state_dict(), f'./models/unet-{epoch}.pt')
-                torch.save(self.ema_network.state_dict(), f'./models/unet-{epoch}.pt')
+            # 보여주기용 무작위 생성
+            generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+            plt.figure(figsize=(3, 3))
+            for idx, image in enumerate(generates):
+                plt.subplot(3, 3, idx + 1)
+                plt.imshow(image)
+            plt.show()
+
+            if (epoch + 1) % 10 == 0:
+                torch.save(self.network.state_dict(), f'./models/unet-{epoch + 1}.pt')
+                torch.save(self.ema_network.state_dict(), f'./models/ema-unet-{epoch + 1}.pt')
 
     '''
         def set_mean_and_std(self, mean, std):

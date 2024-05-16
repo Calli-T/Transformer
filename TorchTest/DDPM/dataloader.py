@@ -5,11 +5,12 @@ import torch
 import cv2
 import matplotlib.pyplot as plt
 import os
-
+import tqdm
 from torch.utils.data import DataLoader
 
+# hyper
 IMAGE_SIZE = 64
-BATCH_SIZE = 64
+BATCH_SIZE = 64 * 4
 DATASET_REPETITIONS = 5
 
 
@@ -55,8 +56,8 @@ torch.manual_seed(42)
 
 
 def getDataLoader(img_path):
-    # imgs, _mean, _std = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
-    imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
+    imgs, _mean, _std = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
+    # imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
     # imgs = preprocess(getImgsFromDir('./datasets'), DATASET_REPETITIONS)
     # print(imgs.shape)
     train_dataset = torch.FloatTensor(imgs)  # .permute(0, 3, 1, 2)

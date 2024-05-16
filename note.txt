@@ -39,3 +39,5 @@ export HSA_OVERRIDE_GFX_VERSION=10.3.0
 
 - rocm으로 돌릴 때 뜨는 치명적인 문제, 파일 없음 -
 https://github.com/ROCm/ROCm/issues/1889
+결론적으로, 그래픽 드라이버에서 사용하는 파일이 없어서 그렇고
+sudo apt install libstdc++-12-dev를 설치하면된다
