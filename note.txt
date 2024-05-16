@@ -36,3 +36,6 @@ export HSA_OVERRIDE_GFX_VERSION=10.3.0
 
 - 윈/리 requiments.txt 문제 -
 리눅스에서 pip freeze는 _ubuntu붙여서 한다
+
+- rocm으로 돌릴 때 뜨는 치명적인 문제, 파일 없음 -
+https://github.com/ROCm/ROCm/issues/1889
