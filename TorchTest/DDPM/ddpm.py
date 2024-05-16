@@ -40,8 +40,8 @@ class DDPM:
         self.EPOCHS = 50
 
         # train_set 평균 절대 오차/RMSprop사용
-        self.criterion = nn.L1Loss().to(device)
-        self.optimizer = optim.RMSprop(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
+        self.criterion = nn.MSELoss().to(device)  # nn.L1Loss().to(device)
+        self.optimizer = optim.Adam(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
         self.train_dataloader = None
@@ -113,7 +113,7 @@ class DDPM:
             signal_rates = signal_rates.to(device)
 
             pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=False
+                current_images, noise_rates, signal_rates, training=True
             )
             # print(pred_noises.shape)
             # print(pred_images.shape)

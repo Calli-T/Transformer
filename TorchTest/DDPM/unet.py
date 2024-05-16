@@ -56,7 +56,9 @@ class UNet(nn.Module):
         self.up2 = UpBlock([160, 128], 64, 2).to(device)
         self.up3 = UpBlock([96, 64], 32, 2).to(device)
 
+        #
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding="same")
+        torch.nn.init.zeros_(self.conv2.weight)
 
     def forward(self, noise_variances, noisy_images):
         '''
