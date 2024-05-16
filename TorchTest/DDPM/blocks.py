@@ -50,18 +50,16 @@ class DownBlock(nn.Module):
         self.residuals.append(ResidualBlock(in_channels, out_channels).to(device))
         for _ in range(block_depth - 1):
             self.residuals.append(ResidualBlock(out_channels, out_channels).to(device))
-
-        self.residuals = nn.Sequential(*self.residuals)
+        self.residuals = nn.ModuleList(self.residuals)  # nn.Sequential(*self.residuals)
 
         self.avgpool = nn.AvgPool2d(kernel_size=2)
 
     def forward(self, x):
-        '''
         for i in range(self.block_depth):
-        x = self.residuals[i](x)
-        self.skips.append(x)
-        '''
-        x = self.residuals(x)
+            x = self.residuals[i](x)
+            self.skips.append(x)
+
+        # x = self.residuals(x)
         x = self.avgpool(x)
 
         return x
@@ -110,7 +108,7 @@ class UpBlock(nn.Module):
             # print(str(i) + " " + str(skips[i].shape[1]))
             self.additional_channels.append(skips[i].shape[1])  # NCHW format에 의거한 채널의 위치
         self.additional_channels.reverse()
-        
+
         # 잔차 블럭들 추가
         for idx, c in enumerate(self.additional_channels):
             self.residuals.append(ResidualBlock(self.out_channels + c, self.out_channels))
@@ -118,6 +116,8 @@ class UpBlock(nn.Module):
 
 
 '''
+
+
 d = DownBlock(3, 64, 2)
 summary(d)
 u = UpBlock([224, 192], 96, 2).to(device)

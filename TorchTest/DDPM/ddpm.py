@@ -39,9 +39,9 @@ class DDPM:
         self.WEIGHT_DECAY = 1e-4
         self.EPOCHS = 50
 
-        # train_set 평균 절대 오차/RMSprop사용
+        # train_set 평균 절대 오차/RMSprop사용 -> L1 loss/RMSprop사용
         self.criterion = nn.MSELoss().to(device)  # nn.L1Loss().to(device)
-        self.optimizer = optim.Adam(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
+        self.optimizer = optim.RMSprop(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
         self.train_dataloader = None
@@ -274,7 +274,7 @@ class DDPM:
 ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
 # ddpm.train_steps()
-# ddpm.train()
+ddpm.train()
 
 
 
