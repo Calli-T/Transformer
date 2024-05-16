@@ -1,7 +1,7 @@
-import numpy as np
-import torch
-
 from unet import *
+
+from torch import optim
+from collections import OrderedDict
 
 
 # 확산 스케줄, 오프셋 코사인 사용
@@ -21,7 +21,7 @@ def offset_cosine_diffusion_schedule(diffusion_times):
 
 
 class DDPM:
-    def __init__(self):
+    def __init__(self, device='cpu'):
 
         self.normalizer = nn.LayerNorm([3, IMAGE_SIZE, IMAGE_SIZE])  # 레이어 정규화, 샘플 각각에 대해서 수행함
         self.network = UNet()
@@ -31,6 +31,14 @@ class DDPM:
         # hyper
         self.EMA = 0.999
         self.reverse_diffusion_steps = 20
+        self.LEARNING_RATE = 1e-3
+        self.WEIGHT_DECAY = 1e-4
+        self.EPOCHS = 50
+
+        # train_set 평균 절대 오차/RMSprop사용
+        self.criterion = nn.L1Loss()
+        self.optimizer = optim.RMSprop(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
+        # self.loss = 0.0
 
         self.train_dataloader = None
         self.mean = None
@@ -135,7 +143,10 @@ class DDPM:
         self.std = torch.FloatTensor(std)
         self.train_dataloader = train_dataloader
 
+    # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
+        cost = 0.0
+
         for batch in self.train_dataloader:
             # 이미지를 정규화하고 무작위 잡음을 뽑아낸다
             images = self.normalizer(batch)
@@ -149,11 +160,35 @@ class DDPM:
             # print(noise_rates.shape)
             # print(signal_rates.shape)
 
+            # 정방향 확산 과정은 한 큐에!
             noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), images) + torch.mul(
                 noise_rates.view([-1, 1, 1, 1]), noises)
             # print(noisy_images.shape)
 
+            # u-net을 통한 잡음 예측
             pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
+            loss = self.criterion(noises, pred_images)
+
+            # 이거 제대로 되긴 하는가? self 달아 줘야 할 지도 모른다?
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            # print(loss)
+            cost += loss
+            # print(cost)
+
+        # ema 신경망에 카피
+        with torch.no_grad():
+            model_params = OrderedDict(ddpm.network.named_parameters())
+            shadow_params = OrderedDict(ddpm.ema_network.named_parameters())
+
+            for name, param in model_params.items():
+                shadow_params[name].sub_((1.0 - self.EMA) * (shadow_params[name] - param))
+
+        cost / len(self.train_dataloader)
+
+        # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
+        return cost
 
     '''
         def set_mean_and_std(self, mean, std):
@@ -200,13 +235,40 @@ class DDPM:
     '''
 
     # 정방향 확산 프로세스(이건 함수가 따로 필요없고 훈련 때 바로 생성하는것도 가능함)
+    #
     # 그리고 pytorch의 손실함수 선택, 최적화 알고리즘적용, 오차 역전파등의 학습과정
 
 
 ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
-ddpm.train_steps()
+ ddpm.train_steps()
 
+'''
+# ema test 코드
+# https://www.zijianhu.com/post/pytorch/ema/
+
+with torch.no_grad():
+    model_params = OrderedDict(ddpm.network.named_parameters())
+    shadow_params = OrderedDict(ddpm.ema_network.named_parameters())
+
+    for param in shadow_params.values():
+        print(param[0][0][0][0])
+        break
+    for name, param in model_params.items():
+        shadow_params[name].sub_((1.0 - 0.999) * (shadow_params[name] - param))
+    for param in shadow_params.values():
+        print(param[0][0][0][0])
+        break
+'''
+
+'''
+# with torch.no_grad()는 딱히 영구 전역 적용은 아닌듯
+x = torch.tensor([1.], requires_grad=True)
+with torch.no_grad():
+    y = x * 2
+    print(y.requires_grad)
+print(x.requires_grad)
+'''
 
 '''
 # 차원이 다른 텐서의 곱 테스트
@@ -217,7 +279,6 @@ z_mul = torch.mul(x.view(-1, 1, 1, 1), y)
 z_mul_reverse = torch.mul(y, x.view(-1, 1, 1, 1))
 print(z_mul_reverse)
 '''
-
 
 # 생성기 테스트 코드
 # train_dataloader, mean_numpy, std_numpy = getDataLoader("./datasets")
