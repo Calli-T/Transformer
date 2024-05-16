@@ -74,5 +74,5 @@ in-place 함수란, 텐서를 즉시 바꾸는 함수
 누가 구현해둔 ddpm
 https://github.com/KyujinHan/DDPM-study
 
-어텐션을 사용한 ddpm, 연결고리 1!!!
+어텐션을 사용한 ddpm, 연결고리 1!!! (github)
 https://ostin.tistory.com/128
