@@ -22,7 +22,7 @@ def sinusoidal_embedding(var):
 # 얘는 float list를 받습니다
 def nchw_tensor_sinusoidal_embedding(variances):
     if torch.is_tensor(variances):
-        variances = variances.numpy()
+        variances = variances.cpu().numpy()
 
     embeddings = []
     for var in variances:
@@ -31,7 +31,7 @@ def nchw_tensor_sinusoidal_embedding(variances):
         # embeddings.append(sinusoidal_embedding(torch.tensor([[[var]]], dtype=torch.float32)))
     # print (torch.stack(embeddings, dim=0).shape)
 
-    return torch.stack(embeddings, dim=0)
+    return torch.stack(embeddings, dim=0).to(device)
 
 
 # --------------------U-Net--------------------
@@ -44,17 +44,17 @@ class UNet(nn.Module):
         self.upsampling = nn.Upsample(scale_factor=IMAGE_SIZE, mode='bilinear', align_corners=True)
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=1, stride=1, padding="same")
 
-        self.down1 = DownBlock(64, 32, 2)
-        self.down2 = DownBlock(32, 64, 2)
-        self.down3 = DownBlock(64, 96, 2)
+        self.down1 = DownBlock(64, 32, 2).to(device)
+        self.down2 = DownBlock(32, 64, 2).to(device)
+        self.down3 = DownBlock(64, 96, 2).to(device)
         self.skips_blocks = []
 
-        self.residual1 = ResidualBlock(96, 128)
-        self.residual2 = ResidualBlock(128, 128)
+        self.residual1 = ResidualBlock(96, 128).to(device)
+        self.residual2 = ResidualBlock(128, 128).to(device)
 
-        self.up1 = UpBlock([224, 192], 96, 2)
-        self.up2 = UpBlock([160, 128], 64, 2)
-        self.up3 = UpBlock([96, 64], 32, 2)
+        self.up1 = UpBlock([224, 192], 96, 2).to(device)
+        self.up2 = UpBlock([160, 128], 64, 2).to(device)
+        self.up3 = UpBlock([96, 64], 32, 2).to(device)
 
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding="same")
 
@@ -76,6 +76,7 @@ class UNet(nn.Module):
         x = self.down1(x)
         x = self.down2(x)
         x = self.down3(x)
+
 
         # self.skips_blocks.append(self.down1.get_skips())
         # self.skips_blocks.append(self.down2.get_skips())

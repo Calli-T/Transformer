@@ -7,8 +7,6 @@ from dataloader import *
 # torch.set_printoptions(precision=8)
 
 
-
-
 # --------------------blocks--------------------
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
@@ -48,9 +46,9 @@ class DownBlock(nn.Module):
 
         # 잔차 블럭들 추가
         self.residuals = []
-        self.residuals.append(ResidualBlock(in_channels, out_channels))
+        self.residuals.append(ResidualBlock(in_channels, out_channels).to(device))
         for _ in range(block_depth - 1):
-            self.residuals.append(ResidualBlock(out_channels, out_channels))
+            self.residuals.append(ResidualBlock(out_channels, out_channels).to(device))
         self.avgpool = nn.AvgPool2d(kernel_size=2)
 
     def forward(self, x):
@@ -82,7 +80,7 @@ class UpBlock(nn.Module):
         self.residuals = []
         for idx, c in enumerate(concat_input_channels):
             # self.residuals.append(ResidualBlock(out_channels + c, out_channels))
-            self.residuals.append(ResidualBlock(c, out_channels))
+            self.residuals.append(ResidualBlock(c, out_channels).to(device))
 
     def forward(self, x):
         x = self.upsampling(x)

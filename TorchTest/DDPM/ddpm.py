@@ -21,11 +21,11 @@ def offset_cosine_diffusion_schedule(diffusion_times):
 
 
 class DDPM:
-    def __init__(self, device='cpu'):
+    def __init__(self):
 
-        self.normalizer = nn.LayerNorm([3, IMAGE_SIZE, IMAGE_SIZE])  # 레이어 정규화, 샘플 각각에 대해서 수행함
-        self.network = UNet()
-        self.ema_network = UNet()
+        self.normalizer = nn.LayerNorm([3, IMAGE_SIZE, IMAGE_SIZE]).to(device)  # 레이어 정규화, 샘플 각각에 대해서 수행함
+        self.network = UNet().to(device)
+        self.ema_network = UNet().to(device)
         self.diffusion_schedule = offset_cosine_diffusion_schedule
 
         # hyper
@@ -36,7 +36,7 @@ class DDPM:
         self.EPOCHS = 50
 
         # train_set 평균 절대 오차/RMSprop사용
-        self.criterion = nn.L1Loss()
+        self.criterion = nn.L1Loss().to(device)
         self.optimizer = optim.RMSprop(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
@@ -148,9 +148,10 @@ class DDPM:
         cost = 0.0
 
         for batch in self.train_dataloader:
+            batch = batch.to(device)
             # 이미지를 정규화하고 무작위 잡음을 뽑아낸다
             images = self.normalizer(batch)
-            noises = torch.randn(batch.shape)
+            noises = torch.randn(batch.shape).to(device)
             # print(images.shape)
             # print(noises.shape)
 
@@ -159,10 +160,12 @@ class DDPM:
             noise_rates, signal_rates = self.diffusion_schedule(diffusion_times)
             # print(noise_rates.shape)
             # print(signal_rates.shape)
+            noise_rates = noise_rates.to(device)
+            signal_rates = signal_rates.to(device)
 
             # 정방향 확산 과정은 한 큐에!
             noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), images) + torch.mul(
-                noise_rates.view([-1, 1, 1, 1]), noises)
+                noise_rates.view([-1, 1, 1, 1]), noises).to(device)
             # print(noisy_images.shape)
 
             # u-net을 통한 잡음 예측
@@ -189,6 +192,15 @@ class DDPM:
 
         # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
         return cost
+
+    def train(self):
+        for epoch in range(self.EPOCHS):
+            cost = self.train_steps()
+            print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
+
+            if epoch % 10 == 0:
+                torch.save(self.network.state_dict(), f'./models/unet-{epoch}.pt')
+                torch.save(self.ema_network.state_dict(), f'./models/unet-{epoch}.pt')
 
     '''
         def set_mean_and_std(self, mean, std):
@@ -241,7 +253,8 @@ class DDPM:
 
 ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
- ddpm.train_steps()
+# ddpm.train_steps()
+ddpm.train()
 
 '''
 # ema test 코드

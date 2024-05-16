@@ -1,3 +1,5 @@
+from device_converter import device
+
 import numpy as np
 import torch
 import cv2
