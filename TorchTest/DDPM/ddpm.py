@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from unet import *
@@ -20,7 +21,7 @@ def offset_cosine_diffusion_schedule(diffusion_times):
 
 
 class DDPM:
-    def __init__(self, mean=None, std=None):
+    def __init__(self):
 
         self.normalizer = nn.LayerNorm([3, IMAGE_SIZE, IMAGE_SIZE])  # 레이어 정규화, 샘플 각각에 대해서 수행함
         self.network = UNet()
@@ -31,6 +32,7 @@ class DDPM:
         self.EMA = 0.999
         self.reverse_diffusion_steps = 20
 
+        self.train_dataloader = None
         self.mean = None
         self.std = None
 
@@ -126,23 +128,44 @@ class DDPM:
 
         return generated_images
 
-    '''
-    def set_mean_and_std(self, mean, std):
-        if torch.is_tensor(mean):
-            self.mean = mean
-        else:
-            self.mean = torch.tensor(mean)
-        if torch.is_tensor(std):
-            self.std = std
-        else:
-            self.std = torch.tensor(std)
-    '''
-
     # 데이터로더, 평균, 표준 편차 모두 여기서 세팅
     def set_datasets_from_path(self, path):
         train_dataloader, mean, std = getDataLoader(path)
         self.mean = torch.FloatTensor(mean)
         self.std = torch.FloatTensor(std)
+        self.train_dataloader = train_dataloader
+
+    def train_steps(self):
+        for batch in self.train_dataloader:
+            # 이미지를 정규화하고 무작위 잡음을 뽑아낸다
+            images = self.normalizer(batch)
+            noises = torch.randn(batch.shape)
+            # print(images.shape)
+            # print(noises.shape)
+
+            # 이미지 수만큼 신호비와 잡음비를 뽑아낸다
+            diffusion_times = torch.rand(len(batch))
+            noise_rates, signal_rates = self.diffusion_schedule(diffusion_times)
+            # print(noise_rates.shape)
+            # print(signal_rates.shape)
+
+            noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), images) + torch.mul(
+                noise_rates.view([-1, 1, 1, 1]), noises)
+            # print(noisy_images.shape)
+
+            pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
+
+    '''
+        def set_mean_and_std(self, mean, std):
+            if torch.is_tensor(mean):
+                self.mean = mean
+            else:
+                self.mean = torch.tensor(mean)
+            if torch.is_tensor(std):
+                self.std = std
+            else:
+                self.std = torch.tensor(std)
+        '''
 
     '''
     def denoise_test(self):
@@ -182,7 +205,21 @@ class DDPM:
 
 ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
+ddpm.train_steps()
 
+
+'''
+# 차원이 다른 텐서의 곱 테스트
+x = torch.FloatTensor([1.0, 2.0, 3.0, 4.0, 5.0])
+y = torch.ones([5, 3, 64, 64], dtype=torch.float32)
+z_div = torch.div(y, x.view(-1, 1, 1, 1))
+z_mul = torch.mul(x.view(-1, 1, 1, 1), y)
+z_mul_reverse = torch.mul(y, x.view(-1, 1, 1, 1))
+print(z_mul_reverse)
+'''
+
+
+# 생성기 테스트 코드
 # train_dataloader, mean_numpy, std_numpy = getDataLoader("./datasets")
 # ddpm = DDPM(mean=mean_numpy, std=std_numpy)
 # print(ddpm.generate(5, 20).shape)
@@ -191,7 +228,7 @@ ddpm.set_datasets_from_path("./datasets")
 # 역방향 확산 테스트 코드
 # ddpm.reverse_diffusion(torch.FloatTensor([[[[1]]], [[[1]]], [[[1]]], [[[1]]], [[[1]]]]), 20)
 # 무작위 잡음의 생성은, [N, 3채널, 1, 1]를 생성하도록 함
-reverse_test_random_tensor = torch.rand([5, 3, 64, 64])
+reverse_test_random_tensor = torch.randn([5, 3, 64, 64])
 # print(reverse_test_random_tensor.shape)
 # print(reverse_test_random_tensor)
 ddpm.reverse_diffusion(reverse_test_random_tensor, 20)
