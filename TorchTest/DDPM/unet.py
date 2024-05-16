@@ -1,8 +1,7 @@
-import random
-
-import torch
-
 from blocks import *
+
+import random
+import torch
 from math import log as ln
 
 # hyper
@@ -79,7 +78,6 @@ class UNet(nn.Module):
         x = self.down2(x)
         x = self.down3(x)
 
-
         # self.skips_blocks.append(self.down1.get_skips())
         # self.skips_blocks.append(self.down2.get_skips())
         # self.skips_blocks.append(self.down3.get_skips())
@@ -101,7 +99,6 @@ class UNet(nn.Module):
 
 
 # print(nchw_tensor_sinusoidal_embedding(torch.rand(5)).shape)
-
 
 '''
 unet = UNet()

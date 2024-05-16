@@ -113,7 +113,7 @@ class DDPM:
             signal_rates = signal_rates.to(device)
 
             pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=True
+                current_images, noise_rates, signal_rates, training=False
             )
             # print(pred_noises.shape)
             # print(pred_images.shape)
@@ -274,7 +274,9 @@ class DDPM:
 ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
 # ddpm.train_steps()
-ddpm.train()
+# ddpm.train()
+
+
 
 '''
 # ema test 코드

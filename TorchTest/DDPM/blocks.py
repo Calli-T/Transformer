@@ -2,9 +2,10 @@ from torch import nn
 
 from dataloader import *
 
-
 # 긴 소수점 표기용
 # torch.set_printoptions(precision=8)
+
+from torchinfo import summary
 
 
 # --------------------blocks--------------------
@@ -38,7 +39,7 @@ class ResidualBlock(nn.Module):
 
 
 class DownBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, block_depth):
+    def __init__(self, in_channels, out_channels, block_depth=2):
         super().__init__()
 
         self.block_depth = block_depth
@@ -49,12 +50,18 @@ class DownBlock(nn.Module):
         self.residuals.append(ResidualBlock(in_channels, out_channels).to(device))
         for _ in range(block_depth - 1):
             self.residuals.append(ResidualBlock(out_channels, out_channels).to(device))
+
+        self.residuals = nn.Sequential(*self.residuals)
+
         self.avgpool = nn.AvgPool2d(kernel_size=2)
 
     def forward(self, x):
+        '''
         for i in range(self.block_depth):
-            x = self.residuals[i](x)
-            self.skips.append(x)
+        x = self.residuals[i](x)
+        self.skips.append(x)
+        '''
+        x = self.residuals(x)
         x = self.avgpool(x)
 
         return x
@@ -64,7 +71,7 @@ class DownBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    def __init__(self, concat_input_channels, out_channels, block_depth):
+    def __init__(self, concat_input_channels, out_channels, block_depth=2):
         super().__init__()
 
         self.block_depth = block_depth
@@ -78,9 +85,12 @@ class UpBlock(nn.Module):
 
         # 잔차블럭
         self.residuals = []
+
         for idx, c in enumerate(concat_input_channels):
             # self.residuals.append(ResidualBlock(out_channels + c, out_channels))
             self.residuals.append(ResidualBlock(c, out_channels).to(device))
+
+        self.residuals = nn.ModuleList(self.residuals)
 
     def forward(self, x):
         x = self.upsampling(x)
@@ -106,6 +116,13 @@ class UpBlock(nn.Module):
             self.residuals.append(ResidualBlock(self.out_channels + c, self.out_channels))
         '''
 
+
+'''
+d = DownBlock(3, 64, 2)
+summary(d)
+u = UpBlock([224, 192], 96, 2).to(device)
+summary(u)
+'''
 
 # down block의 구현을 어떻게 할 것인가 생각해보자
 # 파이토치의 클래스식 잔차블럭을 그대로 가져다 업 다운 블럭에 박을 수 있을것인가?
