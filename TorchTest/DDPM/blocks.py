@@ -115,14 +115,12 @@ class UpBlock(nn.Module):
         '''
 
 
-'''
-
 
 d = DownBlock(3, 64, 2)
 summary(d)
 u = UpBlock([224, 192], 96, 2).to(device)
 summary(u)
-'''
+
 
 # down block의 구현을 어떻게 할 것인가 생각해보자
 # 파이토치의 클래스식 잔차블럭을 그대로 가져다 업 다운 블럭에 박을 수 있을것인가?

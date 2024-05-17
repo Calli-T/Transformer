@@ -37,11 +37,11 @@ class DDPM:
         self.reverse_diffusion_steps = 20
         self.LEARNING_RATE = 1e-3
         self.WEIGHT_DECAY = 1e-4
-        self.EPOCHS = 50
+        self.EPOCHS = 5000
 
         # train_set 평균 절대 오차/RMSprop사용 -> L1 loss/RMSprop사용
-        self.criterion = nn.MSELoss().to(device)  # nn.L1Loss().to(device)
-        self.optimizer = optim.RMSprop(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
+        self.criterion = nn.L1Loss().to(device)  # nn.L1Loss().to(device)
+        self.optimizer = optim.AdamW(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
         self.train_dataloader = None
@@ -142,9 +142,10 @@ class DDPM:
         if initial_noise is None:
             initial_noise = torch.randn(num_images, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
 
-        generated_images = self.reverse_diffusion(initial_noise, diffusion_steps)
-        # print(generated_images.shape)
-        generated_images = self.denomalize(generated_images)
+        with torch.no_grad():
+            generated_images = self.reverse_diffusion(initial_noise, diffusion_steps)
+            # print(generated_images.shape)
+            generated_images = self.denomalize(generated_images)
         # print(generated_images.shape)
 
         return generated_images
@@ -184,6 +185,7 @@ class DDPM:
             # u-net을 통한 잡음 예측
             pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
             self.loss = self.criterion(noises, pred_images)
+            # print(self.loss)
 
             # 이거 제대로 되긴 하는가? self 달아 줘야 할 지도 모른다?
             self.optimizer.zero_grad()
@@ -210,15 +212,18 @@ class DDPM:
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
 
-            # 보여주기용 무작위 생성
-            generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-            plt.figure(figsize=(3, 3))
-            for idx, image in enumerate(generates):
-                plt.subplot(3, 3, idx + 1)
-                plt.imshow(image)
-            plt.show()
 
-            if (epoch + 1) % 10 == 0:
+
+            if (epoch + 1) % 50 == 0:
+                # 보여주기용 무작위 생성
+                generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+                plt.figure(figsize=(3, 3))
+                for idx, image in enumerate(generates):
+                    plt.subplot(3, 3, idx + 1)
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    plt.imshow(image)
+                plt.show()
+
                 torch.save(self.network.state_dict(), f'./models/unet-{epoch + 1}.pt')
                 torch.save(self.ema_network.state_dict(), f'./models/ema-unet-{epoch + 1}.pt')
 
@@ -275,8 +280,6 @@ ddpm = DDPM()
 ddpm.set_datasets_from_path("./datasets")
 # ddpm.train_steps()
 ddpm.train()
-
-
 
 '''
 # ema test 코드
