@@ -40,7 +40,7 @@ class DDPM:
         self.EPOCHS = 5000
 
         # train_set 평균 절대 오차/RMSprop사용 -> L1 loss/RMSprop사용
-        self.criterion = nn.L1Loss().to(device)  # nn.L1Loss().to(device)
+        self.criterion = nn.L1Loss().to(device) # nn.MSELoss().to(device)  # nn.L1Loss().to(device)
         self.optimizer = optim.AdamW(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
@@ -113,7 +113,7 @@ class DDPM:
             signal_rates = signal_rates.to(device)
 
             pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=False
+                current_images, noise_rates, signal_rates, training=True #False
             )
             # print(pred_noises.shape)
             # print(pred_images.shape)
@@ -191,7 +191,7 @@ class DDPM:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            print(loss)
+            # print(loss)
             cost += loss
 
         # ema 신경망에 카피
@@ -202,7 +202,7 @@ class DDPM:
             for name, param in model_params.items():
                 shadow_params[name].sub_((1.0 - self.EMA) * (shadow_params[name] - param))
 
-        cost / len(self.train_dataloader)
+        cost / (len(self.train_dataloader) * 5)
 
         # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
         return cost
@@ -212,9 +212,9 @@ class DDPM:
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
 
-            if (epoch + 1) % 500 == 0:
-                # 보여주기용 무작위 생성
+            if (epoch + 1) % 50 == 0:
 
+                # 보여주기용 무작위 생성
                 generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
                 plt.figure(figsize=(3, 3))
                 for idx, image in enumerate(generates):
