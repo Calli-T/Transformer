@@ -26,12 +26,12 @@ class ResidualBlock(nn.Module):
         https://www.tensorflow.org/api_docs/python/tf/keras/layers/BatchNormalization#symbolic_call
         저 링크들의 정보를 종합했을 때 affine을 끄면 keras의 center/scale을 모두 끄는 효과가 있다
         
-        track_running_stats는 일단 꺼보고 생각함
+        track_running_stats는 일단 꺼보고 생각함 -> 다시 켜봄
         '''
-        self.bn1 = nn.BatchNorm2d(in_channels, momentum=0.99, eps=0.001, affine=False, track_running_stats=False)
+        self.bn1 = nn.BatchNorm2d(in_channels, momentum=0.99, eps=0.001, affine=False, track_running_stats=True)
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding="same")  # bias=False)
         # self.acti_func = nn.ReLU()  # inplace=True) # inplace 옵션은 True일 때, 입력 텐서를 직접수정
-        self.conv1_acti_func = nn.Hardswish()  # 토치에 swish 함수가 없더라, 얘는 같은 기반이지만 시그모이드를 계산비용 문제로 치워버리고, 조각별 선형 아날로그로 대체하였다
+        self.conv1_acti_func = nn.SiLU()  #SiLU가 곧 swish이다 # 토치에 swish 함수가 없더라, 얘는 같은 기반이지만 시그모이드를 계산비용 문제로 치워버리고, 조각별 선형 아날로그로 대체하였다
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding="same")
 
         self.shortcut = nn.Sequential()

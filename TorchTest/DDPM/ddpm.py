@@ -40,7 +40,9 @@ class DDPM:
         self.EPOCHS = 5000
 
         # train_set 평균 절대 오차/RMSprop사용 -> L1 loss/RMSprop사용
-        self.criterion = nn.L1Loss().to(device) # nn.MSELoss().to(device)  # nn.L1Loss().to(device)
+        self.criterion = nn.L1Loss().to(device)  # nn.MSELoss().to(device)  # nn.L1Loss().to(device)
+        # self.criterion2 = nn.MSELoss().to(device)
+        self.ratio = 0.5
         self.optimizer = optim.AdamW(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
         # self.loss = 0.0
 
@@ -113,7 +115,7 @@ class DDPM:
             signal_rates = signal_rates.to(device)
 
             pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=True #False
+                current_images, noise_rates, signal_rates, training=True  # False
             )
             # print(pred_noises.shape)
             # print(pred_images.shape)
@@ -202,7 +204,7 @@ class DDPM:
             for name, param in model_params.items():
                 shadow_params[name].sub_((1.0 - self.EMA) * (shadow_params[name] - param))
 
-        cost / (len(self.train_dataloader) * 5)
+        cost /= (len(self.train_dataloader))  # * BATCH_SIZE)
 
         # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
         return cost
@@ -210,10 +212,10 @@ class DDPM:
     def train(self):
         for epoch in range(self.EPOCHS):
             cost = self.train_steps()
-            print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
+            print(f'Epoch: {epoch + 1:4d}, Loss: {cost:3f}')
 
-            if (epoch + 1) % 50 == 0:
-
+            with torch.no_grad():
+                self.network.eval()
                 # 보여주기용 무작위 생성
                 generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
                 plt.figure(figsize=(3, 3))
@@ -222,7 +224,9 @@ class DDPM:
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     plt.imshow(image)
                 plt.show()
+                self.network.train()
 
+            if (epoch + 1) % 5 == 0:
                 torch.save(self.network.state_dict(), f'./models/unet-{epoch + 1}.pt')
                 torch.save(self.ema_network.state_dict(), f'./models/ema-unet-{epoch + 1}.pt')
 

@@ -56,8 +56,8 @@ def preprocess(_imgs, _DATASET_REPETITIONS=1):
 
 
 def getDataLoader(img_path):
-    # imgs, _mean, _std = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
-    imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
+    imgs, _mean, _std = preprocess(getImgsFromDir(img_path), DATASET_REPETITIONS)
+    # imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
     # imgs = preprocess(getImgsFromDir('./datasets'), DATASET_REPETITIONS)
     # print(imgs.shape)
     train_dataset = torch.FloatTensor(imgs)  # .permute(0, 3, 1, 2)

@@ -76,3 +76,10 @@ https://github.com/KyujinHan/DDPM-study
 
 어텐션을 사용한 ddpm, 연결고리 1!!! (github)
 https://ostin.tistory.com/128
+
+act func로 swish를 쓴다?
+SiLU와 swish는 같은 대상을 다른 이름으로 쓰는듯, 요새 대세 픽인듯?
+SiLU는 시?그모이드에 입력값을 곱한것
+
+오차함수로 L1 norm을 쓰는 이유는, 전체적인 weight감소보다
+나중에 골라내는게 중요해서 그런것인가?
