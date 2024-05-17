@@ -184,15 +184,15 @@ class DDPM:
 
             # u-net을 통한 잡음 예측
             pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
-            self.loss = self.criterion(noises, pred_images)
+            loss = self.criterion(noises, pred_noises)
             # print(self.loss)
 
             # 이거 제대로 되긴 하는가? self 달아 줘야 할 지도 모른다?
             self.optimizer.zero_grad()
-            self.loss.backward()
+            loss.backward()
             self.optimizer.step()
-            # print(loss)
-            cost += self.loss
+            print(loss)
+            cost += loss
 
         # ema 신경망에 카피
         with torch.no_grad():
@@ -212,10 +212,9 @@ class DDPM:
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Cost: {cost:3f}')
 
-
-
-            if (epoch + 1) % 50 == 0:
+            if (epoch + 1) % 500 == 0:
                 # 보여주기용 무작위 생성
+
                 generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
                 plt.figure(figsize=(3, 3))
                 for idx, image in enumerate(generates):

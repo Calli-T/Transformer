@@ -52,7 +52,7 @@ def preprocess(_imgs, _DATASET_REPETITIONS=1):
 
 
 # 고정 시드
-torch.manual_seed(42)
+# torch.manual_seed(42)
 
 
 def getDataLoader(img_path):

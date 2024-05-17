@@ -12,28 +12,44 @@ from torchinfo import summary
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.stride = stride
 
-        self.bn1 = nn.BatchNorm2d(in_channels)
+        '''
+        momentum과 eps는 keras의 기본 세팅으로 해뒀다
+        keras의 center/scale의 False는 정규화 식에서 곱해지는 수, 더해지는 수의 비활성화를 의미한다
+        torch의 affine은 z = g(Wu + b) 즉 아핀 변환을 의미하는데, False로 두면 해당 매개변수가 비활성화 되는듯? FC나 Conv나 모두 Affine Transformation을 사용한다
+        https://ban2aru.tistory.com/35
+        https://stackoverflow.com/questions/73891401/what-does-the-affine-parameter-do-in-pytorch-nn-batchnorm2d
+        https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html#torch.nn.BatchNorm2d
+        https://www.tensorflow.org/api_docs/python/tf/keras/layers/BatchNormalization#symbolic_call
+        저 링크들의 정보를 종합했을 때 affine을 끄면 keras의 center/scale을 모두 끄는 효과가 있다
+        
+        track_running_stats는 일단 꺼보고 생각함
+        '''
+        self.bn1 = nn.BatchNorm2d(in_channels, momentum=0.99, eps=0.001, affine=False, track_running_stats=False)
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding="same")  # bias=False)
         # self.acti_func = nn.ReLU()  # inplace=True) # inplace 옵션은 True일 때, 입력 텐서를 직접수정
         self.conv1_acti_func = nn.Hardswish()  # 토치에 swish 함수가 없더라, 얘는 같은 기반이지만 시그모이드를 계산비용 문제로 치워버리고, 조각별 선형 아날로그로 대체하였다
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding="same")
 
-        # expansion 생략됨
         self.shortcut = nn.Sequential()
-        if stride != 1 or in_channels != out_channels:
+        if in_channels != out_channels or stride != 1:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=True),
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride)
                 # GDL 서적쪽은 bias True(default), 트랜스포머 서적쪽은 False가 기본이었음
                 # nn.BatchNorm2d(self.out_channels)
             )
 
     def forward(self, x):
-        out = self.bn1(x)
-        out = self.conv1(out)
+        residual = self.shortcut(x)
+
+        x = self.bn1(x)
+        out = self.conv1(x)
         out = self.conv1_acti_func(out)
         out = self.conv2(out)
-        out += self.shortcut(x)
+        out += residual
 
         return out
 
@@ -115,11 +131,10 @@ class UpBlock(nn.Module):
         '''
 
 
-
-d = DownBlock(3, 64, 2)
-summary(d)
-u = UpBlock([224, 192], 96, 2).to(device)
-summary(u)
+# d = DownBlock(3, 64, 2)
+# summary(d)
+# u = UpBlock([224, 192], 96, 2).to(device)
+# summary(u)
 
 
 # down block의 구현을 어떻게 할 것인가 생각해보자

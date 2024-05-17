@@ -57,7 +57,7 @@ class UNet(nn.Module):
 
         #
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding="same")
-        torch.nn.init.zeros_(self.conv2.weight)
+        self.conv2.weight = torch.nn.init.zeros_(self.conv2.weight)
 
     def forward(self, noise_variances, noisy_images):
         '''
