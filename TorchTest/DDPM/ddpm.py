@@ -1,9 +1,12 @@
-import tqdm
+import numpy as np
+import torch
 
 from unet import *
 
+import tqdm
 from torch import optim
 from collections import OrderedDict
+from math import sin, cos, pi
 
 
 # 확산 스케줄, 오프셋 코사인 사용
@@ -20,6 +23,15 @@ def offset_cosine_diffusion_schedule(diffusion_times):
     noise_rates = torch.sin(diffusion_angles)
 
     return noise_rates, signal_rates
+
+
+def show_images(images, h, w):
+    plt.figure(figsize=(w, h))
+    for idx, image in enumerate(images):
+        plt.subplot(h, w, idx + 1)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        plt.imshow(image)
+    plt.show()
 
 
 class DDPM:
@@ -145,9 +157,15 @@ class DDPM:
             initial_noise = torch.randn(num_images, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
 
         with torch.no_grad():
+            self.network.eval()
+            self.ema_network.eval()
+
             generated_images = self.reverse_diffusion(initial_noise, diffusion_steps)
             # print(generated_images.shape)
             generated_images = self.denomalize(generated_images)
+
+            self.network.train()
+            self.ema_network.train()
         # print(generated_images.shape)
 
         return generated_images
@@ -158,6 +176,9 @@ class DDPM:
         self.mean = torch.FloatTensor(mean).to(device)
         self.std = torch.FloatTensor(std).to(device)
         self.train_dataloader = train_dataloader
+
+        np.save('models/flowers/mean.npy', self.mean.detach().cpu().numpy())
+        np.save('models/flowers/std.npy', self.std.detach().cpu().numpy())
 
     # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
@@ -214,21 +235,22 @@ class DDPM:
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Loss: {cost:3f}')
 
-            with torch.no_grad():
-                self.network.eval()
+            if (epoch + 1) % 5 == 0:
                 # 보여주기용 무작위 생성
                 generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-                plt.figure(figsize=(3, 3))
-                for idx, image in enumerate(generates):
-                    plt.subplot(3, 3, idx + 1)
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    plt.imshow(image)
-                plt.show()
-                self.network.train()
+                show_images(generates, 3, 3)
 
-            if (epoch + 1) % 5 == 0:
                 torch.save(self.network.state_dict(), f'./models/unet-{epoch + 1}.pt')
                 torch.save(self.ema_network.state_dict(), f'./models/ema-unet-{epoch + 1}.pt')
+
+        torch.save(self.network.state_dict(), f'./models/unet.pt')
+        torch.save(self.ema_network.state_dict(), f'./models/ema-unet.pt')
+
+    def load(self):
+        self.network.load_state_dict(torch.load(f'./models/unet.pt', map_location=device))
+        self.ema_network.load_state_dict(torch.load(f'./models/ema-unet.pt', map_location=device))
+        self.mean = torch.tensor(np.load(f'./models/mean.npy')).to(device)
+        self.std = torch.tensor(np.load(f'./models/std.npy')).to(device)
 
     '''
         def set_mean_and_std(self, mean, std):
@@ -280,9 +302,32 @@ class DDPM:
 
 
 ddpm = DDPM()
-ddpm.set_datasets_from_path("./datasets")
+# ddpm.set_datasets_from_path("./datasets")
 # ddpm.train_steps()
-ddpm.train()
+# ddpm.train()
+ddpm.load()
+
+# 다음 할 일은 확산 단계 수에 따른 품질 차이, 확산 과정의 시각화
+
+# 구면 선형 보간을 활용한 이미지num, step, initial
+gallery = np.zeros((55, IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.float32)
+for i in range(5):
+    outs = None
+    inits = torch.randn(2, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
+
+    for idx, ratio in enumerate(np.arange(0.0, 1.1, 0.1)):
+        initial_noise = torch.unsqueeze(inits[0] * sin((pi / 2) * ratio) + inits[1] * cos((pi / 2) * ratio), 0)
+        gallery[i * 11 + idx] = ddpm.generate(1, 100, initial_noise).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+
+show_images(gallery, 5, 11)
+
+'''
+# 샘플 뜨기, detach/numpy/to cpu/permute 등은 처리과정, seed 고정은 역확산 횟수와 성능차이 확인용
+torch.manual_seed(42)
+sample = ddpm.generate(9, 100).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+print(sample.shape)
+show_images(sample, 3, 3)
+'''
 
 '''
 # ema test 코드
