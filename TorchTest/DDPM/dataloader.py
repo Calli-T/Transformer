@@ -25,9 +25,12 @@ def getImgsFromDir(path):
         if os.path.isdir(f_path_name):
             imglist += getImgsFromDir(f_path_name)
         else:
-            img = cv2.resize(cv2.imread(f_path_name), dsize=(IMAGE_SIZE, IMAGE_SIZE),
-                             interpolation=cv2.INTER_LINEAR)
-            imglist.append(img)
+            try:
+                img = cv2.resize(cv2.imread(f_path_name), dsize=(IMAGE_SIZE, IMAGE_SIZE),
+                                 interpolation=cv2.INTER_LINEAR)
+                imglist.append(img)
+            except:
+                print
 
     return imglist
 
@@ -70,7 +73,6 @@ def getDataLoader(img_path):
     # img = cv2.resize(cv2.imread("./image_06734.jpg"), dsize=(IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
 
     return train_dataloader, _mean, _std
-
 
 '''
 _, mean, std = getDataLoader('./datasets')

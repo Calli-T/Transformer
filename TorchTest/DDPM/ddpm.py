@@ -110,13 +110,15 @@ class DDPM:
         return pred_noises, pred_images
 
     # 역방향 확산의 반복부터 다시 시작하면된다
-    def reverse_diffusion(self, initial_noise, diffusion_steps=None):
+    def reverse_diffusion(self, initial_noise, diffusion_steps=None, return_all_t=False):
         if diffusion_steps is None:
             diffusion_steps = self.reverse_diffusion_steps
 
         num_images = initial_noise.shape[0]
         step_size = 1.0 / diffusion_steps
         current_images = initial_noise
+
+        step_footprint = initial_noise.detach()
 
         for step in range(diffusion_steps):
             diffusion_times = [1 - step * step_size for _ in range(num_images)]
@@ -131,6 +133,8 @@ class DDPM:
             )
             # print(pred_noises.shape)
             # print(pred_images.shape)
+            if return_all_t:
+                step_footprint = torch.concat([step_footprint, pred_images.detach()], 0)
 
             # next_diffusion_times = diffusion_times - step_size
             next_diffusion_times = [x - step_size for x in diffusion_times]
@@ -150,9 +154,12 @@ class DDPM:
             current_images = (next_signal_rates.view([-1, 1, 1, 1]) * pred_images +
                               next_noise_rates.view([-1, 1, 1, 1]) * pred_noises)
 
-        return pred_images
+        if return_all_t:
+            return step_footprint
+        else:
+            return pred_images
 
-    def generate(self, num_images, diffusion_steps, initial_noise=None):
+    def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
             initial_noise = torch.randn(num_images, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
 
@@ -160,7 +167,7 @@ class DDPM:
             self.network.eval()
             self.ema_network.eval()
 
-            generated_images = self.reverse_diffusion(initial_noise, diffusion_steps)
+            generated_images = self.reverse_diffusion(initial_noise, diffusion_steps, return_all_t=return_all_t)
             # print(generated_images.shape)
             generated_images = self.denomalize(generated_images)
 
@@ -302,13 +309,23 @@ class DDPM:
 
 
 ddpm = DDPM()
-# ddpm.set_datasets_from_path("./datasets")
+ddpm.set_datasets_from_path("./datasets/dog")
 # ddpm.train_steps()
-# ddpm.train()
+ddpm.train()
+
+'''
+# 확산 단계
 ddpm.load()
+gallery = ddpm.generate(8, 10, None, True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+summarized = gallery[0::8] # 뭔가 매핑으로 좀 더 깔끔하게 자르는게 가능할지도?
+for i in range(7):
+    summarized = np.concatenate((summarized, gallery[i+1::8]), axis=0)
+show_images(summarized, 8, 11)
+'''
 
-# 다음 할 일은 확산 단계 수에 따른 품질 차이, 확산 과정의 시각화
 
+
+'''
 # 구면 선형 보간을 활용한 이미지num, step, initial
 gallery = np.zeros((55, IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.float32)
 for i in range(5):
@@ -320,6 +337,7 @@ for i in range(5):
         gallery[i * 11 + idx] = ddpm.generate(1, 100, initial_noise).permute(0, 2, 3, 1).to('cpu').detach().numpy()
 
 show_images(gallery, 5, 11)
+'''
 
 '''
 # 샘플 뜨기, detach/numpy/to cpu/permute 등은 처리과정, seed 고정은 역확산 횟수와 성능차이 확인용
