@@ -1,0 +1,8 @@
+NLL, 음의 로그 우도란 무엇인가
+https://airsbigdata.tistory.com/202
+
+구조랑 원리랑 StableDiff가지고 할 수 있는것
+https://ffighting.net/deep-learning-paper-review/diffusion-model/stable-diffusion/#2-1_Architecture
+
+전반적인 원리
+https://tech-savvy30.tistory.com/9

@@ -1,0 +1,16 @@
+CLIP이 뭔지부터 알아보자
+어떤 CLIP을 사용하는지 알아보자
+
+랜덤잡음과 CLIP을 통과한 텍스트 임베딩이 어떻게 섞이나 보자
+1. 무작위 잡음과 텍스트 임베딩이 U-Net의 입력으로 사용될 때 (그림상에서 보면) concat되어사용된다.
+DDPM에서는 잡음의 분산(확산 시간을 통해 만든)과 잡음 낀 이미지를 concat했었다
+이것들은 본래 잡음비를 의미했었는데, 텍스트 임베딩은 대체 어떻게 그런걸 가능하게하는가?
+또 원하는 키워드로 그림을 그리는것은, VAE의 잠재공간에서 해당 키워드에 해당하는 벡터를 추출하고
+그것의 스칼라곱을 무작위 잡음에 더함으로써 이뤄질 수 있는가?
+2. 그리고 concat은 concat인데, switch는 또 뭔가?
+3. 그림상에서 U-Net은 Attention을 쓰던데, Conv대용인가? 또 ViT랑 같은 원리인가?
+4. Attention의 결과도 Skip connection이되나? 어떻게 하는거지
+5. 마지막에 살짝 보인 작은 U-Net모양은 DDPM의 reverse diffusion처럼 Denoise step을
+N회 반복하는것인가? 그리고 CLIP의 값이 switch를 거쳐 뒤로도 들어가던데,
+reverse diffusion 각 단계의 denoise에서 cross attention할 때마다 사용하는것인가?
+6. 사용되는 VAE의 차원(너비, 높이, 채널과 잠재 공간의 차원 전부다)과 층의 깊이는 어떻게 되나?

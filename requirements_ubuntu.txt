@@ -185,6 +185,7 @@ tokenizers==0.15.1
 tomli==2.0.1
 torch==2.0.1+rocm5.4.2
 torchaudio==2.0.2+rocm5.4.2
+torchinfo==1.8.0
 torchvision==0.15.2+rocm5.4.2
 tornado==6.4
 tqdm==4.66.1
