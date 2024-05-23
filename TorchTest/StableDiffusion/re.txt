@@ -1,0 +1,25 @@
+파일들의 역할
+put~~~어쩌고 하는 txt 파일은 실제로 모델이 들어가 있는 상태는 아니다
+사용자가 모델을 넣는곳은 stable-diffusion 디렉터리이다
+
+모델이 남아있는 파일
+VAE: VAE는 없고 VAE-approx 디렉터리에 .pt 파일로 남아있다
+Stable-diffusion: 다운받는 모델로써, model-001.ckpt등 .ckpt 파일로 남아있다
+-> 위 모델들은 torch로 열어서 구조를 뜯어보자. torch.load하는곳에서 어떻게 하는지 확인 ㄱㄱ
+
+karlo: 이게 뭔지 모르겠으니 이것부터 알아보자, CLIP의 일종일지도? 그러나 7.x kb정도로 굉장히 작다
+-> CLIP은 어디에 존재하는지도 좀 파악해보자, 대체 왜 CLIP을 다운받는것인가, pip list에 clip과 openclip이 존재한다
+-> CLIP의 사용위치를 파악하고, 그게 open-clip-torch나 clip이 맞다면 해당 라이브러리에 관한 정보를 찾을 수 밖에 없다
+
+추측하건대, modules에 .py 파일이 잔뜩있는것으로 보아 이쪽에서 동작이 이뤄지는것같다
+-> txt2img.py와 img2img.py에서부터 역추적하자, 이를 실행해보는것도 괜찮을듯
+
+----------------------------------------------------
+차차 할것들
+extensions_builtin의 것들은 말그대로 확장 기능인듯하다
+
+SwinIR - 노이즈 제거? 해상도 상승?
+https://aistudy9314.tistory.com/76
+
+파이썬 버전 호환성에
+__future__ import는 또 뭔가?

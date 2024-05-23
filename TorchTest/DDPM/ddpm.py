@@ -309,7 +309,7 @@ class DDPM:
 
 
 ddpm = DDPM()
-ddpm.set_datasets_from_path("./datasets/dog")
+ddpm.set_datasets_from_path("./datasets/flower")
 # ddpm.train_steps()
 ddpm.train()
 
