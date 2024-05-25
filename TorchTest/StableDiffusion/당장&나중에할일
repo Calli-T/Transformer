@@ -1,4 +1,12 @@
-컨트롤넷, 드림부스가 뭔지는 나중에 알아보자
+lora, controlnet, fine tuning, dreambooth등과
+기존 모델을 사용할 수 있는 코드 개발
+
+
+https://bbs.ruliweb.com/community/board/300143/read/60522326
+https://selgyun.tistory.com/5
+스테이블 디퓨전의 사용법을 나열, 역으로 추적해가면서 구현해보자
 
 당장 stable diffusion webui를 재가동시켜보자
 1.0 compvis 코드와 stableai의 2.1코드를 모두 까보자
+stablity github의 2.1부터 하고 webui는 후순위로, 기능이 너무 많다
+
