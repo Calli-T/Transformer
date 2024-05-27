@@ -10,3 +10,8 @@ https://selgyun.tistory.com/5
 1.0 compvis 코드와 stableai의 2.1코드를 모두 까보자
 stablity github의 2.1부터 하고 webui는 후순위로, 기능이 너무 많다
 
+webui의 모델을 stability의 모델로 convert할 수 있는지 알아본다
+
+---------------------------------------------------
+싹 실패함
+stableai 2.1의 코드를 분석할것

@@ -27,3 +27,11 @@ https://haandol.github.io/2023/07/16/stable-diffusion-for-developers.html
 
 허깅페이스
 https://huggingface.co/stabilityai
+
+학습 데이터셋, LAION의 부분 데이터셋 등에 대하여
+https://waxy.org/2022/08/exploring-12-million-of-the-images-used-to-train-stable-diffusions-image-generator/
+
+stable diffusion 버전별 차이
+https://www.assemblyai.com/blog/stable-diffusion-1-vs-2-what-you-need-to-know/
+
+laion400m 데이터셋은 대체 뭔가?
