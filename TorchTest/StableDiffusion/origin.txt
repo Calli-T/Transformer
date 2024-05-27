@@ -7,11 +7,18 @@ SD 1.0과 2.1의 깃허브 코드
 https://github.com/CompVis/stable-diffusion
 https://github.com/Stability-AI/stablediffusion
 
+{
 stable diffusion 제작자들이 직접밝힌 코드의 원천중 하나, lucidrain의 DDPM
 코드 설명도 있고, 깃허브 링크도 있다
 https://ostin.tistory.com/128
 
 확산 모델 '들' 리뷰와 깃허브 중간 과정의 guided diffusion이 중요한가?
 https://gyoukchu.github.io/review/review_2/#5-guided-diffusion1
+여기 보면 guided부터 논문이름이 쭉나온다, 거기서 뭔 개념을 도입했나 확인해보자
+해당 개념이 stable diffusion에도 도입되었나 확인해볼것
+적어도 제작사가 직접 인증한 사용된 오픈소스뭉치이다
+
 https://arxiv.org/abs/2105.05233
+아래 깃허브는 위 논문의 코드베이스라고 하며, compvis가 직접 stable diffusion을 만드는데 의존한 오픈소스라고한다
 https://github.com/openai/guided-diffusion
+}
