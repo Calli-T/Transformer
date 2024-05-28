@@ -22,3 +22,11 @@ https://arxiv.org/abs/2105.05233
 아래 깃허브는 위 논문의 코드베이스라고 하며, compvis가 직접 stable diffusion을 만드는데 의존한 오픈소스라고한다
 https://github.com/openai/guided-diffusion
 }
+
+-----------------------------------------------
+확산 스케줄 옵션에 관하여
+
+허깅 페이스의 스케줄러 구현체
+https://huggingface.co/docs/diffusers/ko/using-diffusers/schedulers
+해당 구현체의 DDPM쪽에 linear말고 squarecos 옵션도 있는걸로 보아, 코사인 확산 스케줄을 지원하는듯
+karras같은 다른 확산 스케줄은 대체 뭔지 확인해보자
