@@ -27,9 +27,17 @@ https://github.com/openai/guided-diffusion
 }
 
 -----------------------------------------------
-확산 스케줄 옵션에 관하여
+Raw Data
+중요하지만 다 살펴보지 못한 정보들
 
+확산 스케줄 옵션에 관하여
 허깅 페이스의 스케줄러 구현체
 https://huggingface.co/docs/diffusers/ko/using-diffusers/schedulers
 해당 구현체의 DDPM쪽에 linear말고 squarecos 옵션도 있는걸로 보아, 코사인 확산 스케줄을 지원하는듯
 karras같은 다른 확산 스케줄은 대체 뭔지 확인해보자
+
+글라이드를 통한 guided diffusion 리뷰, 여기엔 다른 논문 분석도 아주 많다
+https://junia3.github.io/blog/glide
+
+또 다른 glide 리뷰
+https://velog.io/@jiyoung/%EB%85%BC%EB%AC%B8-%EB%A6%AC%EB%B7%B0-%EB%82%B4%EB%A7%98%EB%8C%80%EB%A1%9C-%EC%A0%95%EB%A6%AC%ED%95%98%EB%8A%94-GLIDE-Towards-Photorealistic-Image-Generation-and-Editing-with-Text-Guided-Diffusion-Models-1.-Introduction
