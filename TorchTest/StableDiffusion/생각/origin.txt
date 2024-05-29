@@ -8,9 +8,12 @@ https://github.com/CompVis/stable-diffusion
 https://github.com/Stability-AI/stablediffusion
 
 {
+https://arxiv.org/pdf/2006.11239
+guided diffusion논문에 이 코드의 원 논문이 자주 인용되길래 ddpm논문도 가져옴
 stable diffusion 제작자들이 직접밝힌 코드의 원천중 하나, lucidrain의 DDPM
 코드 설명도 있고, 깃허브 링크도 있다
 https://ostin.tistory.com/128
+
 
 확산 모델 '들' 리뷰와 깃허브 중간 과정의 guided diffusion이 중요한가?
 https://gyoukchu.github.io/review/review_2/#5-guided-diffusion1
