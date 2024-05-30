@@ -41,3 +41,6 @@ https://junia3.github.io/blog/glide
 
 또 다른 glide 리뷰
 https://velog.io/@jiyoung/%EB%85%BC%EB%AC%B8-%EB%A6%AC%EB%B7%B0-%EB%82%B4%EB%A7%98%EB%8C%80%EB%A1%9C-%EC%A0%95%EB%A6%AC%ED%95%98%EB%8A%94-GLIDE-Towards-Photorealistic-Image-Generation-and-Editing-with-Text-Guided-Diffusion-Models-1.-Introduction
+
+guided 와 cfg
+https://pitas.tistory.com/15#article-2--text-conditioning%EC%9D%98-%EC%A4%91%EC%9A%94%EC%84%B1
