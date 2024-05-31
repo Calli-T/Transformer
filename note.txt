@@ -44,3 +44,7 @@ sudo apt install libstdc++-12-dev를 설치하면된다
 
 - 쓴 코드 몇 줄인지 확인, *.py만, venv폴더는 제외 -
 find . type f -not -path "./venv/*" -name '*.py' | xargs wc -l
+
+- 토치 모델 시각화 툴 -
+https://bo-10000.tistory.com/114
+torchviz가 괜찮은듯?

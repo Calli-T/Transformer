@@ -4,6 +4,9 @@ https://arxiv.org/pdf/2105.05233
 때려치고 번역문 가져옴
 https://hsejun07.tistory.com/248
 
+다른 이들의 리뷰도 있다
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/dmbg/
+
 초록
 현행 SOTA 생성 모델보다 확산 모델이 더 우월한 이미지 견본에 도달할 수 있다
 
@@ -193,6 +196,7 @@ UNet모델은 residual layer and downsampling conv stack을 사용하고
 upsampling conv's residual layer stack을 사용
 동일한 공간 크기의 레이어를 연결하는 skip connection 사용
 단일 헤드로 16x16 전역 어텐션 레이어 사용, 각 잔차 블록에 시간 단계 임베딩의 투영을 추가
+※ 2024/05/31추가, IDDPM 논문과 깃허브 코드에서 밝혀진 시간 단계 임베딩은 sinusoidal embedding을 사용했다, GDL 책에 있는거랑 같음
 
 개선 내용 시도 5가지는
 모델 크기를 상대적으로 일정하게 유지하면서? depth 대비 폭을 늘린다

@@ -1,0 +1,4 @@
+ELBO랑 LowerBound, L_vlb등등
+https://yonghyuc.wordpress.com/2019/09/26/elbo-evidence-of-lower-bound/
+https://medium.com/@chldntjr/paper-review-denoising-diffusion-implicit-models-6796a48a4285
+DDIM과 L_simple
