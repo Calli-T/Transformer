@@ -1,0 +1,9 @@
+Logging to ./outputs/openai-2024-06-03-22-22-17-509729
+creating model and diffusion...
+sampling...
+created 16 samples
+created 32 samples
+created 48 samples
+created 64 samples
+saving to ./outputs/openai-2024-06-03-22-22-17-509729/samples_64x32x32x3.npz
+sampling complete

@@ -18,6 +18,7 @@ from improved_diffusion.train_util import TrainLoop
 '''
 
 import sys
+
 sys.path.append("../")
 
 from improved_diffusion import dist_util, logger
@@ -30,6 +31,7 @@ from improved_diffusion.script_util import (
     add_dict_to_argparser,
 )
 from improved_diffusion.train_util import TrainLoop
+
 
 def main():
     args = create_argparser().parse_args()
@@ -83,7 +85,7 @@ def create_argparser():
         microbatch=-1,  # -1 disables microbatches
         ema_rate="0.9999",  # comma-separated list of EMA values
         log_interval=10,
-        save_interval=10000,
+        save_interval=100,  # 10000,
         resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,

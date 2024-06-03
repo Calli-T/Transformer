@@ -10,6 +10,11 @@ import numpy as np
 import torch as th
 import torch.distributed as dist
 
+# for recognize modules
+import sys
+
+sys.path.append("../")
+
 from improved_diffusion import dist_util, logger
 from improved_diffusion.script_util import (
     NUM_CLASSES,
@@ -19,12 +24,17 @@ from improved_diffusion.script_util import (
     args_to_dict,
 )
 
+# -----
+import datetime
+
 
 def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+
+    # logger.configure()
+    logger.configure("./outputs/" + datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -91,7 +101,7 @@ def main():
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
-        num_samples=10000,
+        num_samples=64,  # 10000
         batch_size=16,
         use_ddim=False,
         model_path="",
