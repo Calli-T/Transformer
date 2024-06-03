@@ -56,11 +56,11 @@ def main():
         model_kwargs=model_kwargs,
     )
 
-    make_dot(sample, params=dict(model.named_parameters())).render("graph", format="png")
-
     sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
     sample = sample.permute(0, 2, 3, 1)
     sample = sample.contiguous()
+
+    # make_dot(sample[0], params=dict(model.named_parameters())).render("graph", format="png")
 
 
 def create_argparser():

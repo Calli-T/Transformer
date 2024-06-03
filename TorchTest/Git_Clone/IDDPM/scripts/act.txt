@@ -1,5 +1,6 @@
 # save interval 조절좀 하던가 하자
 
+# 공통 필수요소, 디바이스 지정
 export HSA_OVERRIDE_GFX_VERSION=10.3.0
 export RDMAV_FORK_SAFE=1
 
