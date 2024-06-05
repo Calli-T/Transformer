@@ -1,0 +1,22 @@
+학습의 경우
+
+실행은 image_train.py로 시작함
+플래그 3개를 파싱함
+MODEL_FLAGS에는 이미지 크기(h, w 같은 숫자인듯), 채널수, 잔차블럭수
+DIFFUSION_FLAGS에는 확산 단계수, 확산 스케줄 (코사인 등등)
+TRAIN_FLAGS에는 학습률, 배치크기
+
+1.
+image_train.py는 시작하자마자
+create_argparser()의 반환(argparse.ArgumentParser클래스)의 parse_args()함수를 사용함
+
+create_argparser 함수는 argparse.ArgumentParser 클래스를 반환함
+해당 함수내의 이름이 default인 dict와
+-> script_util.py의 model_and_diffusion_defaults 함수에서 반환하는 dict를 합쳐 update
+-> 매개변수들 key와 기본 value를 가진 dict구성됨
+-> argparse.ArgumentParser() 클래스를 선언하고
+-> 위 기본값(default dict)를 가지고 parser를 구성
+-> 구성된 parser로 실행시 입력한 값 파싱(parse_args()
+-> 이후 반환하여 코드의 각 부분마다 필요한곳 인자만 뽑아서 사용(기본적으로 args에 다들어있음)
+
+2.
