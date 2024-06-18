@@ -22,5 +22,84 @@ create_argparser 함수는 argparse.ArgumentParser 클래스를 반환함
 요약: 실행 개개변수를 파싱합니다
 
 2. setup_dist()
-dist_util.py의 dist가 정확히 뭘 의미하는지는 모르겠으나 부가 코드를 의미한다고 한다.
-torch 하위 패키지 중에 torch.distributed가 존재함
+dist_util.py의 dist가 정확히 뭘 의미하는지는 모르겠으나
+distributed는 부가적 코드를 의미한다고 한다.
+코드 중에 torch.distributed가 존재함, 이건 병렬 처리에 관한 패키지인듯?
+그러고보니 mpi4py 패키지와 관련이 있을 수 있겠다
+
+??? 나중에 알아볼것
+https://blog.naver.com/PostView.naver?blogId=sw4r&logNo=222314867436
+https://better-tomorrow.tistory.com/entry/Pytorch-Multi-GPU-%EC%A0%95%EB%A6%AC-%EC%A4%91
+요약: 병렬 처리용 부가코드
+
+3. logger.configure()/logger.log
+로그 따는 기능, 따로 코드로 만들어 놨다
+openai-연-월-일-시-분-초-다음엔뭐더라? 폴더에 로그 따놓는게 이 기능인듯
+요약: 로그 따는 기능, 안 중요한것 같으니 다음에
+
+4. model, diffusion = create_model_and_diffusion/create_named_schedule_sampler
+후술, 가장 중요하게 볼 부분
+모델과 샘플러제작
+
+script_util.py의 함수 create_model_and_diffusion은
+말그대로 모델과 확산을 뽑는 것으로 보인다.
+여기서 확산을 뽑는것의 정확한 실체는 뭔지 나중에 알아보고 model부터 알아보자
+
+4-1-1 내부적으로 create_model 함수를 사용하며 이는 같은 파일에 존재한다.
+매개변수로 이미지 크기, 채널수, 잔차블록수
+체크포인트 사용, (어텐션) 헤드 수, 드롭아웃은 기존에 아는 정보이나
+learn_sigma, class_cond, attention_resolutions
+num_heads_upsample, use_scale_shift_norm은 모르는 정보이니 이 매개변수들의 흐름을 따라가볼것
+요약: 매개변수는 저런것이 있고 모르는건 따라가보자
+
+함수 코드를 쭉 따라가 보자면,
+먼저 채널 사이즈에 맞춰 channel_mult 튜플을 달리 설정한다
+256/64/32 사이즈만 인정하며 나머지는 에러로 처리함, 이것도 어디에 쓰이는지 알아보자
+
+attention_ds 리스트는 attention_resolutions 매개변수를 ','로 split 해서 나온다
+그렇게 split 한 값을 res라 하며 integer 값으로 바꾼 다음
+image_size를 res로 나눠 몫을 구한다, 그리고 그 몫을 attention_ds에 append한다
+ds는 추측컨대 downsample인듯 이 매개변수들은 결국 unet.py의 UNetModel 클래스에서 사용되는데,
+거기 attention_resolutions(어텐션 해상도)에 해당 리스트를 넣는다
+거기 매개변수 설명도 적혀있는데, 4가 리스트에 들어가 있으면 4x downsamling을 진행한다는 뜻
+다운 샘플링은 매개변수 크기를 줄이는 모양?
+실행 매개변수에 --attention_resolutions 16과 같이 사용할 수 있다!
+요약: 어텐션 다운샘플링은 어텐션 해상도 매개변수의 정보를 바탕으로 생성, 여러 값 가능
+
+그걸 기반으로 unet.py의 UNetModel class를 선언하고, 이를 return하는게 create_model함수
+결국 'model'이라는건 unet model이다
+들어가는 매개변수는 입력채널 (3고정 RGB), 모델채널은 num_channels
+잔차블럭수는 그대로, 어텐션 방법은 아까 만든 ds 리스트를 튜플로 변환해서
+드롭아웃은 그대로, 체크포인트사용여부도 그대로, 헤드 수도 그대로,
+들어가는 매개변수중에 모르거나 좀 더 알아볼 필요가 있는 것은
+out_channels, channel_mult, num_classes, num_heads_upsample, use_scale_shift_norm이다
+요약: 모델 선언은 unet.py의 UNetModel 클래스에다 매개변수를 끌어다 모아서 가져온다.
+
+4-1-2
+unet은 말그대로 unet이며, 해당 파일의 모든 클래스는 UNetModel 클래스로 사용된다
+class의 내용을 확인해보자
+class TimestepBlock: abc패키지의 @abstractmethod를 사용하는 추상메서드이다.
+nn.Module을 상속받고 TimestepEmbedSequential에 상속되는 것으로만 역할끝
+
+class TimestepEmbedSequential: TimestepBlock과 nn.Sequential을 다중상
+일종의 단위 구성요소로 사용하는 것으로 추측함
+isinstance 메서드로 for layer in self의 각 계층이 TimestepBlock일 경우
+계층에 forward할 때 x에 emb를 같이넣어주고, 아닐경우 x = layer(x)임
+주석은 다음과 같음 "시간 단계 임베딩을 하위 항목에
+전달하는 순차 모듈이며 추가 입력으로 지원됩니다"
+emb의 경우 이를 상속하는 하위 클래스들이 구현하는 대로 오버라이딩 되는듯
+추상메서드가 추가된 nn.Sequential임
+
+class Upsample: UNet의 업샘플링 블럭, nn.Module을 상속받는다
+매개변수로 채널수, 합성곱 사용여부, 차원(기본값 2)가 있다
+__init__에서는 넣어준 매개변수를 모두 필드 변수로 가져오고,
+use_conv true의 경우합성곱 층도 하나 만들어서 메서드로 만듬
+forward()의 흐름은 다음과 같다 먼저 NCHW의 2번째 값
+x.shape[1]을 필드변수 channels와 같도록 강제한다. 그 다음 차원에 맞게 2배크기로 보간한다
+합성곱 층을 사용한다고 되어있으면 합성곱에 넣고, 아니면 그냥 반환한다.
+
+
+
++ model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
+
+5. TrainLoop

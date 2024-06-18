@@ -19,11 +19,12 @@ from .nn import (
     checkpoint,
 )
 
-# 디바이스 변환용
-import sys
 
-sys.path.append("../")
-from improved_diffusion import dist_util
+# # 디바이스 변환용
+# import sys
+#
+# sys.path.append("../")
+# from improved_diffusion import dist_util
 
 
 class TimestepBlock(nn.Module):
@@ -465,7 +466,7 @@ class UNetModel(nn.Module):
         """
         return next(self.input_blocks.parameters()).dtype
 
-    def forward(self, x, timesteps=th.rand(16).to(dist_util.dev()), y=None):
+    def forward(self, x, timesteps, y=None):  # =th.rand(16).to(dist_util.dev()), y=None):
         """
         Apply the model to an input batch.
 
