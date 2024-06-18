@@ -48,3 +48,15 @@ find . type f -not -path "./venv/*" -name '*.py' | xargs wc -l
 - 토치 모델 시각화 툴 -
 https://bo-10000.tistory.com/114
 torchviz가 괜찮은듯?
+https://gaussian37.github.io/dl-pytorch-observe/#visdom%EC%9D%84-%ED%86%B5%ED%95%9C-%ED%95%99%EC%8A%B5-%EC%83%81%ED%83%9C-%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81-1
+viz 실패함 viz2트하기전에 onnx netron시도해볼생각
+https://thdnice.tistory.com/229
+다실패함...
+gaussian_diffusion 파일을 참고할것
+
+- 파이썬 라이브러리 의존성 확인은 pipdeptree -
+
+- 파이토치의 분산학습에 관하여 -
+https://roytravel.tistory.com/364
+
+깃 무시하는 파일 목록보기: git status --ignored

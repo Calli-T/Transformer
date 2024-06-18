@@ -14,6 +14,7 @@ import torch as th
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood
 
+# from torchviz import make_dot
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
@@ -426,6 +427,8 @@ class GaussianDiffusion:
             progress=progress,
         ):
             final = sample
+        # make_dot(final["sample"], params=dict(model.named_parameters())).render("graph", format="png")
+        # print(final["sample"].shape)
         return final["sample"]
 
     def p_sample_loop_progressive(

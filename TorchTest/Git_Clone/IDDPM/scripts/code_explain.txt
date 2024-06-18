@@ -16,7 +16,11 @@ create_argparser 함수는 argparse.ArgumentParser 클래스를 반환함
 -> 매개변수들 key와 기본 value를 가진 dict구성됨
 -> argparse.ArgumentParser() 클래스를 선언하고
 -> 위 기본값(default dict)를 가지고 parser를 구성
--> 구성된 parser로 실행시 입력한 값 파싱(parse_args()
+-> 구성된 parser로 실행시 입력한 값 파싱(parse_args(), 해당 반환값은 Namespace 객체임)
 -> 이후 반환하여 코드의 각 부분마다 필요한곳 인자만 뽑아서 사용(기본적으로 args에 다들어있음)
 
-2.
+요약: 실행 개개변수를 파싱합니다
+
+2. setup_dist()
+dist_util.py의 dist가 정확히 뭘 의미하는지는 모르겠으나 부가 코드를 의미한다고 한다.
+torch 하위 패키지 중에 torch.distributed가 존재함

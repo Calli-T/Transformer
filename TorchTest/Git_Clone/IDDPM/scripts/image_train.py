@@ -94,8 +94,11 @@ def create_argparser():
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
 
+    # print(parser.parse_args())
+
     return parser
 
 
 if __name__ == "__main__":
+    # create_argparser()
     main()
