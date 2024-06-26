@@ -88,7 +88,7 @@ isinstance 메서드로 for layer in self의 각 계층이 TimestepBlock일 경�
 주석은 다음과 같음 "시간 단계 임베딩을 하위 항목에
 전달하는 순차 모듈이며 추가 입력으로 지원됩니다"
 emb의 경우 이를 상속하는 하위 클래스들이 구현하는 대로 오버라이딩 되는듯
-추상메서드가 추가된 nn.Sequential임
+요약: 임베딩이 추상메서드로 구현된 nn.Sequential임
 
 class Upsample: UNet의 업샘플링 블럭, nn.Module을 상속받는다
 매개변수로 채널수, 합성곱 사용여부, 차원(기본값 2)가 있다
@@ -97,7 +97,39 @@ use_conv true의 경우합성곱 층도 하나 만들어서 메서드로 만듬
 forward()의 흐름은 다음과 같다 먼저 NCHW의 2번째 값
 x.shape[1]을 필드변수 channels와 같도록 강제한다. 그 다음 차원에 맞게 2배크기로 보간한다
 합성곱 층을 사용한다고 되어있으면 합성곱에 넣고, 아니면 그냥 반환한다.
+요약: 합성곱은 옵션으로 사용하는 업샘플링 계층
 
+class Downsample: UNet의 다운샘플링 블럭, nn.Module을 상속받는다
+채널/합성곱 층 사용여부/차원을 매개변수로 사용, 업샘플링이랑 대체로 비슷함
+stride는 2/3차원 여부에 따라 2 혹은 (1,2,2)을 사용한다
+합성곱 층을 쓰면 매개변수들 그대로 합성곱 층을 사용하고, 아닌 경우
+평균 풀링을 차원과 stride에 맞게 진행한다.
+채널 강제 여부는 같으나 forward에서 합성곱/풀링 둘 중하나를 써서 반환하는거 말고는 하는거 없음
+요약: 합성곱과 풀링 중 택1해서 사용하는 다운샘플링 계층
+
+class ResBlock: 잔차블록인듯, TimestepBlock을 상속받는다
+매개변수로 채널수, 임베딩 채널수(타임스탭임배딩 채널), 드롭아웃, 아웃채널, 합성곱 사용 여부
+차원(입력 데이터), 체크포인트 사용 여부를 받아온다 초기화 함수에서 아웃채널
+합성곱 사용여부, 스케일 시프트 노름, 체크포인트사용, 데이터 차원은 기본값 존재
+_forward에서는 입력과 임베딩을 각각 다른 층에 넣고, 길이가 다르다면 임베딩쪽을 반대쪽과 맞춰준다
+use_scale_shift_norm가 True일 경우, out_layer를 [0]과(out_norm) 나머지(out_rest)로 나눈다음
+임베딩 아웃 값을 torch.chunk하여 scale과 shift로 나눈다.(1차원으로 2동강낸다, emb_layer에서 이미 채널 2배로 출력되게 설계됨)
+그런다음 out_norm(= out_layer의 정규화 계층)에 넣는다 ※ .nn으로 된건 torch docs에서 찾아볼 수가없고, nn.py에 직접구현해둔것!!!!!!!! ※※ 구현자체는 nn.GroupNorm을 float32로 구현한것
+넣은 값을 스케일링하고, 시프팅 한 다음 out_rest에 넣는다. 그러면 h나옴
+use_scale_shift_norm가 False인 경우
+입력의 출력과 임베딩 입력의 출력을 더하고 out_layer전체에 집어놓고 h만듬
+어떻게 됐건 간에 skip_connection에 x을 넣고 h를 더한다.
+in_layers는 정규화->SiLU->합성곱 순서이며
+emb_layers는 SiLU->선형층(use_scale_shift_norm True의 경우 out channel의 2배, 아니면 그냥 1배)
+out_layers는 정규화->SiLU->dropout->zero_module안에 합성곱넣어서 동작 순서이다
+※ zero_module도 nn.py에 구현되어 있다. 모든 파라미터를 0으로 초기화할 때 쓰는 클래스인듯
+skip_connection은 out_channels==channels인지, 합성곱을 쓰는지, 등등에 따라 달라지는 계층이다
+입출력 채널이 같을 때 skip_connection의 nn.Identity는 그냥 값을 그대로 보내준다는 뜻
+아마 잔차 연결할 때 채널이 다른경우 맞춰주는 용도로 알고있다
+forward는 _forward를 사용하는데, 인자로 x, emb를 사용하지만 반환에 checkpoint 함수를 사용한다
+checkpoint 함수는 nn.py에 구현되어있으며 함수/함수에 들어갈인자/모델의 매개변수(저장용)/플래그를 입력받는다
+flag는 use_checkpoint값이며 true의 경우에만 checkpoint 저장을 해주는 모양, true이면
+같은 nn.py의 class CheckpointFunction를 사용해 처리하는걸로 추정함
 
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
