@@ -130,6 +130,38 @@ forward는 _forward를 사용하는데, 인자로 x, emb를 사용하지만 반�
 checkpoint 함수는 nn.py에 구현되어있으며 함수/함수에 들어갈인자/모델의 매개변수(저장용)/플래그를 입력받는다
 flag는 use_checkpoint값이며 true의 경우에만 checkpoint 저장을 해주는 모양, true이면
 같은 nn.py의 class CheckpointFunction를 사용해 처리하는걸로 추정함
+요약: 잔차블럭이다
+
+class AttentionBlock: 트랜스포머 어텐션인듯? nn.Module을 상속받는다
+매개변수로 채널수, 헤드개수, 체크포인트 사용여부를 받고 __init__에서 self필드로 전환
+__init__에서 추가적으로 nn.py의 normalization사용, 이건 그룹정규화다/https://luvbb.tistory.com/43
+self.qkv는 합성곱의 일종인듯하며, 차원은 1차원이고 입력채널의 3배만큼의 출력을 만든다(아마 각각 q, k, v인듯?), kernel_size는 1
+이 때 사용되는 conv_nd가 nn.py에 작성되어있으며, 합성곱이긴하나 kernel_size가 1인걸로 보아 사실상 선형 임베딩을 대체하(거나 그 자체가 되)는 모양
+self.attention은 class QKVattention의 인스턴스이며 후술
+self.proj_out은형식상으로는 입출력 개수가 channel이고, kernel 크기가 1이며 0값으로 초기화되는 1차원 합성곱신경망이나, 뭘 의미하는건지는 알아볼 필요가 있음
+forward가 내부적으로 _forward와 checkpoint를 이용하는건 ResBlock과 같음
+_forward는 함수 시작과 동시에 x.shape를 b, c, *a로 나눈다(NCHW를 각각 N,C,HW로 나누는듯? *는 unpacking연산자)
+x를 (b, c, -1)로 reshape하는 것으로 보아 배치와 채널을 그대로 하고 나머지를 1차원으로 바꾼다 즉 (N,C,H,W) -> (N,C,H*W)
+그런다음 x를 그룹정규화 하고 qkv 계층에 넣는것으로 qkv 텐서를 만들어낸다
+그런다음 qkv로 'attention'하고 이를 다시 reshape하고, 이를 proj_out에 넣은다음 h를 만들어 x값과 더하고, 이를 다시 원래대로 reshape한다
+h.reshape(b, -1, h.shape[-1])은 대체 뭔지 모르겠다???
+
+class QKVAttention: 모르긴 몰라도 어텐션 메커니즘을 여기서 사용하는듯, nn.Module을 상속받음
+qkv가 out_channel이 channel*3이므로, 위에서 HW를 1차원으로 줄였으니 qkv가 [N, (C*3), H*W]의 크기의 텐서이다
+q, k, v를 다시 [N, C, H*W] 크기의 텐서로 3등분해준다
+scale이란 값이 나오는데 Attention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V에서 sqrt(d_k)를 의미하는 값이다
+weight과 einsum은 아인슈타인 표기법이다. A와 B 행렬의 곱을 C라 하자면 Cij = (AB)ij = (from k=1 to n)a_ik * b_kj = a_i1*b_1j + a_i2*b_2j + ⋯ + a_in*b_nj
+이는 th.einsum('ij,jk->ik', a,b)으로 간단히 표기할 수 있다. QKV 텐서는 픽셀수 H*W=T와, 채널 C에 대해 [T, C/num_head] 크기의 행렬을 가지고 있다
+따라서 Q K^T는 [T, T] 크기의 행렬이다. 한편, 코드로 만들어진 QKV텐서는 각각 [N, C, T] 크기이다
+Q, K를 각각 [b, c, t]와 [b, c, s]로 본다면 배치의 행렬은 각각 t행 c열/s행 c열이 될것이고, 전치하니 뒤는 c행 s열이 될것이다, 이를 간단히 하면 'tc,cs->ts', q, k이며,
+b개 만큼의 배치이므로 'bct,bcs->bts', q, k이다
+요약1: 어텐션 스코어맵을 구하는 과정에서 아인슈타인 표기법을 사용한 텐서곱을 진행하였다
+이후 bts를 softmax하고 비슷한 방식으로 V 텐서와 곱하면, 그것이 바로 어텐션이다
+요약2: ttention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V, 직 forward함수는 self-attention 메커니즘 그 자체를 충실하게 구현했다
++count_flops는 작업 수를 계산하는 thop 패키지용 카운터, 어텐션 연산에 들어있다...고 주석에 적혀있다.
+
+
+class UNetModel부터 다시시작
 
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
