@@ -145,6 +145,9 @@ x를 (b, c, -1)로 reshape하는 것으로 보아 배치와 채널을 그대로 
 그런다음 x를 그룹정규화 하고 qkv 계층에 넣는것으로 qkv 텐서를 만들어낸다
 그런다음 qkv로 'attention'하고 이를 다시 reshape하고, 이를 proj_out에 넣은다음 h를 만들어 x값과 더하고, 이를 다시 원래대로 reshape한다
 h.reshape(b, -1, h.shape[-1])은 대체 뭔지 모르겠다???
++0627추가: attention의 결과물은 [N, C, T]이므로 h.shape[-1] = T  = H*W, (b, -1, T)의 경우 결과적으로 (b, c, T)크기 텐서로 변환
+추측) proj_out은 transformer encoder block 끝의 ffn의 역할일지도?
+
 
 class QKVAttention: 모르긴 몰라도 어텐션 메커니즘을 여기서 사용하는듯, nn.Module을 상속받음
 qkv가 out_channel이 channel*3이므로, 위에서 HW를 1차원으로 줄였으니 qkv가 [N, (C*3), H*W]의 크기의 텐서이다
@@ -157,12 +160,18 @@ Q, K를 각각 [b, c, t]와 [b, c, s]로 본다면 배치의 행렬은 각각 t�
 b개 만큼의 배치이므로 'bct,bcs->bts', q, k이다
 요약1: 어텐션 스코어맵을 구하는 과정에서 아인슈타인 표기법을 사용한 텐서곱을 진행하였다
 이후 bts를 softmax하고 비슷한 방식으로 V 텐서와 곱하면, 그것이 바로 어텐션이다
-요약2: ttention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V, 직 forward함수는 self-attention 메커니즘 그 자체를 충실하게 구현했다
+요약2: attention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V, 직 forward함수는 self-attention 메커니즘 그 자체를 충실하게 구현했다
+[N, C, T]크기의 어텐션 결과물을 돌려준다
 +count_flops는 작업 수를 계산하는 thop 패키지용 카운터, 어텐션 연산에 들어있다...고 주석에 적혀있다.
 
 
-class UNetModel부터 다시시작
-
+class UNetModel: nn.Module을 상속함, 잡음 추측 모델
+매개변수로는 들어오는 채널수, 모델 채널수, 나가는 채널수, 잔차블럭수, 드롭아웃 비율, 차원, 클래스 개수
+체크포인트 사용여부, 헤드수, 스케일_시프트_놈_사용은 뭔지 알겠고
+attention resolutions, channel_mult, conv_resample, num_head_upsample은 코드 따라 알아볼것
+일단 __init__시작하자마자 num_head_upsample 수부터 정하는데 -1이 default이고 디폴트는 num_head값이랑 똑같이 맞춘다
+그 외에 다른 매개변수는 self의 필드로 전환함
+time_ewbed_dim은 모델 채널의 4배수로 설정, time_embed 계층은 nn.Sequential로 선형->SiLU->선형층을 거쳐 time_embed_dim 크기의 out을 출력 -> 뭐하는 건지나 알아보자
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
 
