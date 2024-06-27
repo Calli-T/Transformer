@@ -160,7 +160,7 @@ Q, K를 각각 [b, c, t]와 [b, c, s]로 본다면 배치의 행렬은 각각 t�
 b개 만큼의 배치이므로 'bct,bcs->bts', q, k이다
 요약1: 어텐션 스코어맵을 구하는 과정에서 아인슈타인 표기법을 사용한 텐서곱을 진행하였다
 이후 bts를 softmax하고 비슷한 방식으로 V 텐서와 곱하면, 그것이 바로 어텐션이다
-요약2: attention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V, 직 forward함수는 self-attention 메커니즘 그 자체를 충실하게 구현했다
+요약2: attention(Q, K, V) = softmax((Q K^T) / sqrt(d_k)) * V, 즉 forward함수는 self-attention 메커니즘 그 자체를 충실하게 구현했다
 [N, C, T]크기의 어텐션 결과물을 돌려준다
 +count_flops는 작업 수를 계산하는 thop 패키지용 카운터, 어텐션 연산에 들어있다...고 주석에 적혀있다.
 
@@ -172,12 +172,25 @@ attention resolutions, channel_mult, conv_resample, num_head_upsample은 코드 
 일단 __init__시작하자마자 num_head_upsample 수부터 정하는데 -1이 default이고 디폴트는 num_head값이랑 똑같이 맞춘다
 그 외에 다른 매개변수는 self의 필드로 전환함
 time_ewbed_dim은 모델 채널의 4배수로 설정, time_embed 계층은 nn.Sequential로 선형->SiLU->선형층을 거쳐 time_embed_dim 크기의 out을 출력 -> 뭐하는 건지나 알아보자
-num_classes가 None이 아닐 경우, self.label_emb이 nn.Embedding으로  num_classes행 time_embed_dim열 크기로 선언됨  ※ nn.Embedding은 lookup table이다 -> 대체 뭐에다 쓰는건지나 알아보자
+num_classes가 None이 아닐 경우, self.label_emb이 nn.Embedding으로  num_classes행 time_embed_dim열 크기로 선언됨  ※ nn.Embedding은 lookup table이다 -> 대체 뭐에다 쓰는건지, 룩업테이블은 어떻게 만드는지 알아보자
 input_blocks는 nn.ModuleList로 선언되고 선언 될 때는 TimestepEmbedSequential에 합성곱 신경망이 하나 있으며
 해당 합성곱 신경망은 in_channel을 받아 model_channel개수의 채널을 출력하며, 커널 크기는 3이다
-input_block_chans는 model_channels가 담긴 list로 선언한다, ds는 1로 선언한다 -> 전부 뭐에 쓰는지 알아보자
-아래 for문으로 channel_mult에 대해 반복 작업을 하는데, num_res_block만큼 잔차블럭을 선언해주고, 채널 개수에 대하여 channel_mult의 값으로 채널수에 배율을 곱해준다
-layer부터 뭔소린지 다시 알아보자
+input_block_chans는 model_channels가 담긴 list로 선언한다, ds는 1로 선언한다
+{ //첫 번째 계층의 구성, 코드의 for level, mult...부터 ds *= 2 까지
+아래 for문으로 channel_mult에 대해 반복 작업을 하는데
+또다시 for로 num_res_block만큼 layers에 잔차블럭을 만들어준다.
+이 때 channel_mult의 배율만큼 출력 채널이 늘어난다 ※ 입력채널은 ch 변수로 규정, 앞선 출력 채널이 입력 채널이 되는 방식
+※ds는 downsampling 배율로 추정 ds값 (초기 1)이 attention_resolutions안에 존재한다면, layers에 어텐션 블럭을 하나 추가해준다
+self.input_blocks에 layers의 모든 계층을 TimestepEmbedSequential에 넣고 append한다
+또, input_block_chans에 채널 수(ch)를 append함
+요약1: 이중 for문안에서 내부 for문은 잔차블럭의 수만큼 (잔차블럭과 어텐션블럭으로 이루어진)블럭을 만들어 내고, 채널도 기록해둔다
+channel_mult의 반복 즉 외부 for문은 내부 for문의 하나와 if문 하나로 되어있다. 내부 for문은 위의 내용
+channel_mult는 enumerate로 래핑되어 반복되는데, index에 해당하는 부분은 level로 되어있다.
+if문의 조건은 이 level을 사용한다. (level의 값이 channel_mult의 길이보다 1보다 작은 값과 같지않다면)
+즉, 마지막 단계가 아니라면 다운샘플링 계층을 만들어 input_blocks에 넣고, input_block_chans에 채널을 기록한다, 추가로 ds를 2배한다
+요약: 여러 매개변수로 unet의 한 부분을 만들어낸다. channel_mult는 채널에 곱해지는 배율이다.
+추측: attention_resolutions는 어텐션 해상도를 의미하는 모양, ds가 왜 해당 값에 포함이 될 때만 어텐션 블럭을 추가해주는지도 알아봐야한다
+}
 
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
