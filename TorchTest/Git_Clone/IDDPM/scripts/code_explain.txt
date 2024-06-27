@@ -213,8 +213,37 @@ input_blocks_chans는 선언할 때 1개의 값을 가진 list다. 첫 번째 �
 정확하게 일치함 -> 해결완료, 어디가 어디에서 연결 되는지나 알아보자
 }
 { // 네 번째 구성, self.out = nn .Sequential부터
-
+요약5: 그룹 정규화 -> SiLU -> Conv(영으로 초기화됨, model_channel만큼의 입력채널, out_channels만큼의 출력채널, 커널 3)
 }
+밑에 convert함수 2종류는 아마도 부동소수점 자리수선택에 관한 문제인듯
+@property는 데코함수, https://www.daleseo.com/python-property/
+내용은 input_blocks의 params들의 데이터 타입을 알려주는듯, 이는 forward()에서 사용된다
+{
+forward의 세 매개 변수 x, timesteps, y는
+각각 입력텐서, 타임스텝의 1차원 배치(아마도, 타임스텝이 배치 개수만큼있는듯), 레이블(배치 N개만큼 존재, 클래스 조건이 있다면)이다
+출력텐서와 입력 텐서는 주석을 보면 모양이 같은데, 아마 입력의 차원에 따라 [N, C, ...]에서 뒷 부분이 달라지는듯함
+assert문은 클래스 개수가 존재할 때만 배치의 레이블에 해당하는 y값은 줄것을 강제하고있다
+emb는 임베딩이다. 확산 스케줄과 라벨 정보(클래스 정보가 존재할 경우)를 담고있다.
+timestep embedding은 nn.py에 구현되어있는데, 주석에 정현파 타임스텝 임베딩이라고 적혀있다. 이는 스칼라 값(잡음의 분산)에 대한 연속적인 값을 가진벡터로의 임베딩이다.
+정현파(=사인파, 코사인파) 임베딩은 다음과 같이 인코딩 된다. r(x) = (sin(2πe^0fx), ⋯ , sin(2πe^(L-1)fx), cos(2πe^0fx), ⋯ , cos(2πe^(L-1)fx))
+이 때, 잡음 길이의 절반이 L이며, 코드에 적혀진 주파수는 f = -ln(10000)/(dim-1) 이다
+※ arange 함수의 경우 start,end,step을 매개로 받으며 [start,end)에서 (end-start)/step이 1단계마다 올라가는 값의 크기이다
+※※ 임베딩 차원의 길이가 홀수인 경우 추가 공정있음
+timestep_embedding에서 [배치수, 모델 채널수]의 임베딩을 반환받으면
+이를 (__init__에서 선언된)self.time_embed 계층에 넣는다 [배치수, 모델 채널수 *4]의 emb가 된다
+만약, 클래스(레이블)이 주어진 경우라면 self.label_emb의 룩업 계층을 통하여 위의 emb와 더해준다
+요약1: 정현파 임베딩을 만들어주고, 필요한 경우 클래스 임베딩을 더해준다
+self.inner_dtype과 input_blocks을 사용하여 입력 x를 h로 캐스팅한다
+※ 자세한 설명은 공식 문서 https://pytorch.org/docs/stable/generated/torch.Tensor.type.html 에
+계층에 h과 emb을 같이 넣어서 h로 반환하며, skip connection을 위해 h를 hs의 list에 append해둔다->UNet의 하강구간
+h를 다시 middle block에 emb와 넣고 결과값 h를 뽑아낸다 ->UNet의 아랫구간
+output_block의 각 계층을 하나씩 꺼내오며, hs의 값도 하나씩 pop하며 concat하여 skip_connection을 구현한다, cat함수의 차원은 1(NCHW에서  C를 의미)
+※input_blocks와 output_blocks는 모두 ModuleList
+concat과 emb를 입력으로 하여 output_block의 계층에 넣고 h값을 뽑아낸다
+h를 다시금 x.dtype으로 뽑아내고,
+self.out계층을 마지막으로 h를 넣고 그 값을 return으로 반환하면 UNetModel의 forward 함수가 완성된다
+}
+
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
 
