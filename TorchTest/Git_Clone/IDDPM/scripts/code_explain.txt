@@ -172,6 +172,13 @@ attention resolutions, channel_mult, conv_resample, num_head_upsample은 코드 
 일단 __init__시작하자마자 num_head_upsample 수부터 정하는데 -1이 default이고 디폴트는 num_head값이랑 똑같이 맞춘다
 그 외에 다른 매개변수는 self의 필드로 전환함
 time_ewbed_dim은 모델 채널의 4배수로 설정, time_embed 계층은 nn.Sequential로 선형->SiLU->선형층을 거쳐 time_embed_dim 크기의 out을 출력 -> 뭐하는 건지나 알아보자
+num_classes가 None이 아닐 경우, self.label_emb이 nn.Embedding으로  num_classes행 time_embed_dim열 크기로 선언됨  ※ nn.Embedding은 lookup table이다 -> 대체 뭐에다 쓰는건지나 알아보자
+input_blocks는 nn.ModuleList로 선언되고 선언 될 때는 TimestepEmbedSequential에 합성곱 신경망이 하나 있으며
+해당 합성곱 신경망은 in_channel을 받아 model_channel개수의 채널을 출력하며, 커널 크기는 3이다
+input_block_chans는 model_channels가 담긴 list로 선언한다, ds는 1로 선언한다 -> 전부 뭐에 쓰는지 알아보자
+아래 for문으로 channel_mult에 대해 반복 작업을 하는데, num_res_block만큼 잔차블럭을 선언해주고, 채널 개수에 대하여 channel_mult의 값으로 채널수에 배율을 곱해준다
+layer부터 뭔소린지 다시 알아보자
+
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
 
