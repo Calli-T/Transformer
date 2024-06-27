@@ -188,10 +188,33 @@ channel_mult의 반복 즉 외부 for문은 내부 for문의 하나와 if문 하
 channel_mult는 enumerate로 래핑되어 반복되는데, index에 해당하는 부분은 level로 되어있다.
 if문의 조건은 이 level을 사용한다. (level의 값이 channel_mult의 길이보다 1보다 작은 값과 같지않다면)
 즉, 마지막 단계가 아니라면 다운샘플링 계층을 만들어 input_blocks에 넣고, input_block_chans에 채널을 기록한다, 추가로 ds를 2배한다
-요약: 여러 매개변수로 unet의 한 부분을 만들어낸다. channel_mult는 채널에 곱해지는 배율이다.
+요약2: 여러 매개변수로 unet의 한 부분을 만들어낸다. 변수명은 입력블럭이라고 한다. channel_mult는 채널에 곱해지는 배율이다.
 추측: attention_resolutions는 어텐션 해상도를 의미하는 모양, ds가 왜 해당 값에 포함이 될 때만 어텐션 블럭을 추가해주는지도 알아봐야한다
 }
+{ // 두 번째 계층의 구성, UNet의 밑바닥에 해당한다
+요약3: 잔차->어텐션->잔차블럭으로됨, use_scale_shift_norm은 여기서도 사용
+}
+{ // 세 번째 구성, 첫 번째 구성의 역순, 업스케일링 과정이다
+첫 번째와 유사하게 channel_mult를 enumerate로 래핑하여 for로 반복하나, 이번에는 list로바꾸고 [::-1]로 인덱싱하여 역순으로 사용한다
+잔차 블럭수 보다 하나 많게 돌아가도록 내부 for문을 구성한다
+내부 for문의 내용은, 먼저 layers를 list로 선언하고 내부에 잔차 블럭을 하나 선언한다.
+이 때, 잔차 블럭은 기록한 채널수를 pop하여, skip connection을 구성한다
+※ 첫 번째 구성과 유사하게 ch값이 후설정되나, 역순이며 첫 값은 첫번째 구성에서 넘어온 값 그대로 사용할 수 있다.
+ds값과 attention_resolutions를 사용하여 첫 번째 구성과 유사하게 upsample 계층을 구성한다.
+이 때 num_head_upsample을 사용한다 ※ down과 up sampling의 멀티헤드 어텐션의 헤드 수가 다른 경우가 존재하는 모양???, 어차피 어텐션 스코어 맵은 같게 나올테니
+첫 번째 level이 아니고(첫 번째 구성에서는 마지막 level을 배제했다, 역순이니 반대로), i가 num_res_block과 같은 경우(= 내부 반복문의 마지막 반복의 경우)
+업샘플링 레이어를 추가해준다. 추가하고 ds 값도 절반으로 줄어듬
+layers를 만들면 그걸로 output_blocks에 TimestepEmbedSequential 계층을 append한다
+요약4: UNet의 상승 구간이다. 어째선지 각 레벨에 계층이 한 개 더 많다
+의문점: 대체 왜 num_res_block보다 1회 더 반복을 많이하는가??? ch를 제대로 pop할 수 있는가?
+input_blocks_chans는 선언할 때 1개의 값을 가진 list다. 첫 번째 구성의 내부 for문에서 input_blocks_chans를 num_res_blocks 만큼 추가하고,
+마지막 level을 제외한 모든 경우에서 ch를 하나씩 더하여 len(channel_mult) * (num_res_block + 1) 만큼의 input_blocks_chans list를 가지게된다.
+세번째 구성에서는 외부 for 내에 내부 for 말고 아무것도 없고, 내부 for가 num_res_block + 1만큼 돌아가니 결국 len(channel_mult) * (num_res_block + 1)만큼 pop한다.
+정확하게 일치함 -> 해결완료, 어디가 어디에서 연결 되는지나 알아보자
+}
+{ // 네 번째 구성, self.out = nn .Sequential부터
 
+}
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
 
