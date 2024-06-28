@@ -243,6 +243,40 @@ concat과 emb를 입력으로 하여 output_block의 계층에 넣고 h값을 �
 h를 다시금 x.dtype으로 뽑아내고,
 self.out계층을 마지막으로 h를 넣고 그 값을 return으로 반환하면 UNetModel의 forward 함수가 완성된다
 }
+번외1: self.get_feature_vectors 함수는 forward와 비슷하긴 한데, down/middle/up의 결과를 list에 모아서 반환한다
+번외2: class SuperResModel <- 얘는 뭐하는 건지는 나중에 알아보자, 아마도 화질 개선인듯
+※ script_util의 create_model말고 sr_create_model이 super resolution 관련 모델 선언인듯?
+
+4-2
+create_gaussian_diffusion은 script_util.py의 create_model_and_diffusion함수에서 create_model과 같이 사용하는 함수이다
+※ 매개변수도 같은 방식으로 조달한다 매개변수의 시작에 빈 asterisk가 존재하는데, 이는 bare asterisk라는 방식으로 asterisk 뒤의 매개변수는
+기명으로만 접근가능하게하는, 개발자 편의성을 위한 문법적요소이다. https://this-programmer.tistory.com/503
+매개변수들은 후술
+여기서 필요한 함수나 클래스는 대부분 gaussian_diffusion.py의 폴더에서 가져온다
+betas는 gd에서 noise_schedule과, steps를 주고 β 즉 잡음비(= 분산)를 가져오는것이다. (신호비는 재매개변수화트릭으로, cumprod로 만든다)
+아래의 if-elif-else 구문은 매개변수 use_kl, rescale_learned_sigmas를 가지고 LossType class를 설정하는것
+-> 변분 하한등의 수학적 이론과, rescale_leanned_sigmas가 대체 뭔지나 알아보자, 내용 자체는 오차 함수인것같다
+{ // timestep을 가지고 재처리를 하는모양, timestep 매개변수가 None이라면 [steps]를 사용한다
+timestep_respacing 매개변수는 steps와 함께 respace.py에 space_timesteps함수의 매개변수로 들어가게된다
+해당 함수의 주석에서
+원래 확산 과정에서 사용되던 timesteps의 list를 만듭니다. 원래 확산 과정에서 동일한 크기의 부분에서 사용할 시간 단계수가 저장됩니다.
+예를들어, 300회의시간 단계가 있고 section 수가 [10, 15, 20]이면 처음 100회는 10회, 두 번째 100회 스텝은 15회, 세번 째는 20회
+스텝이 됩니다. stride가 ddim으로 시작하는 문자열일 경우, DDIM논문에서의 고정 striding이 사용되고 단 하나의 섹션만이 혀용됩니다.
+-> section_counts가 list일 경우, timesteps를 len(section_counts)로 나눈 다음 각각의 num_timesteps를 list의 값으로 대체하고
+"ddim"으로 시작하는 문자열은 뭔가 특별한 작업을 해준다. 이게 정확하게 뭘 의미하는건???지는모르겠다 -> IDDPM 논문을 다시 읽어보자, 이게 대체 뭔...???
+section_counts가 string일경우 다음의 코드가 실해오딘다. desired_count는 "ddim"뒤가 몇 글자인지 세어주는 변수이다.
+1부터 timesteps-1까지를 for문으로 순회하며 if문을 하나 돌린다. 해당 if문의 내용은 이러하다.
+만약 0부터 num_timesteps까지를 i씩 순회(range(0, num_timesteps, i))할 때의 길이가 desired_count라면, 해당 range로 만든 set을 반환한다.
+※ 정수로 안나오면 raise로 오류처리함
+??? 이상적인 횟수를 정해놓고, 거기 맞춰서 set을 반환하는모양, 이건 SpacedDiffusion(GaussianDiffusion을 상속함)에서 사용되는데, 그 때 알아보자
+만약 section_count문자이나 ddim으로 시작하지 않고 콤마로 구분된 문자열이라면, 이를 잘라 int list로 만들어준다
+어쨌가어나 section_counts로 정수 list가 됐다면 len으로 timesteps를 자르고(몫과 나머지는 각기 다른 변수명이다)
+list 내부의 값으로 한 번에 몇 단계씩 건너뛸지 (값이 10이면 0, 10, 20...)를 index를 쭉 지정해주고, 이걸 한 list에 담아서 반환한다
+요약: 확산 단계를 재가공하는 함수이다. 0부터 최종단계까지 몇 단계식 건너뛸지에 관한 내용이 반환된다.
+}
+use_timesteps, 아까 만든 betas(= 잡음비)가 첫 두 매개변수이며 model_mean_type이 다음 매개변수인데
+이는 create_gaussian_diffusion의 predict_xstart의 값에 따라 EPSILON과 START_X 둘로 나뉜다.(해당 클래스 자체는 gd에 존재)
+
 
 
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
