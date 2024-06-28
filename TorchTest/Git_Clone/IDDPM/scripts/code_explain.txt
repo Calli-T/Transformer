@@ -276,6 +276,33 @@ list 내부의 값으로 한 번에 몇 단계씩 건너뛸지 (값이 10이면 
 }
 use_timesteps, 아까 만든 betas(= 잡음비)가 첫 두 매개변수이며 model_mean_type이 다음 매개변수인데
 이는 create_gaussian_diffusion의 predict_xstart의 값에 따라 EPSILON과 START_X 둘로 나뉜다.(해당 클래스 자체는 gd에 존재)
+※ 여러 class가 열거형으로 작성되었으며, ModelMeanType도 그러하다. Python의 enum.Enum을 상속하였다.
+이는 문자 그대로 해석하면 모델평균의 타입이며, 이에관한 주석은 gd의 class GaussianDiffusion에 서술되어있다.
+다음 매개변수는 model_var_type인데, 이는 매개변수 sigma_small에 따라 FIXED_LARGE와 FIXED_SMALL로 나뉜다.
+loss_type과 rescale_timesteps는 받아온 그대로 다시 매개변수로 넣는다.
+{ // Diffusion Classes
+class Space_diffusion:
+반환하는 클래스는 class SpaceDiffusion이다. __init__에서 use_timesteps를 제외한 매개변수를 다시금 base_diffusion(self아님!)에 넣고
+for 문으로 순회한다, for문의 내용은 가져온 timesteps 집합에 대하여(space_timesteps으로 가져온!) 일치하는 index가 보이면 betas를 계산한다
+alpha_cumprod자체는 base_diffusion의 __init__에서 계산되며, 이를 기반으로 새로운 β값(잡음비)을 계산해준다. 이 과정에서 self.에
+timestep_map 리스트를 만들고 갱신되는 timestep의 index를 기록해두며, 갱신된 kwarg[betas]와 여타 kwarg를 가지고 부모 클래스의 __init__을
+작동시킨다
+space_diffusion의 함수 p_mean_variance/training_losses는 model과 매개변수, 키워드 매개변수를 모두 들고 함수 _wrap_model을 내부적으로
+사용하며, _wrap_model함수는 _WrappedModel 클래스(아래에 선언됨)을 내부적으로 사용한다.
+이는 오버라이딩 된 메서드로 원본 메서드와 보이는 차이는 거의 없고, model을 래핑된 모델로 사용한다.
+추가로, _scale_timesteps도 오버라이딩 되었는데 별 차이는 없고, timesteps에 관계된 메서드 같으나 래핑 클래스에서 처리하므로 이를 무시하도록
+메서드가 짜여있다.
+class _WrappedModel: 모델을 래핑하는 클래스이다
+model, 위의 __init__에서 만든 timestep_map/original_num_steps, rescale_timesteps(원래 가진 클래스의 필드임)를 매개변수로 가져간다.
+_Wrap의 __init__에서는 해당 매개변수를 self.로 필드로 가져간다. __init__ 외에는 __call__이 작성되어있다.
+__call__은 말그대로 Model 클래스가 호출되었을 때 사용되며, 그 내용은 다음과 같다 ???????? -> 뭔가 적혀있으나 지금 시점에서는 알 수가 없으므로
+코드의 흐름을 따라가면서 알아보자
+gaussian_diffusion.py파일의 함수와 클래스에 관하여,
+첫 두 함수는 확산 스케줄에 관한 내용이다. 세 클래스는 각각 평균, 확산, 오차함수에 관한 내용이며, 자세한 내용은 코드를 통해서 확인해야한다. 그 외에
+class GaussianDiffusion: 이름은 가우시안(정규)확산이며, train_util.py의 TrainLoop 코드의 여러 장소에서 사용되므로 학습용 클래스로 추측한다.
+
+}
+
 
 
 
