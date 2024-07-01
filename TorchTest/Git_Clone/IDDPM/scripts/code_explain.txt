@@ -300,8 +300,32 @@ __call__은 말그대로 Model 클래스가 호출되었을 때 사용되며, �
 gaussian_diffusion.py파일의 함수와 클래스에 관하여,
 첫 두 함수는 확산 스케줄에 관한 내용이다. 세 클래스는 각각 평균, 확산, 오차함수에 관한 내용이며, 자세한 내용은 코드를 통해서 확인해야한다. 그 외에
 class GaussianDiffusion: 이름은 가우시안(정규)확산이며, train_util.py의 TrainLoop 코드의 여러 장소에서 사용되므로 학습용 클래스로 추측한다.
-
+호출하는 순서는 image_train.py의 main() -> script.util.py의 create_model_and_diffusion() -> 같은 파일의 create_gaussian_diffusion()
+-> respace.py의 SpacedDiffusion class -> 의 부모 클래스인 GaussianDiffusion class (gaussian_diffusion.py의)
+{ # __init__에선 뭘하나?
+__init__에서 betas와 type들은 호출한 함수에서 가져오거나, 상속한 부모 클래스에서 처리해주며,
+rescale_timesteps는 실행 매개변수로 받으며(default True) 이를 기반으로 _Wrapper class에서 처리하고, GD class에서 사용된다
+모든 매개변수가 self.의 필드로 들어가며, betas는 넘파이로 변환하여 사용한다. (betas(잡음비)는 [0, 1] 값의 1차원 배열로 강제된다)
+self.num_timestep선언부터, 하단의 코드 7줄은 SpaceDiff의 new_betas를 만드는 것으로 추측한다.
+alphas의 cumprod는 a_bar를 구현하는 과정이며, alpha_prev와 alpha_next는 이전, 다음 단계의 a_bar 값을 쉽게 가져오기 위함으로
+추측한다(크기 자체는 같으며 넘파이 리스트의 끝이나 시작을 하나 떼고 1.0 or 0.0 값을 붙이는 것으로 만듬, 단계적 잡음제거된 이미지를 만들 때 사용)
+???
+아래 sqrt는 alphas_cumprod(=a_bar)값의 제곱근이나, one_minus, log, recip, recipm1값은 뭐에 사용하는지 모르겠다
+-> 코드를 보고 확인해보자???
+-> 이거 일단은 self.의 필드라서 클래스 내부에서 사용하기는함
+-> 일단은 x_{t-1}에서 x_t의 확산과 others?를 계산한다고한다
+-> 어느 코드의 설명에는 5줄 중 위 2줄에만 정방향 확산 과정의 q(X_t|x_0)를 써놨다
+(실제 Song et al..2020의 수식에도 로그에 관한내용은 없더라)
+그 아랫줄부터 posterior~~~코드는 posterior(후부라고하는데, 사후확률을 의미하는듯?)를 계산한다고 한다.
+-> https://kyujinpy.tistory.com/123 여기에 lucidrains의 DDPM코드 설명이 있으며, 이것과 유사하니 참고과 될 만할것같다
+-> 해당 논문 해석에 따르면, 놀랍게도, beta_t는 논문에서 '간단하게' 분산으로 쓰자고 제안된것
+-> 원래 식은 beta_t에 (1-alpha_hat_prev)/(1-alpha_hat)를 곱한것....!!!
+-> 즉, 잡음비 구하는 공식이 약간 다름
+-> 그 외에도 로그를 사용하고, 클리핑이 들어가있는 분산/평균을 사용하는 '앙증맞은' 트릭이 존재한다.
+-> 루시드레인 논문... 읽어야한다
+-> 답이없으니 for_math에 있는걸 모두 읽고 이해해보자, 안그래서야 논문의 내용은 커녕 함수가 뭔지도 모르겠다
 }
+초기화 이후의 함수 중 바로 아래에 있는건
 
 
 
