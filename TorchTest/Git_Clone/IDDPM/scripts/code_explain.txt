@@ -366,6 +366,22 @@ cuda_available하다면, 반드시 use_ddp를 하는모양, cuda가 아니면 se
 }
 아래의 함수 _load_and_sync_parameters/_load_ema_parameters/_load_optimizer_state 는 각각 model load용인듯
 _setup_fp16은 16bit 부동 소숫점으로의 변환인듯?
-{ # run_loop
 
+{ # run_loop()
+run_step()을 호출하는 코드와 그 외 코드들이다. while로 반복하는데, 조건이 좀 특이하다
+아래 코드는 일종의 더미? 데이터가 아니겠는가/openai가 제공하는 모델중에 lr_anneal_steps를 쓰는 모델이 존재하지를 않음
+                    (not self.lr_anneal_steps) or (self.step + self.resume_step < self.lr_anneal_steps)가 while의 조건인데
+                    조건 자체는 어닐링 스탭이 0이거나 전체 돌린 epoch가 어닐링 스탭보다 작을 경우 둘 중 하나만 만족해도 동작하는데,
+                    0으로 주어 무한으로 돌리거나, 어닐링 스탭을 epoch 대용으로 사용하는 2가지 경우가 아닌가 싶다
+                    하지만 어째선지, run_step()은 optimize_normal()를 호출하고 이는 _anneal_lr()를 호출한다 그리고 _anneal_lr()에서는
+                    어닐링 스탭 값이 0일 때는 아무것도 안하지만 돌린 횟수(== self.step + self.resume_step)를 어닐링 스탭 값으로 나눳을 때
+                    lr의 감쇠가 일어나도록 짜여있다. 즉, 최종적으로 돌릴 횟수가 어닐링 스탭보다 큰 것을 상정하는데, run_loop()의 while조건과는
+                    맞지 않는 코드라 동작하지 않으니, self.step이나 self.resume_step의 흐름을 확인할 필요가 있다.
+
+batch, cond는 next(self.data) -> 이건 yield로 만들어진 데이터로더 가져오기           (최종적으로 GD의 training_losses에서 class가 없는 경우라도 동작하도록 짜여있음)
+
+self.run_step()을 호출하고 거기서 동작함
+    { # self.run_step(self, batch, cond)
+
+    }
 }
