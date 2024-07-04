@@ -326,21 +326,6 @@ alphas의 cumprod는 a_bar를 구현하는 과정이며, alpha_prev와 alpha_nex
 -> 답이없으니 for_math에 있는걸 모두 읽고 이해해보자, 안그래서야 논문의 내용은 커녕 함수가 뭔지도 모르겠다
 }
 
-
-
-
-
-
-# 그 사이 내용을 적도록하자
-
-
-
-
-
-
-
-
-
 이후는 뭐가 뭔지 알 수 없으니 방법을 달리해서, guassian diffusion에 있는 함수들은 어디에서 쓰이는지 추적해서 역으로 사용법을 추적하자
 { # image_train.py 즉 학습 과정에서 사용하는 GD class의 함수들
 image_train.py에서 diffusion instance를 만들었다면 이를 train_util.py의 TrainLoop class의 instance를 선언할 때
@@ -356,7 +341,31 @@ image_train.py에서 diffusion instance를 만들었다면 이를 train_util.py�
 ddim쪽도 거의 유사하나, 끝에서 p_mean_variance를 호출하고, 호출 이후 같은 함수에서 _predict_eps_from_xstart()를 사용한다
 }
 
-
 + model.to(dist_util.dev()) 이 코드는 디바이스 선택과 MPI 설정 등 작업
+++ load_data는 전용 데이터로더 클래스인듯, torch의 dataloader인것은 맞고 특이사항으로 결정론적 옵션을 받아 shuffle여부를 정한다
+클래스라벨이 존재하는지도 따지는듯, 그리고 yield로 로더에 있는거 하나씩 꺼내주는 방식이다
++++ resample.py의 코드는 뭔지 정확하게는 모르겠으나, 옵션으로 uniform과 loss-second-moment가 있다.
+아무래도 학습에 사용할 무작위 확산 시간(신호비?)을 샘플링하는 과정인듯 ???
+(alpha_cumprod는 [0, 1]사이의 값을 여러번 곱한것이라 결과도 [0, 1]사이로 나온다 -> uniform함수사용, loss-s-m은 뭔지 모르겠음)
 
 5. TrainLoop
+train.util.py의 class TrainLoop가 학습이 실제로 이루어지는 클래스이다
+매개변수는 모르는 것은 없으나 몇몇 특이한 사용례에 주의하면서 코드 분석해볼것
+{
+__init__에서는 매개변수를 self의 필드로 집어넣으나, 몇몇 특이사항이 존재한다
+microbatch < 이거 batch_size랑 비교해서 얘가 더 크면 batch_size로 self에 넣는 모양, 아마 배치를 잘게 나누어쓰는듯
+self.ema_rate는 string으로도 가능한 모양이다, string의 경우 , split해서 리스트로 쓰고, 아니어도 리스트 자체는 사용함
+schedule_sampler는 주어진 경우가 아니면 그냥 UniformSampler쓴다, 특이하게도, 매개변수가 diffusion(GD class)이다
+global_batch도 좀 특이한데, 분산처리용 torch하위 라이브러리 torch.distributed의 기능을 사용해 batch_size의 n배로 만든다
+INITIAL_LOG_LOSS_SCALE는 기본값이 20, 뭔지 모르겠다??? lg_loss_scale로 사용함
+model_params나 model에서 .parameters()로 가져오고 master_params는 model_params에서 가져오는데, 뭔 차이인지 모르겠다
+최적화 함수는 opt이며 self.master_params가 들어간다, AdamW사용
+resume_step이 학습하다가만걸 다시 학습하는 코드인듯, 관련 코드가 load어쩌고
+DistributedDataParallel는 여러 GPU를 병렬하는 코드인 모양, 이게 기본 세팅이고 하나있는 gpu도 이대로 가는듯?
+cuda_available하다면, 반드시 use_ddp를 하는모양, cuda가 아니면 self.ddp_model = self.model이며 cuda인경우 DDP로 래핑함
+}
+아래의 함수 _load_and_sync_parameters/_load_ema_parameters/_load_optimizer_state 는 각각 model load용인듯
+_setup_fp16은 16bit 부동 소숫점으로의 변환인듯?
+{ # run_loop
+
+}
