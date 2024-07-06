@@ -382,6 +382,47 @@ batch, cond는 next(self.data) -> 이건 yield로 만들어진 데이터로더 �
 
 self.run_step()을 호출하고 거기서 동작함
     { # self.run_step(self, batch, cond)
+        순전파역전파 -> 하강최적화함수 -> 로그따기 순서로 진행함
+        { # forward_backward
+            zero_grad(model_params)시작 (※ 해당함수는 fp16_util.py에 있으나 딱히 16bit fp랑 관련있어보이지는 않음)
+            해당 함수는 param.grad를 detach_하고 zero_함 (grad 기울기 자동 추적 삭제 및 텐서를 0으로 초기화)
 
+            이후 for문으로 batch_size/micro_batch만큼 순회함(※ 배치를 마이크로 배치만큼 나눠서 처리하는게 사실인듯)
+            micro, micro_cond는 데이터와 라벨을 마이크로 배치만큼 잘라서 가져오는 작업 (※last_batch는 boolean type으로, 이름 그대로의 역할임)
+
+            t, weights를 가져온다. 이는 resample.py의 Uniform sampler를 참고하여 보면 다음과 같은 행동을 한다
+            -> [0, num_timesteps) 범위안의 정수를 가지고 길이가 batch_size인 indices와 같은 길이의 1로 차있는 텐서 weights를 반환한다
+            micro.shape[0] 마이크로 배치의 크기이므로 해당 크기만큼처리함
+
+            이후 GD class의 training_losses함수를 호출하는데
+            ddp로 wrapping된 모델과, 배치에서 잘라낸 마이크로 배치와, indices와, (존재한다면) 마이크로 크기로 잘라낸 라벨들을 매개변수로 한다
+                { # 오차 계산
+                    주석에 보니 단일 타임스텝에 대하여 오차를 계산한다고 한다
+                    if model_kwargs가 None(= 라벨 없으면) 빈 {}로 처리한다
+                    noise는 호출 때 넣어주지 않았는데, 따라서 None이며, x_start(여기선 마이크로 배치) 크기만큼의 0~1사이 노이즈를 만들어준다 ???
+                    ※ 주석을 보니 이게 값이 지정된 경우면 제거하려는 특정 가우시안 노이즈라고한다...???
+                    q_sample을 사용하여 x_t를 뽑아낸다, 이 때 매개변수로 배치, 인덱스, 노이즈가 주어진다
+                    {   # q_sample
+                        주어진 확산 단계 수만큼 데이터를 확산시킨다고 하는데, 정황상 얘가 정방향 프로세스인듯
+                        q(x_t | x_0)라고 한다
+                        재매개변수화 트릭이 적용된 정방향 확산 과정은x_t = sqrt(alpha_t_bar) * x_0 + sqrt(1-alpha_t_bar) * ε 이며,
+                        반환값은
+                        _extract_into_tensor(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start
+                        + _extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
+                        * noise 인것으로 보아
+                        정방향 확산 과정이 맞는것으로 추측된다
+                        { # _extract_into_tensor
+                            매개변수명이 arr,timesteps,broadcast_shape이며 각각 신호비 분산값의 제곱근(아래의 경우 1-alpha의 제곱근), 인덱스, x_0의 shape인데
+                            코드가 약간 세밀하게 볼 포인트가 몇 군데 존재한다
+                            일단 텐서로 변환시키는거 까지는 별 문제없으나 [timesteps]로 가져오는것을 확인할 수 있다
+                            이 때, timesteps로 들어온 값은 forward_backward()에서 sampler로 가져온 t(=indices)값인데, 이 값을 통하여
+                            얼마만큼의 alpha_t_bar값을 가질건지를 배열에서 가져오는 모양이다(일종의 fancy indexing인듯, 텐서도 그게 되나?)
+                            (broadcast_shape으로 들어온건 x_0.shape즉 [N, C, ...] 텐서인데, res와 broadcast의 shape을 보고 차원(축)을 맞춰주는 코드가 따로 있다)
+                            반환 할 때는 res를 expand(https://pytorch.org/docs/stable/generated/torch.Tensor.expand.html#torch-tensor-expand)하여 반환한다
+                            아마 이미지 채널, 픽셀 값에 각각 곱해주기 위해 차원을 늘리는 모양
+                        }
+                    }
+                }
+        }
     }
 }
