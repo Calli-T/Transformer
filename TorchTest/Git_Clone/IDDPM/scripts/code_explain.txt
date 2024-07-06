@@ -396,7 +396,7 @@ self.run_step()을 호출하고 거기서 동작함
 
             이후 GD class의 training_losses함수를 호출하는데
             ddp로 wrapping된 모델과, 배치에서 잘라낸 마이크로 배치와, indices와, (존재한다면) 마이크로 크기로 잘라낸 라벨들을 매개변수로 한다
-                { # 오차 계산
+                { # training_losses
                     주석에 보니 단일 타임스텝에 대하여 오차를 계산한다고 한다
                     if model_kwargs가 None(= 라벨 없으면) 빈 {}로 처리한다
                     noise는 호출 때 넣어주지 않았는데, 따라서 None이며, x_start(여기선 마이크로 배치) 크기만큼의 0~1사이 노이즈를 만들어준다 ???
@@ -420,8 +420,19 @@ self.run_step()을 호출하고 거기서 동작함
                             (broadcast_shape으로 들어온건 x_0.shape즉 [N, C, ...] 텐서인데, res와 broadcast의 shape을 보고 차원(축)을 맞춰주는 코드가 따로 있다)
                             반환 할 때는 res를 expand(https://pytorch.org/docs/stable/generated/torch.Tensor.expand.html#torch-tensor-expand)하여 반환한다
                             아마 이미지 채널, 픽셀 값에 각각 곱해주기 위해 차원을 늘리는 모양
+                            요약 -> q(x_t|x_0)를 위한 alpha값을 텐서모양에 맞게 뽑아준다. 사실 numpy 값으로 텐서 뽑아주는 함수인듯
                         }
                     }
+
+                    Bits per dimension(BPD): 음의 로그 가능도 / (C * H * W), 낮을 수록 정규 분포에 근접함
+                    terms와 if문의 내용을 정확히는 모르겠으나, VAE와 관련 있는 내용으로 추측한다
+                    일단 내용은 다음과 같다 self.loss_type이 KL이거나 rescaled_KL이라면 _vb_terms_bpd함수를 사용하여 term["loss"]를 채운다
+                        {   # _vb_terms_bpd
+                            주석에는 Get a term for the variational lower-bound. 즉 변분하한에 대한 항을 구한다고 한다
+                            결과 단위는 비트라고한다(다른 논문과 비교로 이어진다?)
+
+                        }
+                        이거 losstype이 언제 설정되는지랑, 변분추론에 관해서를 다시 알아보자
                 }
         }
     }
