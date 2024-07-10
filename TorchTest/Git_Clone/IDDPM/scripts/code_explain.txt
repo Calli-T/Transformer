@@ -428,17 +428,36 @@ self.run_step()을 호출하고 거기서 동작함
                     terms와 if문의 내용을 정확히는 모르겠으나, VAE와 관련 있는 내용으로 추측한다
                     일단 내용은 다음과 같다 self.loss_type이 KL이거나 rescaled_KL이라면 _vb_terms_bpd함수를 사용하여 term["loss"]를 채운다
                         {   # _vb_terms_bpd
-                            주석에는 Get a term for the variational lower-bound. 즉 변분하한에 대한 항을 구한다고 한다
-                            결과 단위는 비트라고한다(다른 논문과 비교로 이어진다?)
-                            자세한 수학적 이론은 뒤로하고, 뭘 구하는지나 알아보자
+                            변분 바운드와 비트 당 손실을 계산하여 모델 학습의 손실을 평가하는 역할(by gpt)
+
                             true_mean, _, true_log_variance_clipped를 어느 함수로 가져온다
                             {   # q_posterior_mean_variance
                                 해당 함수는 x_0/x_t/timestep을 매개변수로 하여 x_t-1(diffusion posterior)의 평균과 분산을 구한다고 한다
+                                구한다음 이를 KL 발산으로 뭔가 처리를 하는데, 이건 나중에 논문을 좀 더 자세히 들여다 보기로하고 뭘 구하는지나 알아보자
+
+                                이 함수의 용도를 gpt에 물어본 결과,
+                                후방 분포(베이지안 통계학에서 x_t와 x_0가 주어졌을 때 사후 확률)를 구하여
+                                역방향 확산 과정을 지원하는데 사용한다.
+                                자세한 내용은 note.txt에 서술
+
+                                후방 분포 q(x_t|x_t, x_0)의 평균은 coef1에 x_0를, coef2에 x_t를 곱하여 더하는 것으로 계산된다
+                                그 계수들은 시간단계 t로 가져오며, 해당 계수를 만드는 방법은 논문 2페이지의 (10)과 (11)번 수식에 존재한다
+                                베이지안 이론에 의하여, 후방 분포와 잡음비와 평균은 다음과 같이 계산한다
+                                wave(물결표)_beta_t = beta_t * (1 - alpha_bar_t-1)/(1-alpha_bar_t) ※ bar은 cumprod를 의미
+                                wave_μ_t(x_t, x_0) = x_0 * (sqrt(alpha_bar_t-1) * beta_t)/(1 - a_t_bar)
+                                                    + x_t * (sqrt(alpha_bar_t) * (1 - a_bar_t-1)/(1 - a_t_bar)
+                                q(x_t-1|x_t, x_0) = N(x_t-1; wave_μ(x_t, x_0), wave_beta_t*I)
+
+                                _extract~~~ 함수에 들어가는 coef들을 보면, 해당 식과 일치한다
+
+                                posterior varience도 같은 값이긴 하나 log를 붙여 사용하는 self.posterior_log_variance_clipped같은 경우에는
+                                log 0이 존재하지 않기 때문에, [1]번의 log 값을 사용해 [0]번을 갈음하여 사용한다
                             }
 
-
+                            {   # p_mean_variance
+                                해당 함수는 p
+                            }
                         }
-                        이거 losstype이 언제 설정되는지랑, 변분추론에 관해서를 다시 알아보자
                 }
         }
     }
