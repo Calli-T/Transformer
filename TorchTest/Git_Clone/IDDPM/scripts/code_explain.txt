@@ -430,6 +430,12 @@ self.run_step()을 호출하고 거기서 동작함
                         {   # _vb_terms_bpd
                             주석에는 Get a term for the variational lower-bound. 즉 변분하한에 대한 항을 구한다고 한다
                             결과 단위는 비트라고한다(다른 논문과 비교로 이어진다?)
+                            자세한 수학적 이론은 뒤로하고, 뭘 구하는지나 알아보자
+                            true_mean, _, true_log_variance_clipped를 어느 함수로 가져온다
+                            {   # q_posterior_mean_variance
+                                해당 함수는 x_0/x_t/timestep을 매개변수로 하여 x_t-1(diffusion posterior)의 평균과 분산을 구한다고 한다
+                            }
+
 
                         }
                         이거 losstype이 언제 설정되는지랑, 변분추론에 관해서를 다시 알아보자
