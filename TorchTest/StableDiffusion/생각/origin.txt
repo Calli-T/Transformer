@@ -30,6 +30,10 @@ https://github.com/openai/guided-diffusion
 Raw Data
 중요하지만 다 살펴보지 못한 정보들
 
+https://jang-inspiration.com/ddpm-2
+https://jang-inspiration.com/ddpm-1
+DDPM 손실 함수에 대해 알아보자
+
 확산 스케줄 옵션에 관하여
 허깅 페이스의 스케줄러 구현체
 https://huggingface.co/docs/diffusers/ko/using-diffusers/schedulers
