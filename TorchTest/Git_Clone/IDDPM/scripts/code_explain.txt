@@ -482,7 +482,20 @@ self.run_step()을 호출하고 거기서 동작함
 
                     뭐 어떤식이건 간에 terms를 반환하면 끝이다
                 }
+            compute_losses 함수로 손실을 계산하나, (마지막 배치 혹은 ddp를 사용하지 않을 경우) ddp_sync관련 작업을 추가해준다
 
+            (샘플러가 LossAwareSampler인 경우, 뭔가 추가작업을 해주는 모양이다???)
+
+            이런 저런 작업이 끝나면 losses에 평균 내서 로그 따주고 역전파한다
         }
+        끝났으면 log_step으로 로그 따준다, 여기까지가 run_step()
     }
+    step 했으면 간격보고 로그따고, 세이브따고,
+    while 끝났으면 세이브 또 딴다
+
+    추측) while에서 batch를 꺼내는 형상을 보니 1step에 data 전체를 돌리는게 아니라 배치 간격만큼만 돌리는 모양, 그 무식한 반복횟수가 이해되는 부분이다
+    모든 배치를 완벽하게 돌리는 것도 아닌 모양이다
+
+    ※ https://discuss.pytorch.org/t/infinite-dataloader/17903/8
+    무한 데이터로더에 관한 파이토치글, for문으로 반복하도록 적혀있는데, 코드에서는 while True로 무한 반복하는 것으로 보아 배치가 무한하게 돌아가는듯
 }
