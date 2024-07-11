@@ -474,11 +474,15 @@ self.run_step()을 호출하고 거기서 동작함
                             그 외에는 모델로 에측한 pred_x_0가 같이 반환된다
                             즉 오차 한 종류가 output으로 예측된 이미지 하나가 pred_xstart라는 이름으로 반환된다
                         }
+                    _vb함수로 가져온 terms["loss"]에는 오차가 담겨있다, RESCALED의 경우 이를 N배 처리하는 모양
 
-                오차 종류는 script_util의 use_kl와 매개변수로 지정된다
-                0710일에는 4번 push 함
-                kl 안쓸 때는 MSE를 쓰는데 정확히 뭔짓을 하는건지 확인해볼것
+                    반면 self.loss_type이 MSE 계열인 경우 model에서 output을 뽑아다 그걸로 loss를 처리하는 모양
+                    모델분산타입이 LEARNED인 경우, mse항과 vb항을 더한것이 loss이고 아니면 그냥 mse만 loss로 들어가는 모양이다
+                    ??? 자세한 코드는 나중에
+
+                    뭐 어떤식이건 간에 terms를 반환하면 끝이다
                 }
+
         }
     }
 }
