@@ -1,0 +1,26 @@
+생성의 경우
+image_sample.py로 시작함
+
+순서
+{ # main()
+    매개변수 파싱 방법은 train과 거의 유사함
+    setup_dist()도 train과 동일함
+    로그도 따줌 (train과 다르게 출력 폴더 명 지정도 여기서함)
+
+    model, diffusion 가져오는 create_model_and_diffusion나 매개변수도 train의 방식과 유사함
+
+    model의 매개변수를 추가로 load해주고, eval모드로 바꿈
+
+    while문으로 뽑고 싶은(=num_samples) 수 만큼 반복
+    while문의 내용은 다음과 같다
+    {
+        클래스(라벨)이 존재한다면, 뽑을 그림 수만큼 랜덤으로 int 값을 뽑아준다(즉, 클래스는 무작위로 고른다, 나중에 옵션같은거 추가 가능할듯?)
+        샘플에 사용할 (GD 클래스의) 함수는 매개변수에서 ddim 사용여부를 통해 p_sample_loop나 ddim_sample_loop로 갈린다
+        이하의 코드는 전부 후처리이며, sample_fn이 핵심이다
+
+        매개변수로 model, 크기(NCHW순이다), clip_denoised???, 그 외 model_kwargs(라벨명도 여기 들어있음)를 주어 생성한다
+        { # p_sample_loop
+
+        }
+    }
+}
