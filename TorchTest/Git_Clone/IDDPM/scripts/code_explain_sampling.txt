@@ -19,8 +19,40 @@ image_sample.py로 시작함
         이하의 코드는 전부 후처리이며, sample_fn이 핵심이다
 
         매개변수로 model, 크기(NCHW순이다), clip_denoised???, 그 외 model_kwargs(라벨명도 여기 들어있음)를 주어 생성한다
-        { # p_sample_loop
+        {   # p_sample_loop, class GaussianDiffusion의 함수이다. 주석에는 모델로부터 샘플을 만든다고 되어있다.
+            for문이 p_sample_loop_progressive 대체 돌아가며, 해당 함수는 yield로 제작되었다.
 
+            {   # p_sample_loop_progressive, 주석에는 p_sample_loop와 같은 매개변수를 가지고, 확산의 타임스탭별로 각각의 중간 샘플을 만들어낸다고 적혀있다.
+                p_sample()의 반환 값인 dictionary에 대한 generator를 반환한다고 한다
+
+                device 매개변수가 None이면 model에서 param을 꺼내와서 거기서 device를 맞춘다
+                assert는 shape가 tuple이거나 list임을 강제한다
+                noise가 None이 아니라면, img(아마 시작 이미지일것이다)는 noise로 대입한다. None이라면, 표준 정규 분포에 따라 noise를 생성한것을 img에 대입한다.
+
+                indices는 num_timesteps을 range로 하고, 이를 역방향으로 뒤집은 list로 만든다
+
+                progress는 true일경우 진행 상황을 알려주는 유틸 tqdm에 indices를 넣어 동작시킨다
+
+                indices list 내부의 값을 순회하는 for문을 동작시킨다, 해당 내용은 다음과 같다
+                timesteps에 맞는 텐서 t를 배치/장비에 맞게 만들고, 토치의 grad engine을 끈다음
+                p_sample에 model, img, t, clip_denoised, denoised_fn, model_kwargs를 매개로 하여 각 단계를 반환받으며, 이를 yield하는것이 loop함수이다
+                {   # p_sample # 주석에는 x_{t-1}를 주어진 타임스탭 t에대해 샘플링한다고함
+                    주석에 쓰인 설명 일부는 다음과 같다
+                    clip_denoised: True의 경우 x_0 예측을 [-1, 1] 사이로 클리핑
+                    denoised_fn: None이 아니라면, 샘플링에 사용되기 전 x_0 예측에 적용되는 함수 ???
+                    model_kwargs: None이 아니라면, 모델에 전달하여 컨디셔닝에 사용됨(※ 라벨 정보 들고왔음)
+                    return: 'sample'은 무작위 샘플이며, 'pred_xstart'는 x_0의 예측입니다.
+
+                    p_mean_variance를 사용해 결과를 출력한다, p_sample의 매개변수가 그대로 들어간다
+                    ※ 해당함수는 학습에도 사용된 함수이며, p(x_t-1|x_t)즉 직전 상태의 분포 p와 초기 x_0에 대한 예측을 반환한다
+
+                    p_mean_variance의 반환 값을 가지고 sample을 만든다
+                    sample은 x_t-1의 분포의 평균과, 표준 정규 분포에서 가져온 잡음을 표준편차(= 로그 분산에 0.5배한것을 exp에 넣어 만듬)에 곱한것을 더함으로 이루어진다
+                    ※ nonzero_mask는 마지막 타임스탭 t == 0에 대해, 잡음이 없으므로 안 더해주는 과정에서 잡음에 곱해지는 역할이다
+
+                    최종적으로 sample과 x_0에 대한 예측을 반환한다
+                }
+            }
         }
     }
 }
