@@ -1,0 +1,15 @@
+No 코딩 But 딸깍
+yolo task=segment mode=predict model=yolov8n-seg.pt source=./sonny.jpg project=./runs
+
+매개변수는 여기있음
+https://docs.ultralytics.com/usage/cfg/#train-settings
+
+코딩해서 쓰는법은 여기 있음
+https://docs.ultralytics.com/tasks/segment/#inference-sources
+predict하는법
+https://docs.ultralytics.com/modes/predict/#inference-sources
+결과물은 어떤 형태일까
+https://docs.ultralytics.com/reference/engine/results/#ultralytics.engine.results.BaseTensor.cpu
+https://docs.ultralytics.com/reference/engine/results/?h=ultralytics.engine.results.results#ultralytics.engine.results.Results
+
+https://csshark.tistory.com/191
