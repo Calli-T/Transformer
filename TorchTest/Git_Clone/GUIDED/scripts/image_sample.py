@@ -3,6 +3,16 @@ Generate a large batch of image samples from a model and save them as a large
 numpy array. This can be used to produce samples for FID evaluation.
 """
 
+# for recognize modules
+import sys
+
+sys.path.append("../")
+
+# for time
+import datetime
+
+# -----
+
 import argparse
 import os
 
@@ -24,7 +34,8 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    # logger.configure()
+    logger.configure("./outputs/" + datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -93,7 +104,7 @@ def main():
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
-        num_samples=10000,
+        num_samples=64, #10000,
         batch_size=16,
         use_ddim=False,
         model_path="",

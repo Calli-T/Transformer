@@ -3,6 +3,16 @@ Like image_sample.py, but use a noisy image classifier to guide the sampling
 process towards more realistic images.
 """
 
+# for recognize modules
+import sys
+
+sys.path.append("../")
+
+# for time
+import datetime
+
+# -----
+
 import argparse
 import os
 
@@ -27,7 +37,8 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    # logger.configure()
+    logger.configure("./outputs/" + datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
