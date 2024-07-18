@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import cv2
 from math import sqrt
 
-img_path = "./outputs/openai-2024-07-16-11-39-00-185773/samples_16x256x256x3.npz"
+# img_path = "./outputs/openai-2024-07-16-11-39-00-185773/samples_16x256x256x3.npz"
 
+img_path = "./outputs/openai-2024-07-16-11-39-00-185773/samples_16x256x256x3.npz"
 imgs = np.load(img_path, mmap_mode='r')
 
 imgs = imgs['arr_0']
