@@ -72,8 +72,22 @@
             전체적으로 호출-> 호출 하는 과정에서 cond_fn이 존재할 경우 샘플링 함수에서 다르게 처리하게 만드는거 말고는 IDDPM과 동일
         }
     }
+
+    5. 데이터로더
+    별 차이는 없으나 이미지 증강을 위한 자르기, 뒤집기 옵션이 추가로 생겼고 이에 맞춰 코드가 일부 추가되거나 변경되었다
 }
 
 {   # classifier_train.py
     주석: (ImageNet의?) 잡음낀 이미지에 대한 분류기를 학습합니다.
+
+    코드 상에서 image_train.py과의 차이는 다음과 같다
+
+    1. 매개변수 파싱
+    model_and_diffusion_defaults()를 쓰지 않고 classifier_and_diffusion_defaults()를 사용한다.
+    {   # classifier_and_diffusion_defaults()
+        일반 매개변수 리셋 함수랑 같은데, classifier_defaults 함수의 내용이 몇몇 추가된다. (분류기 모델 학습용 코드인듯???, 모델도 2개 동시에 사용함)
+        매개변수 내용은 여러가지가 있으나 모델 학습할 때 내용을 살펴보고 후술함
+    }
+
+    2. 병렬처리와 3. 로그 따기는 별 차이가 없어보인다
 }
