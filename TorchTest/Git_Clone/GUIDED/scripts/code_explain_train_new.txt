@@ -75,6 +75,11 @@
 
     5. 데이터로더
     별 차이는 없으나 이미지 증강을 위한 자르기, 뒤집기 옵션이 추가로 생겼고 이에 맞춰 코드가 일부 추가되거나 변경되었다
+
+    6. TrainLoop
+    fp16_util의 함수가 MixedPrecisionTrainer로 대거 통합됨, 모델의 패러미터나 저장이나 최적화 함수등 원래 하던 것들의 대부분이
+    해당 클래스의 인스턴스 self.mp_trainer로 선언되어 TrainLoop class의 필드로 들어가고, 이를 통해 처리된다
+    나중에 코드의 차이점을 자세히 살펴볼 필요가 있겠음 ???
 }
 
 {   # classifier_train.py
@@ -90,4 +95,8 @@
     }
 
     2. 병렬처리와 3. 로그 따기는 별 차이가 없어보인다
+
+    4. 모델과 확산 클래스 선언
+    create_model_and_diffusion()를 쓰지않고, create_classifier_and_diffusion() 사용한다
+    script_util.py의 create_classifier_and_diffusion부터 다시 시작
 }
