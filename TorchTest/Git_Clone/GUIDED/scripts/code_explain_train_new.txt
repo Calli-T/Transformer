@@ -84,6 +84,9 @@
 
 {   # classifier_train.py
     주석: (ImageNet의?) 잡음낀 이미지에 대한 분류기를 학습합니다.
+    classifier_sample에서 모델을 2개 꺼내쓰는것으로 보아, 확산 과정에서 잡음낀이미지를 분류하는 모델을 따로두어
+    해당 모델이 확산 모델을 돕도록 하는 것으로 추측
+    이 추측이 맞다면,
 
     코드 상에서 image_train.py과의 차이는 다음과 같다
 
@@ -99,4 +102,35 @@
     4. 모델과 확산 클래스 선언
     create_model_and_diffusion()를 쓰지않고, create_classifier_and_diffusion() 사용한다
     script_util.py의 create_classifier_and_diffusion부터 다시 시작
+
+    { # create_classifier_and_diffusion
+        해당 함수는 분류 모델과 확산 클래스를 반환한다
+        매개변수 파싱과정에서 classifier_defaults()으로 가져온 매개변수들이 분류기를 제작하는 create_classifier로 들어가 분류기를 제작한다
+
+        {   # create_classifier
+            반쪽짜리 UNet(EncoderUNet)을 반환하는 함수이다
+
+            채널에 곱해지는 수와 그 층의 개수는 이미지 크기에 따라 결정되도록 코드가 짜여있고,
+            다운 샘플링 매개변수는 여기에서 split 해서 넣는다
+
+            {   # class EncoderUNetModel
+                말그대로 인코딩 기능만 존재하는 UNet이다
+
+                ※ 일반 UNet과 공유하는 특이한 사항이 하나 발견되었는데, resblock_updown이라는 매개변수가 존재한다
+                해당 매개변수는 False일 경우에만 추가 다운/업 샘플링을 진행하는데, True의 경우에는 아무일도 일어나지 않는다,
+                그러나, ResBlock 자체에 다운/업 샘플링 기능을 내장하고 있고 매개변수 up과 down으로 이를 제어한다.
+
+                일반 UNet의 Input-middle블럭까지 존재한다.
+                그러나 끝에 풀링->flatten 하여 out_channels 만큼의 특징 벡터를 뽑아내는 층이 따로 존재하며,
+                그 방법도 adaptive, attention, spatial, spatial_v2로 다양하게 존재한다
+                이는 일반 UNet과 공유하지 않는 계층이며, 클래스 default 값은 adaptive이다,
+                그러나 매개변수 파싱에서의 값으로 덮어지며 이쪽은 기본값이 attention이다.
+                즉, 어텐션 메커니즘을 적용한 풀링으로 추측할 수 있다.
+            }
+        }
+
+        반환은 classifier와 diffusion을 반환한다.
+    }
+
+
 }
