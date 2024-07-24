@@ -166,4 +166,8 @@
     위 mp_trainer랑 호환이 되는 모양이다
     IDDPM의 경우 train_util.py의 trainLoop에 존재하던 코드이다. (classifier 말고 확산 모델 자체는 아직도 TrainLoop 내에서 래핑하긴 한다)
     아무래도 classifier의 학습에 관한 사항은 classifier에 대부분 집어 넣은듯하다
+
+   data_loader는 생략
+   특이사항으로는 validation data를 다른 디렉터리에 냅두는것이 가능하고 관련 args의 매개변수도 존재함
+
 }
