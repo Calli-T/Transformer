@@ -45,16 +45,18 @@ class ScheduleSampler(ABC):
 
         :param batch_size: the number of timesteps.
         :param device: the torch device to save to.
-        :return: a tuple (timesteps, weights):
+        :return: a tuple (timesteps, weights):8
                  - timesteps: a tensor of timestep indices.
                  - weights: a tensor of weights to scale the resulting losses.
         """
         w = self.weights()
         p = w / np.sum(w)
+
         indices_np = np.random.choice(len(p), size=(batch_size,), p=p)
         indices = th.from_numpy(indices_np).long().to(device)
         weights_np = 1 / (len(p) * p[indices_np])
         weights = th.from_numpy(weights_np).float().to(device)
+
         return indices, weights
 
 

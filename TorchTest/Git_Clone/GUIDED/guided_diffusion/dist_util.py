@@ -24,6 +24,7 @@ def setup_dist():
     """
     if dist.is_initialized():
         return
+    # 여기!
     os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
 
     comm = MPI.COMM_WORLD
@@ -50,7 +51,7 @@ def dev():
         return th.device(f"cuda")
     return th.device("cpu")
 
-
+# 여기!
 def load_state_dict(path, **kwargs):
     """
     Load a PyTorch file without redundant fetches across MPI ranks.

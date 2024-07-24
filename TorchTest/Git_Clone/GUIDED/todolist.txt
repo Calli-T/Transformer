@@ -1,0 +1,30 @@
+일단 한 번 동작시켜보기
+IDDPM 코드 분석 보고 뭐가 바뀌었는지 확인하기
+
+
+-----------------------------------------------------------------------------------------------------
+모델 경로 scripts/models
+
+경로 설정
+/mnt/additional/projects/Transformer/TorchTest/Git_Clone/GUIDED/scripts
+
+그래픽 카드 설정
+export HSA_OVERRIDE_GFX_VERSION=10.3.0
+확인
+echo $HSA_OVERRIDE_GFX_VERSION
+
+For sampling
+이게 기본적으로 필요한 코드
+SAMPLE_FLAGS="--batch_size 4 --num_samples 16 --timestep_respacing 250"
+
+256x256 conditional
+MODEL_FLAGS="--attention_resolutions 32,16,8 --class_cond True --diffusion_steps 1000 --image_size 256 --learn_sigma True --noise_schedule linear --num_channels 256 --num_head_channels 64 --num_res_blocks 2 --resblock_updown True --use_fp16 True --use_scale_shift_norm True"
+python classifier_sample.py $MODEL_FLAGS --classifier_scale 1.0 --classifier_path models/256x256_classifier.pt --model_path models/256x256_diffusion.pt $SAMPLE_FLAGS
+
+
+LSUN bedroom 단일 클래스(unconditional)
+MODEL_FLAGS="--attention_resolutions 32,16,8 --class_cond False --diffusion_steps 1000 --dropout 0.1 --image_size 256 --learn_sigma True --noise_schedule linear --num_channels 256 --num_head_channels 64 --num_res_blocks 2 --resblock_updown True --use_fp16 True --use_scale_shift_norm True"
+python image_sample.py $MODEL_FLAGS --model_path models/lsun_bedroom.pt $SAMPLE_FLAGS
+
+LSUN은 샘플 플래그가 다음과 같은것이 좋다고함
+SAMPLE_FLAGS="--batch_size 4 --num_samples 16 --timestep_respacing 1000"

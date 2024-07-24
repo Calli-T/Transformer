@@ -60,3 +60,6 @@ gaussian_diffusion 파일을 참고할것
 https://roytravel.tistory.com/364
 
 깃 무시하는 파일 목록보기: git status --ignored
+
+pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/rocm5.4.2
+torch-rocm 다운받기

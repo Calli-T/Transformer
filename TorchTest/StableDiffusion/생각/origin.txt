@@ -48,3 +48,9 @@ https://velog.io/@jiyoung/%EB%85%BC%EB%AC%B8-%EB%A6%AC%EB%B7%B0-%EB%82%B4%EB%A7%
 
 guided 와 cfg
 https://pitas.tistory.com/15#article-2--text-conditioning%EC%9D%98-%EC%A4%91%EC%9A%94%EC%84%B1
+
+DDIM이란
+https://junia3.github.io/blog/ddim
+
+샘플러 종류
+https://www.internetmap.kr/entry/Stable-Diffusion-Samplers#overview

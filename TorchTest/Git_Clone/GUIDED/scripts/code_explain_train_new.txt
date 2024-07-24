@@ -132,5 +132,38 @@
         반환은 classifier와 diffusion을 반환한다.
     }
 
+    5. sampler
+    sampler를 만드는 함수는 동일한듯하다
+    그러나 args.noised True(default 값임)인 경우에만 동작하도록 되어있다.
+    아래 구간에 args.noised가 True 일 경우만 샘플링한다 ???
 
+    ※ Sampler의 경우, 주석에서는 중요도 샘플링(??? 통계학 용어인듯 알아보자)을 위한 타임 스탭을 가져온다고하는데, Uniform의 경우 동작 방식이 이렇다
+    diffusion_steps에 따라(기본 값 1000, 매개변수로 들어옴) (0, 해당값] 사이의 인덱스를 정한다음
+    (1/해당값) * index를 재매개변수화 트릭에 사용할 alpha_t_bar(=cumprod)즉 잡음 비로 사용하는것이다.
+    이 때 각 단계의 인덱스의 뽑힐 확률이 모두 동일하므로 Uniform인것으로 추측
+    요약: 이 sampler는 x_T의 잡음비(indices of alpha_cumprod)를 뽑는데 사용함
+
+    noise가 False일 경우 0으로만 도배되는데, 0단계의 잡음은 0이므로 아마 잡음이 없는 이미지를 훈련할 때의 경우로 추측함???
+
+    6. resume_step 관련 코드
+    학습 도중인 모델을 가져온 경우 단계와 매개변수를 가져온다
+    원래 다른곳에 있던 코드인데 분류기 모델 같은 경우는 학습도 그렇고 한 파일에서 모두 처리하는듯하다
+
+    7. sync_params
+    분산학습 관련 코드인듯???
+    나중에 알아보자
+    코드 자체는 다른 랭크에 텐서를 전파해서 모두에게 복사하는 코드이다
+    랭크는 프로세스 id를 의미하는듯하다
+    주석에는 바른 EMA와 fp16을 만드는데 필요하다가 되어있다. 이경우, 분산학습 관련코드가 아닐수도 있겠다???
+
+    8. class MixedPrecisionTrainer
+    분류기? EncoderUNet(= half unet + ffn)? 를 학습 시키는(x) 시키는데 필요한(o) 클래스이다.
+    lg_loss_scale이 뭘까 ???
+    정작 학습 step 돌리는 코드는 같은 파일이 아니라 calssifier_train.py에 있다
+
+    9. DDP
+    병렬 학습용 모듈인 DDP에 모델을 래핑?한다
+    위 mp_trainer랑 호환이 되는 모양이다
+    IDDPM의 경우 train_util.py의 trainLoop에 존재하던 코드이다. (classifier 말고 확산 모델 자체는 아직도 TrainLoop 내에서 래핑하긴 한다)
+    아무래도 classifier의 학습에 관한 사항은 classifier에 대부분 집어 넣은듯하다
 }
