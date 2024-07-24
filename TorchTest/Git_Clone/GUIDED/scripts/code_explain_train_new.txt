@@ -214,6 +214,30 @@
     }
 
     {   # 그 아래에 있는 for문
+        반복 횟수 - 여태까지 한 횟수 만큼 step을 반복하여 학습한다
+        log따준다 - 정확한 코드는 뭔지 모르겠다
 
+        파싱한 매개변수 anneal_lr가 사용된다. 존재하는 값인 경우 set_annealed_lr 함수로 어닐링을 해준다
+        for문이 반복되는동안 계속 담금질을 하는 모양이다
+        이론은 AdamWR, 혹은 https://hiddenbeginner.github.io/deeplearning/paperreview/2020/01/04/paper_review_AdamWR.html 를 참고하자
+        set_anneal_lr함수는 pass, 나중에 알아보자???
+
+        로그따기 -> 학습률 담금질 이후에는 학습의 스텝을 진행한다
+        바로 위에서 선언된 forward_backward_log에 데이터(로더)를 집어넣기만 하면 그만이다.
+        zero_grad와 backward는 해당 함수 안에서 동작하며, optimizer.step은 mp_trainer의 메서드 optimize를 실행시켜 동작한다
+        위 3줄 요약: 학습합니다
+
+        아래 if 부터 eval_interval은 검증에 관한내용이다. 조건문 자체는 val_data가 있을것과, 검증 횟수 만큼 step을 돌렸는가를 체크한다
+        no_grad/eval 등 torch식 검증절차 진행함
+
+        그 아래 if 문은 로그 따는 간격에 맞춰 로그 따는 내용이다
+
+        그 아래 if 3종은 저장에 관련한 내용이다
+        step이 0회가 아니고, get_rank가 0이며(이건 아마 분산 처리의 메인 프로세스임을 의미하는듯), 저장 간격만큼 step을 돌렸는 것을 조건으로 한다.
     }
+
+    for문을 다돌리면 마지막 회차가 끝난 이후, 저장하며
+    dist.barrier함수를 호출하는데 이건
+    https://velog.io/@scyonggg/dist.getrank-0-%ED%9B%84-dist.barrier%EC%97%90%EC%84%9C-stall%EB%90%98%EB%8A%94-%ED%98%84%EC%83%81
+    를 참조하도록 하자
 }
