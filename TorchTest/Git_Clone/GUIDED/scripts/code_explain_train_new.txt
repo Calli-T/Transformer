@@ -288,6 +288,18 @@
     샘플링 함수는 매개변수가 좀 다른데, model이 model_fn으로 대체되었고, 클래스 정보 보조용 cond_fn과, 학습 장치 정보가 추가로 넘어간다.
     p_sample의 경우, 평균에 로그 분산 값을 더해 샘플을 뜨는 과정이 있는데 여기의 '평균'을 class 조건에 변항하는데 사용한다
     자세한건 논문을 알아보자
+    {   # condition_mean
+    }
     반면, ddim_sample의 경우 p_mean_variance를 통한 x_t-1의 분포값을 입력으로 넣어 새로운 분포를 만들고 거기서 샘플을 뜬다.
+    cond_fn이 존재하는경우 condition score함수에 넣어 새로운 분포를 가져오는듯하다
+    해당 함수에는 매개로 cond_fn과 원래 분포 out, 입력 값 x(초기 노이즈), 타임스탭 t, model_kwargs 즉 클래스 y를 넣어준다
+    {   # condition_score
+        alpha_t_bar 값을 _extract_into_tensor 함수로 텐서화하고,
+        _predict_eps_from_xstart함수로...
+        여기서부터 모르겠다 선언 박고, 논문 찾아보겠음
+        진짜 뭔소리야??????????
+        sqrt_recip_alphas_cumprod는 왜 신호값에 역수를?
+    }
 
+    일단 이후로는 비슷하고 클래스 정보 있는건 나중에 클래스 정보도 같이 저장해주는 정도임
 }

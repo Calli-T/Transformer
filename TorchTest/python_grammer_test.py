@@ -82,7 +82,14 @@ bunmo = len(p) * p[indices_np]
 print(bunmo)
 '''
 
+'''
 a = [[1, 2], [3, 4]]
 import torch
 a = torch.tensor(a)
 print(a[[0, 1], [0, 1]])
+'''
+
+a = 1
+import torch
+t = torch.tensor([a] * 3)
+print(t)
