@@ -70,6 +70,7 @@ print(np.append(alpha, 0.0))
 
 '''
 
+'''
 import numpy as np
 
 a = np.ones([20])
@@ -79,3 +80,9 @@ indices_np = np.random.choice(len(p), size=(64,), p=p)
 print(indices_np)
 bunmo = len(p) * p[indices_np]
 print(bunmo)
+'''
+
+a = [[1, 2], [3, 4]]
+import torch
+a = torch.tensor(a)
+print(a[[0, 1], [0, 1]])
