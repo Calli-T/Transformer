@@ -241,3 +241,28 @@
     https://velog.io/@scyonggg/dist.getrank-0-%ED%9B%84-dist.barrier%EC%97%90%EC%84%9C-stall%EB%90%98%EB%8A%94-%ED%98%84%EC%83%81
     를 참조하도록 하자
 }
+
+{ # images_sample.py
+    중간에 fp16이면 model.convert_to_fp16()이 있는것만 다르다
+    내부구조 상의 변화가 있어서 그렇게 된 모양
+    모델(= Encoder, classifier) 내부에 convert_to_fp16함수가 존재한다
+
+    그외는 코드에 차이 없음
+    내부 구현에 차이가 있을 수는 있겠다
+}
+
+{   # classifier_sample.py
+    위 images_sample.py와 다른 점은, 분류기를 생성에 사용한다
+
+    classifier도 args의 매개변수와 default로 불러오고
+    가중치도 불러오고, device도 변경하고, 필요하다면 fp16으로 변경하고, eval모드로 변경한다
+
+    classfier와 model을 활용하는 함수가 존재하며
+    기존 sample_fn(p_sample혹은 ddim_sample)에 들어가던 model도 model_fn으로 대체되어있고, sample_fn의 매개변수에 cond_fn이 새로 들어간다
+    그리고 p든 ddim이든 각각의 샘플 방식에서, 또 다른 함수의 매개변수로 들어간다. 사용법이 좀 다른 모양
+    함수 각각의 용도는 다음과 같다
+    {   # cond_fn
+        y가 존재할것을(= 클래스 정보를 넣어 줄것을) assert로 강요한다
+        (코드에서 class 정보는 무작위로 뽑아 이에 맞는 이미지를 생성하는 방식으로 사용하며, 여러 함수 내의 model_kwargs["y"]로 그 값이 들어간다)
+    }
+}

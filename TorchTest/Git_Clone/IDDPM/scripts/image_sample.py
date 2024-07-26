@@ -32,7 +32,6 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-
     # logger.configure()
     logger.configure("./outputs/" + datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
 
