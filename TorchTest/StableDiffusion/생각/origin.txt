@@ -26,6 +26,11 @@ https://arxiv.org/abs/2105.05233
 https://github.com/openai/guided-diffusion
 }
 
+사실 루시드 레인의 코드는 GUIDED를 사용안한다!!!!
+0806일 추가+) cumpvis가 참고한 openai's ADM codebase가 guided diffusion이다, 즉, 참고한게 맞다
+            adm은 ablated diffusion model이란뜻
+그러나
+
 -----------------------------------------------
 Raw Data
 중요하지만 다 살펴보지 못한 정보들
@@ -54,3 +59,6 @@ https://junia3.github.io/blog/ddim
 
 샘플러 종류
 https://www.internetmap.kr/entry/Stable-Diffusion-Samplers#overview
+
+DDIM/DDPM 차이
+https://kyujinpy.tistory.com/97
