@@ -1,0 +1,16 @@
+https://arxiv.org/abs/2006.11239
+https://github.com/lucidrains/denoising-diffusion-pytorch
+이거는 ddpm 논문 / lucidrains의 코드
+
+https://arxiv.org/abs/2102.09672
+이건 improved 논문 / 코드는 openai꺼
+
+https://arxiv.org/abs/2105.05233
+https://github.com/openai/guided-diffusion
+Beats GAN은 guided 논문 / 코드는 openai꺼
+
+이거 차근차근 (다시) 읽어보고 stable로 넘어갑시다
+
+
+그리고 이게 stable diffusion 논문임!!!!
+https://arxiv.org/abs/2112.10752
