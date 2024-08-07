@@ -62,3 +62,6 @@ https://www.internetmap.kr/entry/Stable-Diffusion-Samplers#overview
 
 DDIM/DDPM 차이
 https://kyujinpy.tistory.com/97
+
+생성 모델을 분류하는 자료(Diffusion 없음)
+https://danbi-ncsoft.github.io/works/2021/10/01/Generator.html

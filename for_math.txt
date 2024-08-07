@@ -1,11 +1,13 @@
+사후확률과 로그를 사용하는 이유에 관하여
+https://blog.naver.com/PostView.naver?blogId=ycpiglet&logNo=223110695364
+
 VAE의 수학적 이론(변분 추론과 증거 하한)
 https://hugrypiggykim.com/2018/09/07/variational-autoencoder%EC%99%80-elboevidence-lower-bound/
 https://jaejunyoo.blogspot.com/2017/04/auto-encoding-variational-bayes-vae-2.html
 https://ko.wikipedia.org/wiki/%EB%B3%80%EB%B6%84_%EC%98%A4%ED%86%A0%EC%9D%B8%EC%BD%94%EB%8D%94
 https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/vdm/
 https://linnk.ai/insight/%EA%B8%B0%EA%B3%84-%ED%95%99%EC%8A%B5/%EB%8D%B0%EC%9D%B4%ED%84%B0-%ED%8F%AC%EC%9D%B8%ED%8A%B8%EC%97%90-%EB%8C%80%ED%95%9C-elbo%EC%9D%98-%EC%97%94%ED%8A%B8%EB%A1%9C%ED%94%BC-%ED%95%A9%EC%9C%BC%EB%A1%9C%EC%9D%98-%EC%88%98%EB%A0%B4-ZL5qxfvp/
-사후확률과 로그를 사용하는 이유에 관하여
-https://blog.naver.com/PostView.naver?blogId=ycpiglet&logNo=223110695364
+
 이 수학들은 대체 어디서 나온 수학인지 좀 알아볼것
 
 정보이론이라는게 또 따로 있는 모양인데?

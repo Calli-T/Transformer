@@ -1,3 +1,5 @@
+- 논문, 리뷰, 코드 풀 버전 -
+
 https://arxiv.org/abs/2006.11239
 https://github.com/lucidrains/denoising-diffusion-pytorch
 이거는 ddpm 논문 / lucidrains의 코드
@@ -11,6 +13,14 @@ Beats GAN은 guided 논문 / 코드는 openai꺼
 
 이거 차근차근 (다시) 읽어보고 stable로 넘어갑시다
 
-
-그리고 이게 stable diffusion 논문임!!!!
+그리고 이게 stable diffusion 논문임!!!! (그리고 그건 cumpvis꺼임)
 https://arxiv.org/abs/2112.10752
+
+오리지널 Diffusion 논문이다
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/dul-nt/
+
+와! 기초 개념 설명!
+https://ffighting.net/deep-learning-paper-review/diffusion-model/diffusion-model-basic/
+https://ffighting.net/deep-learning-paper-review/diffusion-model/classifier-guidance/
+
+- 수학 -
