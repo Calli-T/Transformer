@@ -35,3 +35,5 @@ stable diffusion 버전별 차이
 https://www.assemblyai.com/blog/stable-diffusion-1-vs-2-what-you-need-to-know/
 
 laion400m 데이터셋은 대체 뭔가?
+
+파이썬용 통계 모델링 및 확률적프로그래밍 라이브러리: https://wikidocs.net/226639
