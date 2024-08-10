@@ -1,0 +1,9 @@
+논문의 내용이다
+https://arxiv.org/pdf/2006.11239
+https://velog.io/@philiplee_235/Denoising-Diffusion-Probabilistic-Models
+
+둘을 참고 했다
+
+-----
+
+DDPM 매개변수화 된 마르코프 체인이다. 일정한 시간 간격 이후에 data에 대응되는 sample을 생성하는 변분 추론을 이용해 학습되었다.
