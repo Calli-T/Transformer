@@ -152,7 +152,7 @@ def evaluation(model, dataloader):
 
 
 best_loss = 10000
-model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
+# model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
 for epoch in range(epochs - 1):
     train_loss = train(model, optimizer, train_dataloader)
     val_loss, val_accuracy = evaluation(model, valid_dataloader)
