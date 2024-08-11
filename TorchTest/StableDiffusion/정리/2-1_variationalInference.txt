@@ -36,9 +36,58 @@ log p(X)의 유도 과정
 q_star(x) = argmin(q∈Q)D_KL(q(z)||p(z|x))
 즉 변분 추론은 q(z)와 p(z|x)간의 쿨백 라이블리 발산 값을 최소화하는 Q집합내의 q함수를 찾아내는 것이다
 KL발산의 각 항을 풀고, 0이상의 값을 가짐을 활용하여 부등식을 만들면  log p(X) 즉 증거에 관한 식이된다. ※ Jensen 부등식으로도 추론 가능하다고 하는데 그게 뭔지는 모르겠다
+D_KL(q(z)||p(z|x))
+= sympy.integrate(q(z) * log( q(z)/p(z|x) ), z)
+= sympy.integrate(q(z) * log( q(z)p(x)/p(x|z)p(z) ), z) ※ 베이즈 이론에 따라 p(z|x) = p(x|z)p(z) / p(x) <-> 1 / p(z|x) = p(x) / p(x|z)p(z)
+= sympy.integrate(q(z) * log( q(z)/p(z) ), z) + sympy.integrate(q(z) * log(p(x)), z) - sympy.integrate(q(z)*log(p(x|z)), z) ※ log 안의 항을 q(z)/p(z), p(x), 1/p(x/z)로 세 개로 찢었다
+= D_KL(q(z)||p(z|x)) + log(p(x)) - sympy.integrate(q(z)*log(p(x|z)), z)
+※ 세 도막 중 첫 번째는 KL발산과 같다
+※※ 두 번째는 z에 대해 적분하므로 log(p(x))는 상수로 빠져나오고, q(z)는 확률밀도함수이므로 적분하면 그대로 1만 나온다
+
+이는 0보다 크거나 같은 값이므로 부등호를 넣어 정리하면
+log(p(x)) >= sympy.integrate(q(z)*log(p(x|z)), z) - D_KL(q(z)||p(z|x))
+여기서 우항을 ELBO라 부른다
+여기서 KL발산과 KL발산을 푼 3가지의 성분요소를 식으로 나타내면 ※ 첫 식과 끝 씩을 가져온다
+D_KL(q(z)||p(z|x)) = D_KL(q(z)||p(z|x)) + log(p(x)) - sympy.integrate(q(z)*log(p(x|z)), z) = log(p(x)) - ELBO
+이를 정리하면
+log(p(x)) = ELBO + D_KL(q(z)||p(z|x))
+Evidence는 ELBO와 쿨백-라이블러 발산의 합으로 구성한다. 따라서 ELBO를 최대화하는것으로 발산을 최소화할(= 추론을 타당하게할) 수 있다 ※ 단 ELBO와 발산은 모두 q함수에 의존적이니 한 쪽만 최적화 할 수는 없다
+
+https://greeksharifa.github.io/bayesian_statistics/2020/07/14/Variational-Inference/#21-elbo
+여기서 KL읽고, 그다음에 CAVI(VAE에서 쓰는 방법이라고한다)
+KL최적화 방법은 6개나 되고 Diffusion 
 
 
-(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+( 좀 뒤죽박죽이라 무시
 의문 1, log p(X)의 식은 어떻게 유도된건가
 의문 2, 그렇다면 L(q) / ELBO / KL-divergence의 최적값을 찾아내는 방법은 무엇인가
 
@@ -51,5 +100,4 @@ p(X) = sympy.integrate(p(X∩Z), Z) = sympy.integrate(p(X|Z)p(Z), z)
 2. 변분 근사
 잠재 변수 Z에 대한 사후확률 p(Z|X)는 계산이 어려우므로 이를 근사하는 분포 q(Z)를 도입하고,
 이를 최대한 가까이 한다
-
 )
