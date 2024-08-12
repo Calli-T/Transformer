@@ -55,10 +55,8 @@ Evidence는 ELBO와 쿨백-라이블러 발산의 합으로 구성한다. 따라
 
 https://greeksharifa.github.io/bayesian_statistics/2020/07/14/Variational-Inference/#21-elbo
 여기서 KL읽고, 그다음에 CAVI(VAE에서 쓰는 방법이라고한다)
-KL최적화 방법은 6개나 되고 Diffusion 
-
-
-
+KL최적화 방법은 6개나 되고 생성 모델 Diffusion 방법에 따라서도 다르니 알아보자
+그리고 KL이 뭔지도 나중에 알아봅시다
 
 
 
