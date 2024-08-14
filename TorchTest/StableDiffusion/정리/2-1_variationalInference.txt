@@ -58,11 +58,29 @@ https://greeksharifa.github.io/bayesian_statistics/2020/07/14/Variational-Infere
 KL최적화 방법은 6개나 되고 생성 모델 Diffusion 방법에 따라서도 다르니 알아보자
 그리고 KL이 뭔지도 나중에 알아봅시다
 
+위 식은 KL발산에서 부터 시작하며, 아래는 전혀 다름
 
+0814 추가)
+변분 추론에서의 식은
+주변 확률 즉 데이터 X와 잠재 변수 Z의 결합확률 분포 p(X) = sympy.integrate(p(X, Z), Z)의 식에서
+로그를 씌우고 변분 분포 q(Z)를 도입하여 식을 변형하는 것으로 유도되었다.
 
+log p(X)
+= log(integrate(p(X, Z), Z))
+= log(integrate(q(Z)*(p(X,Z)/q(Z)), Z)
+여기서 젠슨 부등식을 쓰면 ※ 자연로그 미분 두 번 하면 음의 값이므로 오목함수로 두고 E[f(X)] <= f(E(x))
 
+E_q(Z)[f(z)] = integrate(q(z)*f(z), z)로 두고
+p(X,Z)= p(X|Z)p(Z)이므로
+log(integrate(q(Z)*(p(X,Z)/q(Z)), Z)
+= log(E_q(Z)[p(X|Z)p(Z)/q(Z)]) >= E_q(Z)[log(p(X|Z)p(Z)/q(Z)]
+이 때 좌변은 log p(X)이고 우변은 ELBO라고 한다.
 
-
+ELBO식을 전개하면
+E_q(Z)[log(p(X|Z)p(Z)/q(Z)]
+= integrate(q(Z) * ( log (p(X|Z)*p(Z) / q(Z)) ), Z) ※ 적분 내부의 log를 분해하면 아래의 식
+= integrate(q(Z) * log p(X|Z), Z) + integrate(q(Z) * log p(Z)/q(Z), Z) ※ 오른쪽 p(Z)/q(Z)를 뒤집으면 로그 값은 마이너스가 되고, 이는 정확히 KL발산식의 형태와 일치하게된다
+= E_q(Z)[log p(X|Z)] - KL(q(Z)||p(Z)
 
 
 
