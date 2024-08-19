@@ -19,23 +19,28 @@ tokenizer = BertTokenizer.from_pretrained(
     do_lower_case=False
 )
 
-'''# ----- get Dataset -----
+# ----- get Dataset -----
+
+labels = {'공포': 0, '분노': 1, '슬픔': 2, '중립': 3, '행복': 4}
 
 # Raw 2 df
 df1 = pd.read_excel("./한국어_연속적_대화_데이터셋.xlsx", skiprows=1)
 df1 = df1.iloc[:, 1:3]
-df1.iloc[:, 1] = df1.iloc[:, 1].apply(lambda x: 0 if x == '중립' else 1)
+df1.iloc[:, 1] = df1.iloc[:, 1].apply(lambda x: labels[x] if x in labels else -1)
 
 df2 = pd.read_excel("./한국어_단발성_대화_데이터셋.xlsx")
 df2 = df2.iloc[:, 0:2]
-df2.iloc[:, 1] = df2.iloc[:, 1].apply(lambda x: 0 if x == '중립' else 1)
+df2.iloc[:, 1] = df2.iloc[:, 1].apply(lambda x: labels[x] if x in labels else -1)
 
-df = pd.concat([df1, df2.rename(columns={"Sentence": "발화", "Emotion": "감정"})], ignore_index=True)
-df = df.rename(columns={"발화": "text", "감정": "label"})
+# df = pd.concat([df1, df2.rename(columns={"Sentence": "발화", "Emotion": "감정"})], ignore_index=True)
+df = df2
+df = df.rename(columns={"Sentence": "text", "Emotion": "label"})
+# df = df.rename(columns={"발화": "text", "감정": "label"})
+df = df[df['label'] != -1]  # 안쓰는 감정인 혐오와 놀람 제거
 df['label'] = df['label'].astype(int)  # 감정 column을 str 2 int
-df = df.sample(frac=1, random_state=42).reset_index(drop=True)  # 순서 무작위로 섞기
+df = df.sample(frac=1).reset_index(drop=True)  # 순서 무작위로 섞기
 df.dropna(inplace=True)  # 결측치 제거
-# print(df[:20].text.tolist())
+# print(df[:20])  # .text.tolist())
 # print(type(df[:20].label.values))
 
 # train:val:test = 8:1:1
@@ -77,13 +82,12 @@ test_dataset = make_dataset(test, tokenizer, device)
 test_dataloader = get_dataloader(test_dataset, RandomSampler, batch_size)
 
 # print(train_dataset[0])
-'''
 
 # ----- set model -----
 
 model = BertForSequenceClassification.from_pretrained(
     pretrained_model_name_or_path="bert-base-multilingual-cased",
-    num_labels=2
+    num_labels=5
 ).to(device)
 optimizer = optim.AdamW(model.parameters(), lr=1e-5, eps=1e-8)
 
@@ -97,7 +101,7 @@ def calc_accuracy(preds, labels):
 
 # ----- train -----
 
-'''# 학습시키는 함수, 매개변수로 모델/최적화/데이터로더(train)을 줘야함
+# 학습시키는 함수, 매개변수로 모델/최적화/데이터로더(train)을 줘야함
 def train(model, optimizer, dataloader):
     model.train()
     train_loss = 0.0
@@ -148,33 +152,34 @@ def evaluation(model, dataloader):
     return val_loss, val_accuracy
 
 
-# 학습 시작
-best_loss = 10000
-# model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
-for epoch in range(epochs):
-    print(f'Epoch: {epoch + 1}')
-    train_loss = train(model, optimizer, train_dataloader)
-    val_loss, val_accuracy = evaluation(model, valid_dataloader)
-    print(f"Epoch {epoch + 1}: Train Loss: {train_loss:.4f} Val Loss: {val_loss:.4f} Val Accuracy {val_accuracy:.4f}")
+# # 학습 시작
+# best_loss = 10000
+# # model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
+# for epoch in range(epochs):
+#     print(f'Epoch: {epoch + 1}')
+#     train_loss = train(model, optimizer, train_dataloader)
+#     val_loss, val_accuracy = evaluation(model, valid_dataloader)
+#     print(f"Epoch {epoch + 1}: Train Loss: {train_loss:.4f} Val Loss: {val_loss:.4f} Val Accuracy {val_accuracy:.4f}")
+#
+#     if val_loss < best_loss:
+#         best_loss = val_loss
+#         torch.save(model.state_dict(), f'./models/BERT_SENTENCE_CLASSIFICATION_{epoch+1}.pt')
+#         print("Saved the model weights")
+#
+# print("Testing")
+# # 최종 정확도 테스트, val 함수랑 다를게 없으니 그대로 갑니다
+# model.config.pad_token_id = model.config.eos_token_id
+# # model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
+# test_loss, test_accuracy = evaluation(model, test_dataloader)
+#
+# print(f"Test Loss : {test_loss:.4f}")
+# print(f"Test Accuracy : {test_accuracy:.4f}")
 
-    if val_loss < best_loss:
-        best_loss = val_loss
-        torch.save(model.state_dict(), f'./models/BERT_SENTENCE_CLASSIFICATION_{epoch}.pt')
-        print("Saved the model weights")
+# 모델 불러오기
+model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION_3.pt"))
 
-# 최종 정확도 테스트, val 함수랑 다를게 없으니 그대로 갑니다
-model.config.pad_token_id = model.config.eos_token_id
-# model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION.pt"))
-test_loss, test_accuracy = evaluation(model, test_dataloader)
 
-print("Testing")
-print(f"Test Loss : {test_loss:.4f}")
-print(f"Test Accuracy : {test_accuracy:.4f}")'''
-
-model.load_state_dict(torch.load("./models/BERT_SENTENCE_CLASSIFICATION_1.pt"))
-# torch.save(model, './models/BERT_SENTENCE_CLASSIFICATION_model.pt')
-# model = torch.load('./models/BERT_SENTENCE_CLASSIFICATION_model.pt')
-
+# 추론
 def inference(sentence, _model, _tokenizer, _device):
     tokenized = _tokenizer(
         text=sentence,
@@ -200,7 +205,6 @@ def inference(sentence, _model, _tokenizer, _device):
 
 
 # 여기 sentence에다 문장 list로 여러개 넣으면 여러 개 분석 다 해줌
-# 0은 중립 1은 감정
-print(inference(
-    ["역시 정상화는 신창섭", "지금 몇 시지?", "코딩은 즐거워", "맙소사 여태까지 했던게 모두 WWE에 불과하다고", "점심 추천 좀", "내가 어제 뭐 했지?", "내가 어제 쓴 일기 봤어?",
-     "오늘 존나 슬프다"], model, tokenizer, device))
+# 0은 중립 1은 감정 -> 5개로 나뉜 걸로 변경
+print(inference(["역시 정상화는 신창섭", "지금 몇 시지?", "코딩은 즐거워", "맙소사 여태까지 했던게 모두 WWE에 불과하다고", "점심 추천 좀"], model,
+    tokenizer, device))
