@@ -116,7 +116,7 @@ E_q[-log p_θ(x_0:T) / q(x1:T|x_0)]
 표본 x_t에 바로 접근할 수 있다는 겁니다.
 -> admit이 ~에 접근할 수단이 되다로 사용된 모양이다.
 이는 수식 α_t:=1-Β_t, a_t_bar:=Π_product(s=1, t, a_s)을 사용하여, 수식
-q(x_t|x_0) = N(x_t; sqrt(a_t_bar)x_0, (1-a_t_bar)I
+q(x_t|x_0) = N(x_t; sqrt(a_t_bar)x_0, (1-a_t_bar)I)
 -> 정규분포에 가법성에 따라 단계를 스킵하여 정방향 확산을 하나로 처리하는 수식, 원리는 논문에없다
 그리고 x_t는 sqrt(a_t_bar)x_0 + sqrt(1-a_t_bar)*ε ※ ε ~ N(0, I)
 로 나타낼 수 있다.
@@ -154,7 +154,7 @@ E_q[D_KL(q(x_T|x_0)||p(x_T)) + Σ_sum(t=2, T, D_KL(q(x_t-1|x_t, x_0||p_θ(x_t-1|
 x_t와 x_0를 조건으로 하여 x_t-1를 만들어내는 q분포와(q의 사후확률) 원래 역방향 확산 과정 p(x_t-1|x_t)를 KL발산으로 비교해야하고, 이건 x_0값이 존재해야 해석가능하다고 한다.
 ->-> 여기서 x_t에서 x_0로 갔다가 x_t-1로 가는 이론적 기반이 존재하게 된걸지도????
 q(x_t-1|x_t, x_0) = N(x_t-1; ~μ(x_t, x_0), ~B_t * I)
-where ~μ(x_t, x_0) = (sqrt(α_t-1_bar) * β)/(1-α_t_bar) * x_0 + (sqrt(a_t)*(1-a_t-1_bar)/(1-a_t_bar))*x_t and ~β_t = (1-a_t-1_bar)/(1-a_t_bar) * β_t
+where ~μ_t(x_t, x_0) = (sqrt(α_t-1_bar) * β)/(1-α_t_bar) * x_0 + (sqrt(a_t)*(1-a_t-1_bar)/(1-a_t_bar))*x_t and ~β_t = (1-a_t-1_bar)/(1-a_t_bar) * β_t
 -> 이 식, x_0과 x_t의 가중 평균에관한 내용인 모양이다.
 ->-> 알파 베타 값은 잡음/신호비이며 linear나 cosine등 확산 과정에 따라 다를 수 있다.
 ->->-> IDDPM 코드 같은 경우는 긴 배열에다가 자르고 붙이던 그 녀석들 같은데? 이를 근사하여 사용하는 경우가 있으니 잘봐야할듯
@@ -263,3 +263,15 @@ D_KL(N(μ_p, Σ) || N(μ_q, Σ)) = 1/2 [transpose(μ_p - μ_q) * inverse(Σ) * (
 이 때, 분산 행렬의 역행렬은 (1/σ_t^2) * I가 된다.
 차의 전치와 차를 곱하면 두 평균 벡터의 L2 노름이 되고. 최종적으로
 (1/2*σ_t^2)||μ_θ(x_t, x_0) - μ_θ(x_t, t)||^2가 된다. 이를 E_q에 넣으면 L_t-1항이 됨
+
+식 9에서 식10으로의 변환과정
+식 4에 따라, x_t(x_0, ε) = sqrt(α_t_bar)x_0 + sqrt(1-α_t_bar)ε이다
+이를 x_0에 대하여 정리하면 다음과 같다 x_0 = (x_t(x_0, ε) - sqrt(1-α_t_bar)ε) / sqrt(α_t_bar)
+x_0를 ~μ(x_t, x_0)에 정리하여 대입하면 다음과 같다. ※ https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/ddpm/
+-> 난 도저히 계산이 꼬여서 안되더라, 여기 보고함
+~μ(x_t, x_0) = x_0 * (sqrt(α_t-1_bar)*β_t/(1-a_t_bar)) + x_t * (sqrt(a_t)*(1-a_t-a_bar)/(1-a_t_bar))
+             = 1/sqrt(α_t_bar) * (x_t(x_0, ε) - sqrt(1-α_t_bar)*ε) * (sqrt(α_t-1_bar)*β_t/(1-a_t_bar)) + x_t * (sqrt(a_t)*(1-a_t-a_bar)/(1-a_t_bar)) ※ x_0에다 정리된 식 대입
+             = x_t(x_0, ε) * ((sqrt(α_t-1_bar)/sqrt(α_t_bar) * β_t/(1-a_t_bar) + 1/sqrt(α_t) * a_t(1-a_t-1_bar)/(1-a_t_bar)) ※ x_t와 ε로 분리, x_t항에서 sqrt(a_t)항은 a_t로 변경하고 1/sqrt(a_t)로 계수를 빼줌(나중에 분리할 목적)
+              + ε * (sqrt(α_t-1_bar) * β_t / ((1-a_t_bar) * sqrt(α_t_bar)) ※ 1/sqrt(α_t) = sqrt(α_t-1_bar) / sqrt(α_t_bar) = sqrt(α_t-1_bar / α_t_bar) = sqrt(Π_product(s=1, t-1, α_s) / Π_product(s=1, t, α_s)) = sqrt(1/α_t) 즉, 머리위에 줄 그어진놈들은 프로덕트의 연쇄로 인해 대부분이 약분되는것이다!!!!!!!!
+             = 1/sqrt(α_t) * ( (β_t+α_t - α_t*α_t-1_bar)/(1-α_t_bar) * x_t(x_0, ε) - β_t/(1-α_t_bar) * ε) ※ α_t*α_t-1_bar = a_t_bar/β_t+α_t=1, 따라서 β_t+α_t - α_t*α_t-1_bar = β_t+α_t - a_t_bar = 1 - a_t_bar
+             = 1/sqrt(α_t) * (x_t(x_0, ε) - β_t/(1-α_t_bar) * ε)
