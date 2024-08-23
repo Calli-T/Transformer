@@ -1,0 +1,47 @@
+DDPM 뜯고 구현
+-> 루시드레인 코드가 있고, 논문쓴사람이 TF로 만든게 있다
+https://github.com/lucidrains/denoising-diffusion-pytorch
+
+DDIM의 논문읽고 DDPM과 비교 및 뜯고 구현/ 논문과 논문 리뷰
+https://arxiv.org/abs/2010.02502
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/ddim/
+
+{   여기 리스트는 좀 간단하게만 읽읍시다
+    Improved DDPM 논문과 논문 리뷰
+    https://arxiv.org/abs/2102.09672
+    https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/iddpm/
+    -> L_hybrid 등 차이점을 좀 알아봅시다
+
+    {   얘는 걸러야함 - IDDPM에 분류기만 추가한거라
+        GUIDED diffusion의 논문과 논문 리뷰
+        https://arxiv.org/abs/2105.05233
+        https://github.com/openai/guided-diffusion
+        -> Beats GAN 논문은 사실 이미 읽어봄
+        ->-> class free guidance로 가기전에 읽을지 말지 고민해봅시다
+    }
+}
+-> DDIM이랑 Improved는 같은 시일내에 좀 빠르게 읽읍시다
+
+CFG 즉 분류기 모델이 따로 필요없는 학습 기법
+논문과 리뷰
+https://arxiv.org/abs/2207.12598
+https://pitas.tistory.com/15
+-> 여기서부터 본격적인 Stable diffusion
+->-> 좀 빠르게 읽읍시다
+
+종결과제1 - Stable diffusion 구현
+그리고 이게 stable diffusion 논문임!!!! (그리고 그건 cumpvis꺼임)
+https://arxiv.org/abs/2112.10752
+오리지널 Diffusion 논문이다
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/dul-nt/
+
+----- 여기 까지 학습 순서 -----
+
+번외로 할 일
+음성 모델 관련 작업
+1. DDIM/IDDPM 논문 까지 읽으면, 구현이 가능하면 걔네 둘을 구현해봅시다. (Torch DDIM/DDPM 코드 써놓은거 기반으로 하던지, 루시드레인코드를 쓰던지는 상황보고)
+2. 구현이 되던 말건 간에, 음성 합성 모델을 차근차근 뜯어서 분류해봅시다.
+
+샘플러 관련작업
+1. DPM solver 등 여러 샘플링 기법에 대해 알아봅시다
+2. 시점은 IDDPM/DDIM을 읽고난 이후로
