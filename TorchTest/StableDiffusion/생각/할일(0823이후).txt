@@ -1,6 +1,7 @@
 DDPM 뜯고 구현
 -> 루시드레인 코드가 있고, 논문쓴사람이 TF로 만든게 있다
 https://github.com/lucidrains/denoising-diffusion-pytorch
+0829추가) 이거 루시드 레인 코드에는 CFG부터 이것저것 들어가있는 버전임, DDIM이랑, CFG읽어보고 해봅시다
 
 DDIM의 논문읽고 DDPM과 비교 및 뜯고 구현/ 논문과 논문 리뷰
 https://arxiv.org/abs/2010.02502
