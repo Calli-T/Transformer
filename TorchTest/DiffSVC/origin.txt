@@ -1,0 +1,55 @@
+DiffSVC
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/diffsvc/
+https://arxiv.org/pdf/2105.13871
+논문리뷰와 논문이다
+
+{ 논문리뷰 발췌 내용
+SVC란 content와 멜로디를 그대로 두고 노래의 목소리만 다른 가수
+최근의 SVC 모델은 content encoder를 학습시켜 source로부터 content feature를 추출시킨다음
+conversion model을 학습시켜 content feature를 다른 feature로 변형 시킨다고한다
+(이 때 content는 음성이며 content encoder의 결과물은 content vecter이다)
+encoder와 conversion model은 연결하여 AE처럼 학습 시키는 경우도 있고, 각각 학습하는 경우도 있다.
+
+각각 학습 시키는 경우 자동 음성 인식 모델 즉 ASR를 content encoder로 사용한다.
+ASR 모델은 end-to-end 모델이거나 히든마르코프-심층신경망 하이브리드 모델이라고 한다.
+
+conversion model은 GAN이나 회귀 모델을 사용하는데
+GAN의 경우 content feature에서 바로 waveform(파형)을 만들어 내고,
+regression model이 사용된 경우
+content vector(feature) 추출 -> 멜 스펙토그램등의 주파수 성분의 특성으로 변환 -> 추가로 학습시킨 vocoder로 생성
+DiffSVC의 경우 후자의 경우이며 회귀 모델 대신 Diffusion model을 conversion model에 사용한다
+}
+
+멜스펙토그램이란?
+https://judy-son.tistory.com/6
+결론적으로 시간에 따른 주파수 성분의 변화를 잘 보여주는 방법이다.
+x축이 시간, y축이 주파수(증가폭이 로그 스케일임), 그래프의 색은 소리의 크기이다
+mel(f) = 2595 log2(1+f/700)
+
+일반적인 SVC의 순서는(gemini 피셜)
+멜스펙토그램 - 인코딩 - 변환 모델 - 디코딩
+DiffSVC의 경우가 아니다!!!!
+
+ASR 모델의 출력은 phonetic posteriorgram이며,
+Diffusion model은 content, melody, loudness의 feature를 조건으로 받아
+가우스 잡음으로부터 멜 스펙토그램을 점진적으로 복구한다고한다
+(복구하는게 멜 스펙토그램이라면, 이걸 다시 디코딩을 해야겠네?)
+
+모델 구조 설명 구간
+{
+입력으로 PPG, Log_F0, and Loudness
+
+원본 데이터를 ASR에 넣으면 PPG가 되며, ※ PPG는 음성 후방 확률 그림으로, 시간 경과에 따른 음소 별 확률을 나타낸다.
+이를 FC 레이어로 이루어진 PPG Prenet에 입력한다.
+
+melody는 기본 주파수 값에 로그를 씌운 윤곽(contour, Log-F0)로 표현된다.
+※ 기본 주파수란 여러 주파수가 섞인 음에서 주기가 가장 긴(= 주파수가 가장 낮은)음이다. 이를 기본으로 음의 높낮이를 계산한다.
+※ 음색은 기본 주파수에서 그 사이 겹친 다양한 파형의 조합에 따라 파동의 모양이 달라져서 다른 것이다.
+
+loudness는 A weighting
+
+이후 melody와 Loudness는 각각 f_0와 l로 표현되며, 둘 다 임베딩이 되고 처리 방식이 같다.
+둘 다 256 bin(원문도 그렇지만, bit가 아니다!)으로 양자화 한 다음 각각의 임베딩용 룩업 테이블을 통과해서 만들어진다.
+}
+
+
