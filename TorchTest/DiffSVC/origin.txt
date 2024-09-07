@@ -35,6 +35,8 @@ Diffusion model은 content, melody, loudness의 feature를 조건으로 받아
 가우스 잡음으로부터 멜 스펙토그램을 점진적으로 복구한다고한다
 (복구하는게 멜 스펙토그램이라면, 이걸 다시 디코딩을 해야겠네?)
 
+※ 정황상 DiffSVC는 DDPM기반 모델이며, 잡음을 복구할 때 추가 조건(음성을 포함한)을 달아주는 식으로 변형한 모델인듯하다
+※ UNet대신 WaveNet으로 잡음을 예측한다
 모델 구조 설명 구간
 {
     {   이 셋은 elementwise하게 더해져 conditioner e가 되며, 이는 diffusion decoder의 추가 토큰이 된다.
@@ -62,7 +64,21 @@ Diffusion model은 content, melody, loudness의 feature를 조건으로 받아
         사인파 임베딩과 비슷하다? 사인파 위치 인코딩이라고한다, 128차원이다
         t_emb(t_ = [sin(10^((0x4)/63))t, ... , sin(10^((63x4)/63))t, cos(10^((0x4)/63))t, ... , cos(10^((63x4)/63))t]
         어째 GDL책에서 본 거랑 굉장히 유사한데?
+
+        여튼 128차원 벡터를 (FC레이어 + Swish함수)x2번을 거쳐 출력한다
+        (출력물의 형태는 몰?루 멜 스펙토그램을 1x1합성곱에 넣은것과 형태가 동일한 모양이다)
+    }
+
+    {   Diffusion decoder
+        잡음 예측에 자기회귀적 합성곱 신경망(딜레이드 컨볼루션)인 Wavenet을 쓴다
+        https://james-scorebook.tistory.com/entry/WaveNet-A-Generative-Model-for-Raw-Audio 참고
+
+        잡음낀 멜 스펙토그램, timestep t(의 변형), embedding(아까 3개 정보 뭉친거)를 받아 잡음을 예측한다
+
+        음성을 멜 스펙토그램으로 만들 때의 세부 사항은 Experiments에 있다.
+        ※ 만들 때는 라이브러리, 다시 음성으로 디코딩할 때는 Hifi-GAN!!!
+        ※ prophesier 기준 librosa라이브러리를 사용한다.
     }
 }
-
-
+※ 이 모델이 다 끝나고, 결과물은 잡음이 없겠지만 여전히 멜 스펙토그램이므로
+이를 waveform으로 변환시키려면 모델이 필요하고, 이를 위한 vocoder로 Hifi-GAN을 쓴다고한다.
