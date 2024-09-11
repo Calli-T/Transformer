@@ -1,0 +1,25 @@
+0911) 모델의 기반 이론이 혼동되는 문제에 봉착
+
+prophesier계열 구현은 Diffsinger라는 논문과 구현체를 기반으로 하는 모양이다
+Diff-SVC 논문과는 아무런 관련이 없다고 밑에 적어놨다. 헛다리 짚은듯
+뭔가 원리는 비슷한것같은데 자세한 것을 알 수 없으니 찾아보겠음
+
+DiffSinger
+https://github.com/MoonInTheRiver/DiffSinger?tab=readme-ov-file
+깃허브와
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/diffsinger/
+논문리뷰
+
+{   SVS 구현체 모음
+    이름모를 구현체가 존재한다
+    https://github.com/CookiePPP/DiffSVC_inference_only/blob/main/end2end.py
+
+    한글 Diff-SVS 구현체는 여기에 있다
+    https://github.com/wlsdml1114/diff-svc
+
+    SVS의 근원 깃허브
+    https://github.com/MoonInTheRiver/DiffSinger
+
+    openvpi 버전
+    https://github.com/openvpi/DiffSinger
+}
