@@ -1,10 +1,36 @@
-parallel-wavegan-preprocess     --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/config.yml     --rootdir sample     --dumpdir dump/sample/raw
+parallel-wavegan-preprocess \
+    --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/config.yml \
+    --rootdir sample \
+    --dumpdir dump/sample/raw
 
 
-parallel-wavegan-normalize     --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_mode
-l/vctk_parallel_wavegan.v1/config.yml     --rootdir dump/sample/raw     --dumpdir dump/sample/norm     --stats /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/stats.h5
+parallel-wavegan-normalize \
+    --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/config.yml \
+    --rootdir dump/sample/raw \
+    --dumpdir dump/sample/norm \
+    --stats /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/stats.h5
 
 parallel-wavegan-decode \
     --checkpoint /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/checkpoint-400000steps.pkl \
+    --dumpdir dump/sample/norm \
+    --outdir sample
+
+    --outdir outputs # 디렉터리좀 바꾸자
+
+저기 vctk어쩌고에서 모델 다른거 집어넣으면 된다
+
+parallel-wavegan-preprocess \
+    --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
+    --rootdir sample \
+    --dumpdir dump/sample/raw
+
+parallel-wavegan-normalize \
+    --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
+    --rootdir dump/sample/raw \
+    --dumpdir dump/sample/norm \
+    --stats /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5
+
+parallel-wavegan-decode \
+    --checkpoint /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl \
     --dumpdir dump/sample/norm \
     --outdir sample

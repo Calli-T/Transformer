@@ -1,0 +1,54 @@
+0911) 모델의 기반 이론이 혼동되는 문제에 봉착
+
+prophesier계열 구현은 Diffsinger라는 논문과 구현체를 기반으로 하는 모양이다
+Diff-SVC 논문과는 아무런 관련이 없다고 밑에 적어놨다. 헛다리 짚은듯
+뭔가 원리는 비슷한것같은데 자세한 것을 알 수 없으니 찾아보겠음
+
+DiffSinger
+https://github.com/MoonInTheRiver/DiffSinger?tab=readme-ov-file
+깃허브와
+https://kimjy99.github.io/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0/diffsinger/
+논문리뷰
+
+{   SVS 구현체 모음
+    이름모를 구현체가 존재한다
+    https://github.com/CookiePPP/DiffSVC_inference_only/blob/main/end2end.py
+
+    한글 Diff-SVS 구현체는 여기에 있다
+    https://github.com/wlsdml1114/diff-svc
+
+    SVS의 근원 깃허브
+    https://github.com/MoonInTheRiver/DiffSinger
+
+    openvpi 버전
+    https://github.com/openvpi/DiffSinger
+}
+
+0919) 추가
+음성 합성 모델의 구조를 매우 간단하게 요약하자면,
+음성->음성정보 요약(멜 스펙트로그램등)->음성의 2단계를 거친다
+첫 단계에서 실제 음성을 요약한 정보와 비교해서, 음성에 해당하는 음성 요약 정보를 만들어내도록 모델을 훈련하는 것이 첫번째 이고,
+음성 정보 요약을 음성으로 바꾸도록 훈련하는 것이 두번째이다.
+후자의 경우 Vocoder로 불리며 하이파이간이나, 페러렐 웨이브넷 등 여러 옵션이 있는 모양이다.
+
+일단 할 수 있는 부분부터 구현해 나가며 다른 부분은 사전 학습된 다른 모델을 쓰다가 나중에 대체하자
+
+가장 먼저 할일은! 잘드는 보코더를 찾는것이다.
+구체적으로
+1) 멜스펙트로그램으로 변환하는 라이브러리와 그 사용법을 찾고
+2) 데이터셋을 찾아 변환하며
+3) 이를 보코더에 집어넣어 잘되는지 확인해봐야한다.
+
+{ 준비물
+pwg 라이브러리
+https://pypi.org/project/parallel-wavegan/0.3.2/
+https://github.com/kan-bayashi/ParallelWaveGAN
+이걸 쓸지, svs에 있는 코드를 사용할지 결정하자
+일단 라이브러리 쪽에는 사전 학습된 코드도 준다.
+
+데이터셋
+https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=123
+
+
+
+-----
