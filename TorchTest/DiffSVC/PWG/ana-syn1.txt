@@ -1,0 +1,10 @@
+parallel-wavegan-preprocess     --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/config.yml     --rootdir sample     --dumpdir dump/sample/raw
+
+
+parallel-wavegan-normalize     --config /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_mode
+l/vctk_parallel_wavegan.v1/config.yml     --rootdir dump/sample/raw     --dumpdir dump/sample/norm     --stats /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/stats.h5
+
+parallel-wavegan-decode \
+    --checkpoint /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1/checkpoint-400000steps.pkl \
+    --dumpdir dump/sample/norm \
+    --outdir sample
