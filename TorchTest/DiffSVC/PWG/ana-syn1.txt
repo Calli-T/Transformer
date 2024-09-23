@@ -33,4 +33,4 @@ parallel-wavegan-normalize \
 parallel-wavegan-decode \
     --checkpoint /mnt/additional/projects/Transformer/TorchTest/DiffSVC/PWG/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl \
     --dumpdir dump/sample/norm \
-    --outdir sample
+    --outdir
