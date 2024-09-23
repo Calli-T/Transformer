@@ -26,7 +26,7 @@ from parallel_wavegan.datasets import (
     MelSCPDataset,
 )
 '''
-from datasets.audio_mel_dataset import (
+from TorchTest.DiffSVC.PWG_refactored_slim.utils.audio_mel_dataset import (
     AudioDataset,
     MelDataset,
     MelF0ExcitationDataset

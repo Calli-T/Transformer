@@ -5,3 +5,13 @@
 거기 파일들에 대한 설명은 text.txt에 있다.
 
 일단 preprocess.py부터 시작하자
+
+args에서 쓸모없는 것들을 모조리 잘라냈다
+!!! 멜스펙트로그램의 '로그값'을 사용하니 참고
+
+preprocess.py의 경로를 변경하다가 알게된건데
+먼저등록한 경로가 있으면 sys.path.append가 안먹히는 모양이다
+datasets로 등록한데서 문제생김
+그리고 howto에 있는거 라이브러리자체 명령어 쓰지말고, 코드 리팩터링한건 python3으로 실행시키자
+다음과 같이
+python3 preprocess.py     --config files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml     --rootdir files_for_gen/sample     --dumpdir files_for_gen/dump/sample/raw
