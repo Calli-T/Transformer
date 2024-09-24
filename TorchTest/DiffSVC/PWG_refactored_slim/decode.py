@@ -26,12 +26,11 @@ from parallel_wavegan.datasets import (
     MelSCPDataset,
 )
 '''
-from utils.audio_mel_dataset import  (
+from utils.audio_mel_dataset import (
     AudioDataset,
     MelDataset,
     MelF0ExcitationDataset
 )
-
 
 from utils.utils import load_model, read_hdf5
 
@@ -44,15 +43,7 @@ def main():
             "(See detail in parallel_wavegan/bin/decode.py)."
         )
     )
-    parser.add_argument(
-        "--scp",
-        default=None,
-        type=str,
-        help=(
-            "kaldi-style feats.scp file. "
-            "you need to specify either feats-scp or dumpdir."
-        ),
-    )
+
     parser.add_argument(
         "--dumpdir",
         default=None,
@@ -61,12 +52,6 @@ def main():
             "directory including feature files_for_gen. "
             "you need to specify either feats-scp or dumpdir."
         ),
-    )
-    parser.add_argument(
-        "--segments",
-        default=None,
-        type=str,
-        help="kaldi-style segments file.",
     )
     parser.add_argument(
         "--outdir",
@@ -137,12 +122,6 @@ def main():
         config = yaml.load(f, Loader=yaml.Loader)
     config.update(vars(args))
 
-    # check arguments
-    if (args.scp is not None and args.dumpdir is not None) or (
-            args.scp is None and args.dumpdir is None
-    ):
-        raise ValueError("Please specify either --dumpdir or --feats-scp.")
-
     # setup model
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -162,7 +141,7 @@ def main():
     use_aux_input = "VQVAE" not in generator_type
     use_global_condition = config.get("use_global_condition", False)
     use_local_condition = config.get("use_local_condition", False)
-    use_f0_and_excitation = generator_type == "UHiFiGANGenerator"
+    # use_f0_and_excitation = generator_type == "UHiFiGANGenerator"
 
     if use_aux_input:
         ############################
@@ -173,56 +152,26 @@ def main():
             if config["format"] == "hdf5":
                 mel_query = "*.h5"
                 mel_load_fn = lambda x: read_hdf5(x, "feats")  # NOQA
-                if use_f0_and_excitation:
-                    f0_query = "*.h5"
-                    f0_load_fn = lambda x: read_hdf5(x, "f0")  # NOQA
-                    excitation_query = "*.h5"
-                    excitation_load_fn = lambda x: read_hdf5(x, "excitation")  # NOQA
             elif config["format"] == "npy":
                 mel_query = "*-feats.npy"
                 mel_load_fn = np.load
-                if use_f0_and_excitation:
-                    f0_query = "*-f0.npy"
-                    f0_load_fn = np.load
-                    excitation_query = "*-excitation.npy"
-                    excitation_load_fn = np.load
             else:
                 raise ValueError("Support only hdf5 or npy format.")
 
-            if not use_f0_and_excitation:
+            if not False:  # use_f0_and_excitation:
                 dataset = MelDataset(
                     args.dumpdir,
                     mel_query=mel_query,
                     mel_load_fn=mel_load_fn,
                     return_utt_id=True,
                 )
-            else:
-                dataset = MelF0ExcitationDataset(
-                    root_dir=args.dumpdir,
-                    mel_query=mel_query,
-                    f0_query=f0_query,
-                    excitation_query=excitation_query,
-                    mel_load_fn=mel_load_fn,
-                    f0_load_fn=f0_load_fn,
-                    excitation_load_fn=excitation_load_fn,
-                    return_utt_id=True,
-                )
-        else:
-            if use_f0_and_excitation:
-                raise NotImplementedError(
-                    "SCP format is not supported for f0 and excitation."
-                )
-            '''dataset = MelSCPDataset(
-                feats_scp=args.feats_scp,
-                return_utt_id=True,
-            )'''
         logging.info(f"The number of features to be decoded = {len(dataset)}.")
 
         # start generation
         total_rtf = 0.0
         with torch.no_grad(), tqdm(dataset, desc="[decode]") as pbar:
             for idx, items in enumerate(pbar, 1):
-                if not use_f0_and_excitation:
+                if not False:  # use_f0_and_excitation:
                     utt_id, c = items
                     f0, excitation = None, None
                 else:
@@ -255,7 +204,7 @@ def main():
         logging.info(
             f"Finished generation of {idx} utterances (RTF = {total_rtf / idx:.03f})."
         )
-    else:
+    '''else:
         ############################
         #      VQ-WAV2WAV CASE     #
         ############################
@@ -285,6 +234,7 @@ def main():
                     global_load_fn = np.load
             else:
                 raise ValueError("support only hdf5 or npy format.")
+
             dataset = AudioDataset(
                 args.dumpdir,
                 audio_query=audio_query,
@@ -300,13 +250,7 @@ def main():
                 raise NotImplementedError("Not supported.")
             if use_global_condition:
                 raise NotImplementedError("Not supported.")
-            '''
-            dataset = AudioSCPDataset(
-                args.scp,
-                segments=args.segments,
-                return_utt_id=True,
-            )
-            '''
+
         logging.info(f"The number of features to be decoded = {len(dataset)}.")
 
         # start generation
@@ -374,7 +318,7 @@ def main():
         # report average RTF
         logging.info(
             f"Finished generation of {idx} utterances (RTF = {total_rtf / idx:.03f})."
-        )
+        )'''
 
 
 if __name__ == "__main__":
