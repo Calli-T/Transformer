@@ -129,17 +129,15 @@ def main():
     )
     '''
 
-    '''
     parser.add_argument(
         "--verbose",
         type=int,
         default=1,
         help="logging level. higher is more logging. (default=1)",
     )
-    '''
     args = parser.parse_args()
 
-    '''
+
     # set logger
     if args.verbose > 1:
         logging.basicConfig(
@@ -157,7 +155,6 @@ def main():
             format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
         )
         logging.warning("Skip DEBUG/INFO messages")
-    '''
 
     # load config
     with open(args.config) as f:
