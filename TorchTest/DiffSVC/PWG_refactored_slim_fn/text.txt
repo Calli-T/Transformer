@@ -1,0 +1,11 @@
+여기 코드들 parallelwavegan의 비공식 구현 라이브러리에서 가져온 코드들임
+다시 고쳐써서 코드 상으로 동작가능하게 하는것이 목표
+
+trashbin은 원본 라이브러리의 bin에서,
+당장 안쓸 train.py 등의 파일을 모아둔거
+
+생성에 필요한 outputs/dump/sample/pretrained_model dir는 files_for_gen dir안에 넣어둠
+
+
+다음 디렉터리의 파일들은 원본 라이브러리의 디렉터리 명과 일치하도록함
+datasets, utils
