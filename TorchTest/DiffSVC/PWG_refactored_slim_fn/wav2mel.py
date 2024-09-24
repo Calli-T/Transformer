@@ -7,7 +7,7 @@
 
 """Perform preprocessing and raw feature extraction."""
 
-import argparse
+
 import logging
 import os
 
@@ -17,7 +17,6 @@ import soundfile as sf
 import yaml
 from tqdm import tqdm
 
-# from parallel_wavegan.datasets import AudioDataset, AudioSCPDataset
 from audio_mel_dataset import AudioDataset
 from utils import write_hdf5
 
@@ -117,6 +116,7 @@ def wav2mel(sample_path, config_path, dump_path=None):
         sampling_rate = config["sampling_rate_for_feats"]
 
     # process each data
+    mel_list = []
     for utt_id, (audio, fs) in tqdm(dataset):
         # check
         assert len(audio.shape) == 1, f"{utt_id} seems to be multi-channel signal."
@@ -178,6 +178,11 @@ def wav2mel(sample_path, config_path, dump_path=None):
             if config["format"] == "hdf5":
                 write_hdf5(
                     os.path.join(dump_path, f"{utt_id}.h5"),
+                    "wave",
+                    audio.astype(np.float32),
+                )
+                write_hdf5(
+                    os.path.join(dump_path, f"{utt_id}.h5"),
                     "feats",
                     mel.astype(np.float32),
                 )
@@ -198,11 +203,15 @@ def wav2mel(sample_path, config_path, dump_path=None):
             else:
                 raise ValueError("support only hdf5 or npy format.")
         else:
-            return mel
+            mel_list.append(mel)
+
+    return mel_list
 
 
 # dump_path=None, 넘파이 배열를 return, 경로가 있을 경우 거기다 저장
-'''print(wav2mel(sample_path="files_for_gen/sample/",
-              config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml").shape)'''
-wav2mel(sample_path="files_for_gen/sample/", dump_path="files_for_gen/dump/sample/raw",
-        config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")
+'''print(len(wav2mel(sample_path="files_for_gen/sample/",
+              config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")))
+print(wav2mel(sample_path="files_for_gen/sample/",
+              config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")[0].shape)'''
+'''wav2mel(sample_path="files_for_gen/sample/", dump_path="files_for_gen/dump/sample/raw",
+        config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")'''
