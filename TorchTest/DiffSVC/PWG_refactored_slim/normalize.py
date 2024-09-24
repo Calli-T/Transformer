@@ -15,29 +15,10 @@ import yaml
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
-'''
-from parallel_wavegan.datasets import (
-    AudioMelDataset,
-    AudioMelF0ExcitationDataset,
-    AudioMelSCPDataset,
-    MelDataset,
-    MelF0ExcitationDataset,
-    MelSCPDataset,
-)
-'''
 from utils.audio_mel_dataset import (
     AudioMelDataset,
-    AudioMelF0ExcitationDataset,
     MelDataset,
-    MelF0ExcitationDataset,
 )
-
-'''from TorchTest.DiffSVC.PWG_refactored_slim.utils.datasets.scp_dataset import (
-    AudioMelSCPDataset,
-    MelSCPDataset
-)'''
-
-# from parallel_wavegan.utils import read_hdf5, write_hdf5
 from utils.utils import read_hdf5, write_hdf5
 
 
@@ -77,21 +58,12 @@ def main():
         help="statistics file.",
     )
 
-    '''
-    parser.add_argument(
-        "--segments",
-        default=None,
-        type=str,
-        help="kaldi-style segments file.",
-    )
-    '''
-
-    parser.add_argument(
+    '''parser.add_argument(
         "--skip-wav-copy",
         default=False,
         action="store_true",
         help="whether to skip the copy of wav files_for_gen.",
-    )
+    )'''
     parser.add_argument(
         "--target-feats",
         type=str,
@@ -133,7 +105,6 @@ def main():
 
     # check model architecture
     generator_type = config.get("generator_type", "ParallelWaveGANGenerator")
-    # use_f0_and_excitation = generator_type == "UHiFiGANGenerator"
 
     # check directory existence
     if not os.path.exists(args.dumpdir):
@@ -147,10 +118,6 @@ def main():
             audio_query, mel_query = "*.h5", "*.h5"
             audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
             mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
-            '''if use_f0_and_excitation:
-                f0_query, excitation_query = "*.h5", "*.h5"
-                f0_load_fn = lambda x: read_hdf5(x, "f0")  # NOQA
-                excitation_load_fn = lambda x: read_hdf5(x, "excitation")  # NOQA'''
             if config.get("use_global_condition", False):
                 global_query = "*.h5"
                 global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
@@ -158,36 +125,23 @@ def main():
             audio_query, mel_query = "*-wave.npy", f"*-{args.target_feats}.npy"
             audio_load_fn = np.load
             mel_load_fn = np.load
-            '''if use_f0_and_excitation:
-                f0_query, excitation_query = "*-f0.npy", "*-excitation.npy"
-                f0_load_fn = np.load
-                excitation_load_fn = np.load'''
+
             if config.get("use_global_condition", False):
                 global_query = "*-global.npy"
                 global_load_fn = np.load
         else:
             raise ValueError("support only hdf5 or npy format.")
-        if not False:  # use_f0_and_excitation:
-            if not args.skip_wav_copy:
-                dataset = AudioMelDataset(
-                    root_dir=args.rootdir,
-                    audio_query=audio_query,
-                    mel_query=mel_query,
-                    audio_load_fn=audio_load_fn,
-                    mel_load_fn=mel_load_fn,
-                    global_query=global_query,
-                    global_load_fn=global_load_fn,
-                    return_utt_id=True,
-                )
-            else:
-                dataset = MelDataset(
-                    root_dir=args.rootdir,
-                    mel_query=mel_query,
-                    mel_load_fn=mel_load_fn,
-                    global_query=global_query,
-                    global_load_fn=global_load_fn,
-                    return_utt_id=True,
-                )
+
+        dataset = AudioMelDataset(
+            root_dir=args.rootdir,
+            audio_query=audio_query,
+            mel_query=mel_query,
+            audio_load_fn=audio_load_fn,
+            mel_load_fn=mel_load_fn,
+            global_query=global_query,
+            global_load_fn=global_load_fn,
+            return_utt_id=True,
+        )
 
     logging.info(f"The number of files_for_gen = {len(dataset)}.")
 
@@ -208,12 +162,12 @@ def main():
     for items in tqdm(dataset):
         if not False:  # use_f0_and_excitation:
             if config.get("use_global_condition", False):
-                if not args.skip_wav_copy:
+                if True: #not args.skip_wav_copy:
                     utt_id, audio, mel, g = items
                 else:
                     utt_id, mel, g = items
             else:
-                if not args.skip_wav_copy:
+                if True: #not args.skip_wav_copy:
                     utt_id, audio, mel = items
                 else:
                     utt_id, mel = items
@@ -236,7 +190,7 @@ def main():
                 mel_norm.astype(np.float32),
             )
 
-            if not args.skip_wav_copy:
+            if True: # not args.skip_wav_copy:
                 write_hdf5(
                     os.path.join(args.dumpdir, f"{utt_id}.h5"),
                     "wave",
@@ -253,7 +207,7 @@ def main():
                 allow_pickle=False,
             )
 
-            if not args.skip_wav_copy:
+            if True: # not args.skip_wav_copy:
                 np.save(
                     os.path.join(args.dumpdir, f"{utt_id}-wave.npy"),
                     audio.astype(np.float32),
