@@ -1,3 +1,26 @@
+python3 preprocess.py \
+    --config files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
+    --rootdir files_for_gen/sample \
+    --dumpdir files_for_gen/dump/sample/raw
+
+python3 normalize.py \
+    --config files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
+    --rootdir files_for_gen/dump/sample/raw \
+    --dumpdir files_for_gen/dump/sample/norm \
+    --stats files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5
+
+python3 decode.py \
+    --checkpoint files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl \
+    --dumpdir files_for_gen/dump/sample/norm \
+    --outdir files_for_gen/outputs
+
+
+
+
+
+
+
+
 parallel-wavegan-preprocess \
     --config files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
     --rootdir files_for_gen/sample \

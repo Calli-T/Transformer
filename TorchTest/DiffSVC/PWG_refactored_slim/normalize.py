@@ -25,16 +25,17 @@ from parallel_wavegan.datasets import (
     MelSCPDataset,
 )
 '''
-from TorchTest.DiffSVC.PWG_refactored_slim.utils.audio_mel_dataset import (
+from utils.audio_mel_dataset import (
     AudioMelDataset,
     AudioMelF0ExcitationDataset,
     MelDataset,
     MelF0ExcitationDataset,
 )
-from datasets.scp_dataset import (
+
+'''from TorchTest.DiffSVC.PWG_refactored_slim.utils.datasets.scp_dataset import (
     AudioMelSCPDataset,
     MelSCPDataset
-)
+)'''
 
 # from parallel_wavegan.utils import read_hdf5, write_hdf5
 from utils.utils import read_hdf5, write_hdf5
@@ -58,28 +59,16 @@ def main():
         ),
     )
     parser.add_argument(
-        "--wav-scp",
-        default=None,
-        type=str,
-        help="kaldi-style wav.scp file. you need to specify either *-scp or rootdir.",
-    )
-    parser.add_argument(
-        "--feats-scp",
-        default=None,
-        type=str,
-        help="kaldi-style feats.scp file. you need to specify either *-scp or rootdir.",
-    )
-    parser.add_argument(
-        "--segments",
-        default=None,
-        type=str,
-        help="kaldi-style segments file.",
-    )
-    parser.add_argument(
         "--dumpdir",
         type=str,
         required=True,
         help="directory to dump normalized feature files_for_gen.",
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="yaml format configuration file.",
     )
     parser.add_argument(
         "--stats",
@@ -87,17 +76,21 @@ def main():
         required=True,
         help="statistics file.",
     )
+
+    '''
+    parser.add_argument(
+        "--segments",
+        default=None,
+        type=str,
+        help="kaldi-style segments file.",
+    )
+    '''
+
     parser.add_argument(
         "--skip-wav-copy",
         default=False,
         action="store_true",
         help="whether to skip the copy of wav files_for_gen.",
-    )
-    parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="yaml format configuration file.",
     )
     parser.add_argument(
         "--target-feats",
@@ -112,6 +105,7 @@ def main():
         default=1,
         help="logging level. higher is more logging. (default=1)",
     )
+
     args = parser.parse_args()
 
     # set logger
@@ -139,13 +133,7 @@ def main():
 
     # check model architecture
     generator_type = config.get("generator_type", "ParallelWaveGANGenerator")
-    use_f0_and_excitation = generator_type == "UHiFiGANGenerator"
-
-    # check arguments
-    if (args.feats_scp is not None and args.rootdir is not None) or (
-            args.feats_scp is None and args.rootdir is None
-    ):
-        raise ValueError("Please specify either --rootdir or --feats-scp.")
+    # use_f0_and_excitation = generator_type == "UHiFiGANGenerator"
 
     # check directory existence
     if not os.path.exists(args.dumpdir):
@@ -159,10 +147,10 @@ def main():
             audio_query, mel_query = "*.h5", "*.h5"
             audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
             mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
-            if use_f0_and_excitation:
+            '''if use_f0_and_excitation:
                 f0_query, excitation_query = "*.h5", "*.h5"
                 f0_load_fn = lambda x: read_hdf5(x, "f0")  # NOQA
-                excitation_load_fn = lambda x: read_hdf5(x, "excitation")  # NOQA
+                excitation_load_fn = lambda x: read_hdf5(x, "excitation")  # NOQA'''
             if config.get("use_global_condition", False):
                 global_query = "*.h5"
                 global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
@@ -170,16 +158,16 @@ def main():
             audio_query, mel_query = "*-wave.npy", f"*-{args.target_feats}.npy"
             audio_load_fn = np.load
             mel_load_fn = np.load
-            if use_f0_and_excitation:
+            '''if use_f0_and_excitation:
                 f0_query, excitation_query = "*-f0.npy", "*-excitation.npy"
                 f0_load_fn = np.load
-                excitation_load_fn = np.load
+                excitation_load_fn = np.load'''
             if config.get("use_global_condition", False):
                 global_query = "*-global.npy"
                 global_load_fn = np.load
         else:
             raise ValueError("support only hdf5 or npy format.")
-        if not use_f0_and_excitation:
+        if not False:  # use_f0_and_excitation:
             if not args.skip_wav_copy:
                 dataset = AudioMelDataset(
                     root_dir=args.rootdir,
@@ -200,52 +188,7 @@ def main():
                     global_load_fn=global_load_fn,
                     return_utt_id=True,
                 )
-        else:
-            if not args.skip_wav_copy:
-                dataset = AudioMelF0ExcitationDataset(
-                    root_dir=args.rootdir,
-                    audio_query=audio_query,
-                    mel_query=mel_query,
-                    f0_query=f0_query,
-                    excitation_query=excitation_query,
-                    audio_load_fn=audio_load_fn,
-                    mel_load_fn=mel_load_fn,
-                    f0_load_fn=f0_load_fn,
-                    excitation_load_fn=excitation_load_fn,
-                    return_utt_id=True,
-                )
-            else:
-                dataset = MelF0ExcitationDataset(
-                    root_dir=args.rootdir,
-                    mel_query=mel_query,
-                    f0_query=f0_query,
-                    excitation_query=excitation_query,
-                    mel_load_fn=mel_load_fn,
-                    f0_load_fn=f0_load_fn,
-                    excitation_load_fn=excitation_load_fn,
-                    return_utt_id=True,
-                )
-    else:
-        if use_f0_and_excitation:
-            raise NotImplementedError(
-                "SCP format is not supported for f0 and excitation."
-            )
-        if config.get("use_global_condition", False):
-            raise NotImplementedError(
-                "SCP format is Not supported for global conditioning."
-            )
-        if not args.skip_wav_copy:
-            dataset = AudioMelSCPDataset(
-                wav_scp=args.wav_scp,
-                feats_scp=args.feats_scp,
-                segments=args.segments,
-                return_utt_id=True,
-            )
-        else:
-            dataset = MelSCPDataset(
-                feats_scp=args.feats_scp,
-                return_utt_id=True,
-            )
+
     logging.info(f"The number of files_for_gen = {len(dataset)}.")
 
     # restore scaler
@@ -263,7 +206,7 @@ def main():
 
     # process each file
     for items in tqdm(dataset):
-        if not use_f0_and_excitation:
+        if not False:  # use_f0_and_excitation:
             if config.get("use_global_condition", False):
                 if not args.skip_wav_copy:
                     utt_id, audio, mel, g = items
@@ -274,11 +217,6 @@ def main():
                     utt_id, audio, mel = items
                 else:
                     utt_id, mel = items
-        else:
-            if not args.skip_wav_copy:
-                utt_id, audio, mel, f0, excitation = items
-            else:
-                utt_id, mel, f0, excitation = items
 
         # normalize
         mel_norm = scaler.transform(mel)
@@ -297,17 +235,7 @@ def main():
                 args.target_feats,
                 mel_norm.astype(np.float32),
             )
-            if use_f0_and_excitation:
-                write_hdf5(
-                    os.path.join(args.dumpdir, f"{utt_id}.h5"),
-                    "f0",
-                    f0.astype(np.float32),
-                )
-                write_hdf5(
-                    os.path.join(args.dumpdir, f"{utt_id}.h5"),
-                    "excitation",
-                    excitation.astype(np.float32),
-                )
+
             if not args.skip_wav_copy:
                 write_hdf5(
                     os.path.join(args.dumpdir, f"{utt_id}.h5"),
@@ -324,17 +252,7 @@ def main():
                 mel_norm.astype(np.float32),
                 allow_pickle=False,
             )
-            if use_f0_and_excitation:
-                np.save(
-                    os.path.join(args.dumpdir, f"{utt_id}-f0.npy"),
-                    f0.astype(np.float32),
-                    allow_pickle=False,
-                )
-                np.save(
-                    os.path.join(args.dumpdir, f"{utt_id}-excitation.npy"),
-                    excitation.astype(np.float32),
-                    allow_pickle=False,
-                )
+
             if not args.skip_wav_copy:
                 np.save(
                     os.path.join(args.dumpdir, f"{utt_id}-wave.npy"),

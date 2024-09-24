@@ -26,15 +26,12 @@ from parallel_wavegan.datasets import (
     MelSCPDataset,
 )
 '''
-from TorchTest.DiffSVC.PWG_refactored_slim.utils.audio_mel_dataset import (
+from utils.audio_mel_dataset import  (
     AudioDataset,
     MelDataset,
     MelF0ExcitationDataset
 )
-from datasets.scp_dataset import (
-    AudioSCPDataset,
-    MelSCPDataset
-)
+
 
 from utils.utils import load_model, read_hdf5
 
@@ -215,10 +212,10 @@ def main():
                 raise NotImplementedError(
                     "SCP format is not supported for f0 and excitation."
                 )
-            dataset = MelSCPDataset(
+            '''dataset = MelSCPDataset(
                 feats_scp=args.feats_scp,
                 return_utt_id=True,
-            )
+            )'''
         logging.info(f"The number of features to be decoded = {len(dataset)}.")
 
         # start generation
@@ -303,11 +300,13 @@ def main():
                 raise NotImplementedError("Not supported.")
             if use_global_condition:
                 raise NotImplementedError("Not supported.")
+            '''
             dataset = AudioSCPDataset(
                 args.scp,
                 segments=args.segments,
                 return_utt_id=True,
             )
+            '''
         logging.info(f"The number of features to be decoded = {len(dataset)}.")
 
         # start generation

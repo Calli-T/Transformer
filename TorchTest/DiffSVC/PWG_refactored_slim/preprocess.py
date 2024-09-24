@@ -138,7 +138,6 @@ def main():
     )
     '''
     args = parser.parse_args()
-    print(args)
 
     '''
     # set logger
@@ -241,6 +240,7 @@ def main():
                 fmin=config["fmin"],
                 fmax=config["fmax"],
             )
+            # print(mel.shape)
 
             # make sure the audio length and feature length are matched
             audio = np.pad(audio, (0, config["fft_size"]), mode="edge")
