@@ -1,0 +1,2 @@
+mel-spectrogram(정확히는 log 10으로 처리한)의 shape는
+(길이에 따라 다름, 80)이더라
