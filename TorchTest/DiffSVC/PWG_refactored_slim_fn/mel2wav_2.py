@@ -21,7 +21,7 @@ from audio_mel_dataset import MelDataset
 from utils import load_model, read_hdf5
 
 
-def wav2mel(model_path, dump_path, output_path=None):
+def mel2wav(model_path, dump_path, output_path=None):
     """Run decoding process."""
     # load config
     dirname = os.path.dirname(model_path)
@@ -119,10 +119,14 @@ def wav2mel(model_path, dump_path, output_path=None):
     return wav_list
 
 
+params = [
+    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
+    "files_for_gen/dump/sample/norm/",
+    "files_for_gen/outputs/"
+]
 '''print(mel2wav(model_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
               dump_path="files_for_gen/dump/sample/norm/")[0].shape)'''
-wav2mel(model_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
-        dump_path="files_for_gen/dump/sample/norm/", output_path="files_for_gen/outputs/")
+mel2wav(model_path=params[0], dump_path=params[1], output_path=params[2])
 
 '''normalize(raw_path="files_for_gen/dump/sample/raw/", dump_path="files_for_gen/dump/sample/norm/",
           stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",

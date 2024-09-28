@@ -32,3 +32,8 @@ getitem으로 최종적으로 가져올 수 있도록 한다.
 
 
 ----- 작업 노트 -----
+일단 PipeLineDataset class를 만들어 이것저것 때려박을 수 있게 하였으나,
+global/local이나 config처럼 중간 중간 읽을게 너무 많다.
+걍 처음에 다 읽은 다음 list나 class만 던져주고, 필요할 때 PipeLineDataset을 그걸로
+만들 수 있도록 해줘야겠다.
+use_pipeline=False/True는 함수에다 줄까? 말까?

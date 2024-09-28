@@ -53,11 +53,6 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
 
     args = parser.parse_args()
 
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-    # )
-
     # load config
     with open(config_path) as f:
         config = yaml.load(f, Loader=yaml.Loader)
@@ -74,7 +69,7 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
             audio_query, mel_query = "*.h5", "*.h5"
             audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
             mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
-            if config.get("use_global_condition", False): # 일단 pwg 모델은 안쓰더라, global
+            if config.get("use_global_condition", False):  # 일단 pwg 모델은 안쓰더라, global
                 global_query = "*.h5"
                 global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
         elif config["format"] == "npy":
@@ -120,7 +115,6 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
         if config.get("use_global_condition", False):
             utt_id, audio, mel, g = items
         else:
-
             utt_id, audio, mel = items
 
         # normalize
@@ -179,15 +173,16 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
 
     return mel_norm_list
 
-raw_path="files_for_gen/dump/sample/raw/"
-dump_path="files_for_gen/dump/sample/norm/"
-stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5"
-config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
+
+params = [
+    "files_for_gen/dump/sample/raw/",
+    "files_for_gen/dump/sample/norm/",
+    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
+    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
+]
 
 '''print(len(normalize(raw_path="files_for_gen/dump/sample/raw/",
           stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
           config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")))'''
 
-normalize(raw_path="files_for_gen/dump/sample/raw/", dump_path="files_for_gen/dump/sample/norm/",
-          stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
-          config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")
+normalize(raw_path=params[0], dump_path=params[1], stats_path=params[2], config_path=params[3])

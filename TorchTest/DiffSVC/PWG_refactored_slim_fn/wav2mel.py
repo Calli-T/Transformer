@@ -88,11 +88,6 @@ def logmelfilterbank(
 
 # 만약 dump_path가 None이라면, 저장을 안하고 넘파이 배열만 돌려주는 것으로 하자
 def wav2mel(sample_path, config_path, dump_path=None):
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-    # )
-
     # load config
     with open(config_path) as f:
         config = yaml.load(f, Loader=yaml.Loader)
@@ -212,14 +207,16 @@ def wav2mel(sample_path, config_path, dump_path=None):
         return PipelineDataset(utt_ids=utt_id_list, waves=audio_list, mels=mel_list)
 
 
-sample_path = "files_for_gen/sample/"
-config_path = "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
-dump_path = "files_for_gen/dump/sample/raw"
+params = [
+    "files_for_gen/sample/",
+    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml",
+    "files_for_gen/dump/sample/raw",
+]
 
 # dump_path=None, 넘파이 배열를 return, 경로가 있을 경우 거기다 저장
 # print(len(wav2mel(sample_path=sample_path, config_path=config_path)))
 
-for item in wav2mel(sample_path=sample_path, config_path=config_path):
+for item in wav2mel(sample_path=params[0], config_path=params[1]):
     print(item[1].shape)
     print(item[2].shape)
 
