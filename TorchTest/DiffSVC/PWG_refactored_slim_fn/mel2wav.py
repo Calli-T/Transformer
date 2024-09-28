@@ -5,6 +5,7 @@
 #  MIT License (https://opensource.org/licenses/MIT)
 
 """Normalize feature files_for_gen and dump them."""
+# import wav2mel
 
 import argparse
 import logging
@@ -15,20 +16,11 @@ import yaml
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
-from audio_mel_dataset import (
-    AudioMelDataset,
-)
+from audio_mel_dataset import AudioMelDataset, PipelineDataset
 from utils import read_hdf5, write_hdf5
 
-'''
---config files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml \
-    --rootdir files_for_gen/dump/sample/raw \
-    --dumpdir files_for_gen/dump/sample/norm \
-    --stats files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5
-'''
 
-
-def normalize(config_path, raw_path, stats_path, dump_path=None):
+def normalize(for_config, raw_path, for_stats, for_dataset=None, dump_path=None):
     """Run preprocessing process."""
     parser = argparse.ArgumentParser(
         description=(
@@ -36,13 +28,6 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
             " parallel_wavegan/bin/normalize.py)."
         )
     )
-
-    '''parser.add_argument(
-        "--skip-wav-copy",
-        default=False,
-        action="store_true",
-        help="whether to skip the copy of wav files_for_gen.",
-    )'''
     parser.add_argument(
         "--target-feats",
         type=str,
@@ -50,13 +35,15 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
         choices=["feats", "local"],
         help="target name to be normalized.",
     )
-
     args = parser.parse_args()
 
-    # load config
-    with open(config_path) as f:
-        config = yaml.load(f, Loader=yaml.Loader)
-    config.update(vars(args))
+    # load config, 파이프라이닝 할 때는 경로가 아니라 config 그 자체를 전달
+    if type(for_config) == str:
+        with open(for_config) as f:
+            config = yaml.load(f, Loader=yaml.Loader)
+        config.update(vars(args))
+    else:
+        config = for_config
 
     # check model architecture
     generator_type = config.get("generator_type", "ParallelWaveGANGenerator")
@@ -83,29 +70,36 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
         else:
             raise ValueError("support only hdf5 or npy format.")
 
-        dataset = AudioMelDataset(
-            root_dir=raw_path,
-            audio_query=audio_query,
-            mel_query=mel_query,
-            audio_load_fn=audio_load_fn,
-            mel_load_fn=mel_load_fn,
-            global_query=global_query,
-            global_load_fn=global_load_fn,
-            return_utt_id=True,
-        )
+        if for_dataset is None:
+            dataset = AudioMelDataset(
+                root_dir=raw_path,
+                audio_query=audio_query,
+                mel_query=mel_query,
+                audio_load_fn=audio_load_fn,
+                mel_load_fn=mel_load_fn,
+                global_query=global_query,
+                global_load_fn=global_load_fn,
+                return_utt_id=True,
+            )
+        else:  # local이니 global이니 하는 것들은 나중에 옵션으로 추가해주자
+            dataset = PipelineDataset(*for_dataset)
+            print(type(dataset))
 
     logging.info(f"The number of files_for_gen = {len(dataset)}.")
 
     # restore scaler
     scaler = StandardScaler()
-    if config["format"] == "hdf5":
-        scaler.mean_ = read_hdf5(stats_path, "mean")
-        scaler.scale_ = read_hdf5(stats_path, "scale")
-    elif config["format"] == "npy":
-        scaler.mean_ = np.load(stats_path)[0]
-        scaler.scale_ = np.load(stats_path)[1]
+    if type(for_config) == str:
+        if config["format"] == "hdf5":
+            scaler.mean_ = read_hdf5(for_stats, "mean")
+            scaler.scale_ = read_hdf5(for_stats, "scale")
+        elif config["format"] == "npy":
+            scaler.mean_ = np.load(for_stats)[0]
+            scaler.scale_ = np.load(for_stats)[1]
+        else:
+            raise ValueError("support only hdf5 or npy format.")
     else:
-        raise ValueError("support only hdf5 or npy format.")
+        scaler.mean_, scaler.scale_ = for_stats
     # from version 0.23.0, this information is needed
     scaler.n_features_in_ = scaler.mean_.shape[0]
 
@@ -174,15 +168,19 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
     return mel_norm_list
 
 
-params = [
+'''params = [
     "files_for_gen/dump/sample/raw/",
     "files_for_gen/dump/sample/norm/",
     "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
     "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
-]
+]'''
 
 '''print(len(normalize(raw_path="files_for_gen/dump/sample/raw/",
           stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
           config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")))'''
 
-normalize(raw_path=params[0], dump_path=params[1], stats_path=params[2], config_path=params[3])
+# normalize(raw_path=params[0], dump_path=params[1], for_stats=params[2], for_config=params[3])
+
+# import wav2mel
+# normalize(raw_path=params[0], dump_path=params[1], for_stats=params[2], for_config=params[3],
+#           for_dataset=wav2mel.wav2mel(sample_path=wav2mel.params[0], for_config=wav2mel.params[1]))

@@ -17,18 +17,28 @@ import torch
 import yaml
 from tqdm import tqdm
 
-from audio_mel_dataset import MelDataset
+from audio_mel_dataset import MelDataset, PipelineDataset
 from utils import load_model, read_hdf5
 
 
-def mel2wav(model_path, dump_path, output_path=None):
+def mel2wav(model_path, for_config=None, output_path=None, for_dataset=None):
     """Run decoding process."""
     # load config
     dirname = os.path.dirname(model_path)
     config_path = os.path.join(dirname, "config.yml")
 
-    with open(config_path) as f:
-        config = yaml.load(f, Loader=yaml.Loader)
+    # load config, 파이프라이닝 할 때는 경로가 아니라 config 그 자체를 전달
+    if type(config_path) == str:
+        with open(config_path) as f:
+            config = yaml.load(f, Loader=yaml.Loader)
+    else:
+        config = for_config
+
+    '''if for_config is None:
+        config = for_config
+    else:
+        with open(config_path) as f:
+            config = yaml.load(f, Loader=yaml.Loader)'''
 
     # setup model
     if torch.cuda.is_available():
@@ -51,7 +61,7 @@ def mel2wav(model_path, dump_path, output_path=None):
     #       MEL2WAV CASE       #
     ############################
     # setup dataset
-    if dump_path is not None:
+    if for_dataset is not None:
         if config["format"] == "hdf5":
             mel_query = "*.h5"
             mel_load_fn = lambda x: read_hdf5(x, "feats")  # NOQA
@@ -61,13 +71,15 @@ def mel2wav(model_path, dump_path, output_path=None):
         else:
             raise ValueError("Support only hdf5 or npy format.")
 
-        if True:  # not use_f0_and_excitation:
+        if type(for_dataset) == "str":  # not use_f0_and_excitation:
             dataset = MelDataset(
-                dump_path,
+                for_dataset,
                 mel_query=mel_query,
                 mel_load_fn=mel_load_fn,
                 return_utt_id=True,
             )
+        else:
+            dataset = PipelineDataset(*for_dataset)
     logging.info(f"The number of features to be decoded = {len(dataset)}.")
 
     # start generation
@@ -119,17 +131,11 @@ def mel2wav(model_path, dump_path, output_path=None):
     return wav_list
 
 
-params = [
+'''params = [
     "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
     "files_for_gen/dump/sample/norm/",
     "files_for_gen/outputs/"
-]
+]'''
 '''print(mel2wav(model_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
               dump_path="files_for_gen/dump/sample/norm/")[0].shape)'''
-mel2wav(model_path=params[0], dump_path=params[1], output_path=params[2])
-
-'''normalize(raw_path="files_for_gen/dump/sample/raw/", dump_path="files_for_gen/dump/sample/norm/",
-          stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
-          config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")'''
-
-# 좀 있다가 멜스펙트로그램작성-정상화-음성파일제작을 def로 한 큐에 흐를 수 있도록 (norm, mel2wav함수에서 경로를 입력으로 받는, wav2mel은 줘야함)파일 읽기를 배제하고 짜보자
+# mel2wav(model_path=params[0], dump_path=params[1], output_path=params[2])
