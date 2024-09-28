@@ -208,23 +208,4 @@ def wav2mel(sample_path, for_config, dump_path=None):
 
     if dump_path is None:
         return [utt_id_list, audio_list,
-                mel_list]  # , PipelineDataset(utt_ids=utt_id_list, waves=audio_list, mels=mel_list)
-
-
-'''params = [
-    "files_for_gen/sample/",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml",
-    "files_for_gen/dump/sample/raw",
-]'''
-
-# dump_path=None, 넘파이 배열를 return, 경로가 있을 경우 거기다 저장
-# print(len(wav2mel(sample_path=sample_path, config_path=config_path)))
-
-'''for item in wav2mel(sample_path=params[0], config_path=params[1]):
-    print(item[1].shape)
-    print(item[2].shape)'''
-
-# name, ad, mel = wav2mel(sample_path=params[0], for_config=params[1])
-# print(mel[0].shape)
-
-# wav2mel(sample_path=sample_path, config_path=config_path, dump_path=dump_path)
+                mel_list]

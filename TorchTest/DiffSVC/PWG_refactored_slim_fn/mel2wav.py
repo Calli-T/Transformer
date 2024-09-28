@@ -166,21 +166,3 @@ def normalize(for_config, raw_path, for_stats, for_dataset=None, dump_path=None)
             mel_norm_list.append(mel_norm)
 
     return mel_norm_list
-
-
-'''params = [
-    "files_for_gen/dump/sample/raw/",
-    "files_for_gen/dump/sample/norm/",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
-]'''
-
-'''print(len(normalize(raw_path="files_for_gen/dump/sample/raw/",
-          stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
-          config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")))'''
-
-# normalize(raw_path=params[0], dump_path=params[1], for_stats=params[2], for_config=params[3])
-
-# import wav2mel
-# normalize(raw_path=params[0], dump_path=params[1], for_stats=params[2], for_config=params[3],
-#           for_dataset=wav2mel.wav2mel(sample_path=wav2mel.params[0], for_config=wav2mel.params[1]))

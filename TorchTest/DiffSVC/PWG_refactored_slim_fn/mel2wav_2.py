@@ -34,12 +34,6 @@ def mel2wav(model_path, for_config=None, output_path=None, for_dataset=None):
     else:
         config = for_config
 
-    '''if for_config is None:
-        config = for_config
-    else:
-        with open(config_path) as f:
-            config = yaml.load(f, Loader=yaml.Loader)'''
-
     # setup model
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -129,13 +123,3 @@ def mel2wav(model_path, for_config=None, output_path=None, for_dataset=None):
     )
 
     return wav_list
-
-
-'''params = [
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
-    "files_for_gen/dump/sample/norm/",
-    "files_for_gen/outputs/"
-]'''
-'''print(mel2wav(model_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
-              dump_path="files_for_gen/dump/sample/norm/")[0].shape)'''
-# mel2wav(model_path=params[0], dump_path=params[1], output_path=params[2])
