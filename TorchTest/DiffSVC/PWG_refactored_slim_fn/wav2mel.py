@@ -7,7 +7,6 @@
 
 """Perform preprocessing and raw feature extraction."""
 
-
 import logging
 import os
 
@@ -17,7 +16,7 @@ import soundfile as sf
 import yaml
 from tqdm import tqdm
 
-from audio_mel_dataset import AudioDataset
+from audio_mel_dataset import AudioDataset, PipelineDataset
 from utils import write_hdf5
 
 
@@ -117,6 +116,8 @@ def wav2mel(sample_path, config_path, dump_path=None):
 
     # process each data
     mel_list = []
+    utt_id_list = []
+    audio_list = []
     for utt_id, (audio, fs) in tqdm(dataset):
         # check
         assert len(audio.shape) == 1, f"{utt_id} seems to be multi-channel signal."
@@ -203,15 +204,23 @@ def wav2mel(sample_path, config_path, dump_path=None):
             else:
                 raise ValueError("support only hdf5 or npy format.")
         else:
+            utt_id_list.append(utt_id)
             mel_list.append(mel)
+            audio_list.append(audio)
 
-    return mel_list
+    if dump_path is None:
+        return PipelineDataset(utt_ids=utt_id_list, waves=audio_list, mels=mel_list)
 
+
+sample_path = "files_for_gen/sample/"
+config_path = "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
+dump_path = "files_for_gen/dump/sample/raw"
 
 # dump_path=None, 넘파이 배열를 return, 경로가 있을 경우 거기다 저장
-'''print(len(wav2mel(sample_path="files_for_gen/sample/",
-              config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")))
-print(wav2mel(sample_path="files_for_gen/sample/",
-              config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")[0].shape)'''
-'''wav2mel(sample_path="files_for_gen/sample/", dump_path="files_for_gen/dump/sample/raw",
-        config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml")'''
+# print(len(wav2mel(sample_path=sample_path, config_path=config_path)))
+
+for item in wav2mel(sample_path=sample_path, config_path=config_path):
+    print(item[1].shape)
+    print(item[2].shape)
+
+# wav2mel(sample_path=sample_path, config_path=config_path, dump_path=dump_path)

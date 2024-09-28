@@ -14,25 +14,71 @@ from torch.utils.data import Dataset
 
 from parallel_wavegan.utils import find_files, read_hdf5
 
+# Audio와 Mel의 넘파이 배열과 음원명 셋 중 하나만 있어도 동작하는 통합 데이터셋이다
+#
+# 중간 과정으로 파일로의 저장을 거치지 않는 파이프라인을 위한 데이터셋이다
+'''
+Audio와 Mel의 넘파이 배열과 음원명 셋 중 하나만 있어도 동작하는 통합 데이터셋으로,
+중간 과정으로 파일로의 저장을 거치지 않는 파이프라인을 위한 데이터셋이다.
+id, wave, mel, mel_norm, l, g 순으로 주며 없으면 걍 None을 준다.
+'''
+
+
+class PipelineDataset(Dataset):
+    def __init__(self, utt_ids=None, waves=None, mels=None, mel_norms=None, locs=None, glos=None):
+        self.utt_ids = utt_ids
+        self.waves = waves
+        self.mels = mels
+        self.mel_norms = mel_norms
+        self.locs = locs
+        self.glos = glos
+
+    def __getitem__(self, idx):
+        items = []
+        if self.utt_ids is not None:
+            items.append(self.utt_ids[idx])
+        if self.waves is not None:
+            items.append(self.waves[idx])
+        if self.mels is not None:
+            items.append(self.mels[idx])
+        if self.mel_norms is not None:
+            items.append(self.mel_norms[idx])
+        if self.locs is not None:
+            items.append(self.locs[idx])
+        if self.glos is not None:
+            items.append(self.glos[idx])
+
+        return items
+
+    def __len__(self):
+        if self.utt_ids is not None:
+            return len(self.utt_ids)
+        elif self.waves is not None:
+            return len(self.waves)
+        elif self.mels is not None:
+            return len(self.mels)
+        elif self.mel_norms is not None:
+            return len(self.mel_norms)
+
 
 class AudioMelDataset(Dataset):
     """PyTorch compatible audio and mel (+global conditioning feature) dataset."""
 
     def __init__(
-        self,
-        root_dir,
-        audio_query="*.h5",
-        audio_load_fn=lambda x: read_hdf5(x, "wave"),
-        mel_query="*.h5",
-        mel_load_fn=lambda x: read_hdf5(x, "feats"),
-        local_query=None,
-        local_load_fn=None,
-        global_query=None,
-        global_load_fn=None,
-        audio_length_threshold=None,
-        mel_length_threshold=None,
-        return_utt_id=False,
-        allow_cache=False,
+            self,
+            root_dir,
+            audio_query="*.h5",
+            audio_load_fn=lambda x: read_hdf5(x, "wave"),
+            mel_query="*.h5",
+            mel_load_fn=lambda x: read_hdf5(x, "feats"),
+            local_query=None,
+            local_load_fn=None,
+            global_query=None,
+            global_load_fn=None,
+            audio_length_threshold=None,
+            mel_length_threshold=None,
+            return_utt_id=False,
+            allow_cache=False,
     ):
         """Initialize dataset.
 
@@ -196,20 +242,20 @@ class AudioMelF0ExcitationDataset(Dataset):
     """PyTorch compatible audio and mel dataset."""
 
     def __init__(
-        self,
-        root_dir,
-        audio_query="*.h5",
-        mel_query="*.h5",
-        f0_query="*.h5",
-        excitation_query="*.h5",
-        audio_load_fn=lambda x: read_hdf5(x, "wave"),
-        mel_load_fn=lambda x: read_hdf5(x, "feats"),
-        f0_load_fn=lambda x: read_hdf5(x, "f0"),
-        excitation_load_fn=lambda x: read_hdf5(x, "excitation"),
-        audio_length_threshold=None,
-        mel_length_threshold=None,
-        return_utt_id=False,
-        allow_cache=False,
+            self,
+            root_dir,
+            audio_query="*.h5",
+            mel_query="*.h5",
+            f0_query="*.h5",
+            excitation_query="*.h5",
+            audio_load_fn=lambda x: read_hdf5(x, "wave"),
+            mel_load_fn=lambda x: read_hdf5(x, "feats"),
+            f0_load_fn=lambda x: read_hdf5(x, "f0"),
+            excitation_load_fn=lambda x: read_hdf5(x, "excitation"),
+            audio_length_threshold=None,
+            mel_length_threshold=None,
+            return_utt_id=False,
+            allow_cache=False,
     ):
         """Initialize dataset.
 
@@ -358,17 +404,17 @@ class AudioDataset(Dataset):
     """PyTorch compatible audio dataset."""
 
     def __init__(
-        self,
-        root_dir,
-        audio_query="*-wave.npy",
-        audio_length_threshold=None,
-        audio_load_fn=np.load,
-        local_query=None,
-        local_load_fn=None,
-        global_query=None,
-        global_load_fn=None,
-        return_utt_id=False,
-        allow_cache=False,
+            self,
+            root_dir,
+            audio_query="*-wave.npy",
+            audio_length_threshold=None,
+            audio_load_fn=np.load,
+            local_query=None,
+            local_load_fn=None,
+            global_query=None,
+            global_load_fn=None,
+            return_utt_id=False,
+            allow_cache=False,
     ):
         """Initialize dataset.
 
@@ -501,17 +547,17 @@ class MelDataset(Dataset):
     """PyTorch compatible mel (+global conditioning feature) dataset."""
 
     def __init__(
-        self,
-        root_dir,
-        mel_query="*.h5",
-        mel_load_fn=lambda x: read_hdf5(x, "feats"),
-        local_query=None,
-        local_load_fn=None,
-        global_query=None,
-        global_load_fn=None,
-        mel_length_threshold=None,
-        return_utt_id=False,
-        allow_cache=False,
+            self,
+            root_dir,
+            mel_query="*.h5",
+            mel_load_fn=lambda x: read_hdf5(x, "feats"),
+            local_query=None,
+            local_load_fn=None,
+            global_query=None,
+            global_load_fn=None,
+            mel_length_threshold=None,
+            return_utt_id=False,
+            allow_cache=False,
     ):
         """Initialize dataset.
 
@@ -644,17 +690,17 @@ class MelF0ExcitationDataset(Dataset):
     """PyTorch compatible mel dataset."""
 
     def __init__(
-        self,
-        root_dir,
-        mel_query="*-feats.npy",
-        f0_query="*-f0.npy",
-        excitation_query="*-excitation.npy",
-        mel_length_threshold=None,
-        mel_load_fn=np.load,
-        f0_load_fn=np.load,
-        excitation_load_fn=np.load,
-        return_utt_id=False,
-        allow_cache=False,
+            self,
+            root_dir,
+            mel_query="*-feats.npy",
+            f0_query="*-f0.npy",
+            excitation_query="*-excitation.npy",
+            mel_length_threshold=None,
+            mel_load_fn=np.load,
+            f0_load_fn=np.load,
+            excitation_load_fn=np.load,
+            return_utt_id=False,
+            allow_cache=False,
     ):
         """Initialize dataset.
 
@@ -693,7 +739,7 @@ class MelF0ExcitationDataset(Dataset):
         assert len(mel_files) != 0, f"Not found any mel files_for_gen in ${root_dir}."
         assert len(f0_files) != 0, f"Not found any f0 files_for_gen in ${root_dir}."
         assert (
-            len(excitation_files) != 0
+                len(excitation_files) != 0
         ), f"Not found any excitation files_for_gen in ${root_dir}."
 
         self.mel_files = mel_files

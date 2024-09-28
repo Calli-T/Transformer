@@ -74,7 +74,7 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
             audio_query, mel_query = "*.h5", "*.h5"
             audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
             mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
-            if config.get("use_global_condition", False):
+            if config.get("use_global_condition", False): # 일단 pwg 모델은 안쓰더라, global
                 global_query = "*.h5"
                 global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
         elif config["format"] == "npy":
@@ -179,6 +179,10 @@ def normalize(config_path, raw_path, stats_path, dump_path=None):
 
     return mel_norm_list
 
+raw_path="files_for_gen/dump/sample/raw/"
+dump_path="files_for_gen/dump/sample/norm/"
+stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5"
+config_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml"
 
 '''print(len(normalize(raw_path="files_for_gen/dump/sample/raw/",
           stats_path="files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
