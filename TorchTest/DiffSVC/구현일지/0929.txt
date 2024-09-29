@@ -1,0 +1,6 @@
+DiffSinger의 논문에서는 non-causal wavenet을 사용한다고 한다
+prophesier의 구현에서는 확실히 해당 구현이 없었으며, UNet과 비슷한 구조인듯하니
+이를 차근 차근 뜯어보자
+encoder_hidden과 dilation_cycle_length를 hparams에서 가져오는데,
+이게 키워드? 인듯하다 이걸 차근차근 뜯어보자
+그리고 음원 파일 크기가 서로 다른데 이걸 어떻게 활용하는지도 알아보자
