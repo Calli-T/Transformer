@@ -152,6 +152,25 @@ def wav2mel(sample_path, for_config, dump_path=None):
             fmin=config["fmin"],
             fmax=config["fmax"],
         )
+        # mel = librosa.power_to_db(pow(10, mel), ref=np.max)
+
+        '''
+        mel = librosa.feature.melspectrogram(
+            y=x,
+            sr=sampling_rate,
+            hop_length=hop_size,
+            n_fft=config["fft_size"],
+            win_length=config["win_length"],
+            window=config["window"],
+            pad_mode="reflect",
+            n_mels=config["num_mels"],
+            fmin=config["fmin"],
+            fmax=config["fmax"],
+        )
+        mel = librosa.power_to_db(mel.T, ref=np.max)
+        print(mel.shape)
+        print(type(mel))
+        '''
 
         # make sure the audio length and feature length are matched
         audio = np.pad(audio, (0, config["fft_size"]), mode="edge")

@@ -5,4 +5,31 @@
 그걸 넣는 규격 즉 wavenet을 알아보자
 시각화도 잊지말고
 
-일단 mel spectrogram을 만들어보는 과정을 간단하게 살펴보자
+{   일단 mel spectrogram을 만들어보는 과정을 간단하게 살펴보자
+    logmelfilterback함수를 쓴다 끝, 근데 라이브러리의 구현과는 출력물이 다른듯 하다
+}
+
+일단 음성파일 -> stft -> filter -> log변환(dB scale로)하는데,
+특이하게도 librosa.feature.melspectrogram를 쓰는게 아니고,
+librosa library를 쓰기는 하는데, 내부 함수를 꺼내다가 각각을 이어붙여서 구현했다???
+일단 통합 함수로 대체 가능한지 한 번 써보고, 확인할 것
+docs는 여기에
+https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html#librosa.feature.melspectrogram
+
+시각화 작업 하는 중인데,
+https://ratsgo.github.io/speechbook/docs/fe/mfcc
+이게 뭔
+
+pwg에 에서 멜 스펙트로그램을 만들 때 뭔가 이상함
+librosa.feature.melspectrogram과 다르게 동작한다
+야매 구현인가?
+
+- 알게된 것 -
+저기 구현된건 log 10으로 만들어 놓은거고, 라이브러리의 코드는
+power spectrum이라 db로 보려면 power to db 함수를 써야한다
+
+- 검증해볼 것 -
+행은 주파수 밴드 정보를, 열은 시간(정확히는 window)를 나타낸다고 하며
+각 행렬값은 음의 세기라고 한다.
+그렇다면 window단위로 모델에 넣는 것일까?
+이것이 사실이기는 할까?

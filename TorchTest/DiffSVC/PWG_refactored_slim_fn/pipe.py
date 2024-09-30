@@ -14,15 +14,6 @@ params = {"origin_path": "files_for_gen/sample/",
           "model_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
           "stats_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
           "config_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml", }
-'''params = [
-    "files_for_gen/sample/",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml",
-    "files_for_gen/dump/sample/raw",
-    "files_for_gen/dump/sample/norm/",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
-    "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
-    "files_for_gen/outputs/"
-]'''
 
 audio_mel = [*wav2mel.wav2mel(sample_path=params["origin_path"], for_config=params["config_path"])]
 print(len(audio_mel))
