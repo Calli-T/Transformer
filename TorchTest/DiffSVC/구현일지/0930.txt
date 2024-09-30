@@ -1,0 +1,8 @@
+일단 MoonInTheRiver의 기준, yaml config파일에 k, 즉 적정 확산단계수는 있는데
+정작 classifier가 없더라, 찾아보자
+
+멜스펙트로그램을 만드는 과정과,
+그걸 넣는 규격 즉 wavenet을 알아보자
+시각화도 잊지말고
+
+일단 mel spectrogram을 만들어보는 과정을 간단하게 살펴보자
