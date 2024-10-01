@@ -6,7 +6,7 @@ from wav2mel import *
 
 def show_mel(mel, sr):
     mel = librosa.power_to_db(pow(10, mel), ref=np.max)
-    print(mel)
+    # print(mel)
     # Mel Filter Bank 시각화
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(mel, sr=sr, x_axis='time',
@@ -34,5 +34,5 @@ params = {"origin_path": "files_for_gen/sample/",
           "config_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/config.yml", }
 
 audio_mel = [*wav2mel(sample_path=params["origin_path"], for_config=params["config_path"])]
-print(audio_mel[2][0].T.shape)
+# print(audio_mel[2][0].T.shape)
 show_mel(audio_mel[2][0].T, sr=24000)
