@@ -29,13 +29,14 @@ def get_units(raw_wav_path):
             units = hbt_soft.units(torch.FloatTensor(wav16.astype(float)).unsqueeze(0).unsqueeze(0).to(dev))
             return units'''
 
-    return wav
+    return wav16
 
 
 # wav = torch.ones(1, 16000)
 wav = get_units("./wav_sample/dancenote_origin.wav")
 wav = torch.Tensor(wav).to(device).unsqueeze(0)
-wav = torch.split(wav, 24000, 1)
+wav = torch.split(wav, 16000, 1)
+
 
 for wave in wav:
     print(wave.shape)
