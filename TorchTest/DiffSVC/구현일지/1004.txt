@@ -1,0 +1,34 @@
+일단 4가지를 추적해보자
+첫 번째는 음소 모델의 형태와
+두 번째는 임베딩이 어디에서 무엇을 추출되며, 어디로 가는지를 알아보자
+세 번째는 Wavenet 등 사용하는 모델의 형태이고
+네 번째는 이것과 Diffusion의 결합이다.
+
+----- 음소 모델 -----
+
+일단 음소 모델에서 중요한 정보를 하나 알아냈는데,
+DiffSinger에는 Hubert 모델이 없고, prophersier-diff-svc는 hubert 모델이 있다.
+GPT피셜, 음성 데이터에 전처리를 거친것으로 학습 가능하나, 기본적으로 원시 Raw 파일을 사용한다고 한다.
+그럼 레이블은 뭘 쓰냐고 할 수 있는데, 놀랍게도 K-mean clustering으로 지 알아서 만들어 낸다고 한다.
+클러스터 각각은 잠재적인 음향 단위가 된다고 한다. ※ 즉, 각 나라의 음소 체계나 IPA를 사용하는게 아니다. 실제 코딩시에는 어떨지 모르겠다
+???
+여기서 생각할 포인트, DiffSinger는 가사, 즉 Lyrics를 Encoder를 사용해 phoneme ID를 임베딩 시퀀스로 만든다고한다.
+그렇다면 Lyrics에서 phoneme ID가 바로 나오는 구조인가? 임베딩 시퀀스라면 차원은 어떻게되고, 그 차원은 대체 어떻게 맞춰주는가?
+잠재적 음향 단위 '만' 사용하여 임베딩을 만들 것인지, phonetic2embedding 구조도 사용할 것인지 생각을 좀 해보자
+
+prophesier의 hubert 모델 코드는
+https://github.com/prophesier/diff-svc/blob/main/network/hubert/hubert_model.py#L20
+에 있다.
+
+그리고 한국어로 학습한 ko-hubert는
+https://huggingface.co/team-lucid/hubert-base-korean에 존재한다
+여기에 softmax를 달아 음소 구분을 하도록(이경우 음성을 x로 IPA를 레이블 y로 줄까 한다, 그리고 Denselayer와 softmax를 거치면 될듯함)하는 작업과,
+음소 임베딩을 만드는 작업은 넓은 의미로 보면 서로 다른 다른 테스크가 아닐까한다.
+
+먼저할일: 음소 모델 Hubert 테스트 하기
+
+다음 할일
+음소 모델에서 다음으로 알아볼 작업은 임베딩을 어떻게 만드냐인데,
+DiffSVC는 PPG Prenet은 FC layer를 사용하며 (논문에 나와있다),
+DiffSVS-DiffSinger/Prophesier 계열은 어떻게 사용하는지를 알아보자
+그리고 형태도 알아보자

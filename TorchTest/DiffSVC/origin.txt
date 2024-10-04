@@ -449,3 +449,11 @@ auxiliary decoder를 사용하여 boundary predictor를 3만 step동안 학습�
 
 - 추론 -
 사전 학습된 Parallel WaveGAN (PWG)을 vocoder로 사용하여 생성된 mel-spectrogram을 waveform으로 변환
+
+
+
+
+
+깃허브 2개
+https://github.com/prophesier/diff-svc
+https://github.com/MoonInTheRiver/DiffSinger

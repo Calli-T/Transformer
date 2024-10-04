@@ -1,0 +1,11 @@
+한국어 to IPA
+https://hangul-to-ipa.herokuapp.com/
+
+Eng to IPA
+http://photransedit.com/Online/Text2Phonetics.aspx
+
+Auto recognition to IPA
+https://openl.io/ko
+
+IPA TTS
+http://ipa-reader.xyz/
