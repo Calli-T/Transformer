@@ -1,0 +1,80 @@
+최상단의 Clone 디렉터리는 git ignore
+거기다 한글 IPA 변환기를 clone 해놓고 쓸만한 파일만 _slim에 분리하는중
+MIT 라이센스임
+-> 일단 포기
+
+- 오늘 알아낸것 -
+1. DiffSVS에서 mel-spectrogram은 fastspeech로 만들며, ※ 이게 ~M인것으로 추측된다
+lyrics에서 phonetics를, midi에서 melody나 f0등 나머지를 뽑는 모양이다
+torch.onnx.export(
+            self.fs2,
+            (hubert, mel2ph, spk_embed, f0),
+            f"{project_name}_encoder.onnx",
+            input_names=["hubert", "mel2ph", "spk_embed", "f0"],
+            output_names=["mel_pred", "f0_pred"],
+            dynamic_axes={
+                "hubert": [1],
+                "f0": [1],
+                "mel2ph": [1]
+            },
+            opset_version=16
+        )
+이게 코드의 일부이다
+
+2. Diff에 들어가는 Condition의 형태로 추정되는 것은
+cond = torch.randn([1, 256, 10]).cpu(), 이다
+x = torch.randn((1, 1, self.mel_bins, cond.shape[2]), dtype=torch.float32).cpu()
+
+n_frames = cond.shape[2]라는 코드와, GPT와의 대화를 참조해보면,
+[N, D, S] 벡터인듯하다, 즉 conv 연산등을 위해 seq개수가 '뒤에' 나와있다
+
+encoder_hidden이 Diffnet에서의 이름,
+conditioner_projection이 resblock에서의 이름이다
+config에서는 hidden_size를 사용하며 yaml파일에서 일관적으로 256라는 값으로 나타난다
+
+3. 속도 개선에 pndms라는 기법을 사용한 것으로 추측한다. pndms = 100이라는 코드가 존재한다.
+
+4. Diffusion의 in_dims는 80이다. 혹시 mel band 개수를 의미하는게 아닐런지
+내부적 처리는
+self.residual_channels = hparams['residual_channels']
+self.input_projection = Conv1d(in_dims, self.residual_channels, 1)과 같이 하므로
+내부에서 처리되는 잔차블럭의 채널 수도 아니다.
+
+5. 모델은 GaussianDiffusionOnnx클래스가 onnx로 export하며 이를 infer_tool.py에서 class Svc로 처리하며, 이를 infer.py에서 가져와서 쓰는듯하다
+
+
+{
+infer.py에서 불러오는 model은 infer_tool.py의 class Svc(Onnx x)
+infer_tool.py의 class Svc에서 불러오 'model'은 from network.diff.diffusion import GaussianDiffusion
+그리고 거기에 Diffnet이 포함됨
+class에 method로def infer도 포함됨
+오로롱 — 오늘 오후 8:57
+스타듀벨리가 어딨더라
+흑기사 — 오늘 오후 8:57
+infer_tool.py의 class Svc의 method def infer()의 내부에 선언되는 def diff_infer()에
+오로롱 — 오늘 오후 8:58
+메모장인가요
+흑기사 — 오늘 오후 8:58
+self.model에 다음과 같은 매개변수를 넣어서 실행됨
+self.model(
+                hubert.cuda(), spk_embed=spk_embed, mel2ph=mel2ph.cuda(), f0=f0.cuda(), uv=uv.cuda(),energy=energy.cuda(),
+                ref_mels=ref_mels.cuda(),
+                infer=True, **kwargs)
+여기서 'model'이란 class GuassianDiffusion임
+class GuassianDiffusion은 class Diffnet을 self.denoise_fn로 두고 있음
+class diffnet은 내부 구조로 nn.Module을 상속한 ResidualBlock를 layer로 둠
+가우스 확산 클래스의 생성자는 다음과 같음
+def init(self, phone_encoder, out_dims, denoise_fn,
+                 timesteps=1000, K_step=1000, loss_type=hparams.get('diff_loss_type', 'l1'), betas=None, spec_min=None,
+                 spec_max=None):
+@오로롱 ㅖㅏ
+흑기사 — 오늘 오후 9:05
+class GuassainDiffusion의 forward의 returnd은 다음 둘 임mel_out.transpose(2, 1), f0_denorm
+diff_infer()는 아무래도 model에 넣고 결과를 받아오는 함수 같음
+forward 함수에서, 첫 2줄에서 cond의 행방을 알 수 있었음
+decoder_inp, f0_denorm = self.fs2(hubert, mel2ph, spk_embed, f0)
+        cond = decoder_inp.transpose(1, 2)
+fastspeech 내부의 forward함수를 보니 hubert에 pitch에 이것저것 다 더하고 있는걸 보니
+아무래도, 저게 condiftion embedding같다
+저걸 permute하여 cond로 쓰고, cond는 Diffnet의 ResdualBlock에서 conv를 타고 다른 정보와 합쳐진다
+}

@@ -35,7 +35,7 @@ def get_units(raw_wav_path):
 # wav = torch.ones(1, 16000)
 wav = get_units("./wav_sample/dancenote_origin.wav")
 wav = torch.Tensor(wav).to(device).unsqueeze(0)
-wav = torch.split(wav, 16000, 1)
+wav = torch.split(wav, 32399, 1) # 정황상 320개의 샘플이 stride 크기인 모양이다. 윈도우는 아마 640?, 샘플 개수 % 320 >= 80일 경우만 마지막 윈도우를 추가해주는 모양이다. 32399는 100개 seq, 32400는 101개 seq더라
 
 
 for wave in wav:
