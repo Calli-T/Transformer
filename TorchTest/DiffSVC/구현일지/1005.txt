@@ -48,13 +48,9 @@ infer.py에서 불러오는 model은 infer_tool.py의 class Svc(Onnx x)
 infer_tool.py의 class Svc에서 불러오 'model'은 from network.diff.diffusion import GaussianDiffusion
 그리고 거기에 Diffnet이 포함됨
 class에 method로def infer도 포함됨
-오로롱 — 오늘 오후 8:57
-스타듀벨리가 어딨더라
-흑기사 — 오늘 오후 8:57
+
 infer_tool.py의 class Svc의 method def infer()의 내부에 선언되는 def diff_infer()에
-오로롱 — 오늘 오후 8:58
-메모장인가요
-흑기사 — 오늘 오후 8:58
+
 self.model에 다음과 같은 매개변수를 넣어서 실행됨
 self.model(
                 hubert.cuda(), spk_embed=spk_embed, mel2ph=mel2ph.cuda(), f0=f0.cuda(), uv=uv.cuda(),energy=energy.cuda(),
@@ -67,8 +63,7 @@ class diffnet은 내부 구조로 nn.Module을 상속한 ResidualBlock를 layer�
 def init(self, phone_encoder, out_dims, denoise_fn,
                  timesteps=1000, K_step=1000, loss_type=hparams.get('diff_loss_type', 'l1'), betas=None, spec_min=None,
                  spec_max=None):
-@오로롱 ㅖㅏ
-흑기사 — 오늘 오후 9:05
+
 class GuassainDiffusion의 forward의 returnd은 다음 둘 임mel_out.transpose(2, 1), f0_denorm
 diff_infer()는 아무래도 model에 넣고 결과를 받아오는 함수 같음
 forward 함수에서, 첫 2줄에서 cond의 행방을 알 수 있었음
@@ -78,3 +73,5 @@ fastspeech 내부의 forward함수를 보니 hubert에 pitch에 이것저것 다
 아무래도, 저게 condiftion embedding같다
 저걸 permute하여 cond로 쓰고, cond는 Diffnet의 ResdualBlock에서 conv를 타고 다른 정보와 합쳐진다
 }
+
+이것들을 추적해보자
