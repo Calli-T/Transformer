@@ -1,0 +1,15 @@
+torchcrepe
+praat-parselmouth
+scikit-image
+ipython
+ipykernel
+pyloudnorm
+webrtcvad-wheels
+h5py
+einops
+pycwt
+torchmetrics
+pytorch_lightning
+pyyaml
+tensorboard
+pydub
