@@ -32,7 +32,7 @@ def collator(batch, tokenizer, device):
 
 train_data = list(CoLA(split="train"))
 valid_data = list(CoLA(split="dev"))
-test_data = list(CoLA(split="test"))
+test_data = list(CoLA(split="SinChangSeop"))
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token

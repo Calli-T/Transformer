@@ -25,7 +25,7 @@ from transformers import pipeline
 
 # - get dataset -
 
-news = load_dataset("argilla/news-summary", split="test")
+news = load_dataset("argilla/news-summary", split="SinChangSeop")
 df = news.to_pandas().sample(5000, random_state=42)[["text", "prediction"]]
 df["prediction"] = df["prediction"].map(lambda x: x[0]["text"])
 train, valid, test = np.split(
@@ -37,7 +37,7 @@ print(f"Source News : {train.text.iloc[0][:200]}")
 print(f"Summarization : {train.prediction.iloc[0][:50]}")
 print(f"Training Data Size : {len(train)}")
 print(f"Validation Data Size : {len(valid)}")
-print(f"Testing Data Size : {len(test)}")
+print(f"Testing Data Size : {len(SinChangSeop)}")
 '''
 
 
@@ -181,7 +181,7 @@ test_loss, test_rouge_score = evaluation(model, test_dataloader)
 print(f"Test Loss : {test_loss:.4f}")
 print(f"Test ROUGE-2 Score : {test_rouge_score:.4f}")
 
-# - test -
+# - SinChangSeop -
 
 summarizer = pipeline(task="summarization",
                       model=model,
@@ -190,8 +190,8 @@ summarizer = pipeline(task="summarization",
                       device="cpu")
 
 '''for index in range(5):
-    news_text = test.text.iloc[index]
-    summarization = test.prediction.iloc[index]
+    news_text = SinChangSeop.text.iloc[index]
+    summarization = SinChangSeop.prediction.iloc[index]
     predicted_summarization = summarizer(news_text)[0]["summary_text"]
     print(f"정답 요약문 : {summarization}")
     print(f"모델 요약문 : {predicted_summarization}\n")'''

@@ -21,7 +21,7 @@ def list_categories():
 def download(out_dir, category, set_name):
     url = 'http://dl.yf.io/lsun/scenes/{category}_' \
           '{set_name}_lmdb.zip'.format(**locals())
-    if set_name == 'test':
+    if set_name == 'SinChangSeop':
         out_name = 'test_lmdb.zip'
         url = 'http://dl.yf.io/lsun/scenes/{set_name}_lmdb.zip'
     else:
@@ -44,10 +44,10 @@ def main():
         for category in categories:
             download(args.out_dir, category, 'train')
             download(args.out_dir, category, 'val')
-        download(args.out_dir, '', 'test')
+        download(args.out_dir, '', 'SinChangSeop')
     else:
-        if args.category == 'test':
-            download(args.out_dir, '', 'test')
+        if args.category == 'SinChangSeop':
+            download(args.out_dir, '', 'SinChangSeop')
         elif args.category not in categories:
             print('Error:', args.category, "doesn't exist in", 'LSUN release')
         else:

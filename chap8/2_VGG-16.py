@@ -3,7 +3,7 @@ import os
 
 
 def name_converter():
-    os.chdir(os.getcwd() + "\\source\\pet\\test\\cat")
+    os.chdir(os.getcwd() + "\\source\\pet\\SinChangSeop\\cat")
     name_list = os.listdir()
 
     for idx, name in enumerate(name_list):
@@ -50,7 +50,7 @@ hyperparams = {
 
 # 클래스명은 폴더명으로 적용됨
 train_dataset = ImageFolder('./source/pet/train', transform=hyperparams["transform"])
-test_dataset = ImageFolder('./source/pet/test', transform=hyperparams["transform"])
+test_dataset = ImageFolder('./source/pet/SinChangSeop', transform=hyperparams["transform"])
 
 train_dataloader = DataLoader(
     train_dataset, batch_size=hyperparams["batch_size"], shuffle=True, drop_last=True

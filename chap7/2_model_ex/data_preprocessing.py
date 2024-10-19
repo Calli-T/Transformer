@@ -5,7 +5,7 @@ from torchtext.vocab import build_vocab_from_iterator
 # 원본 데이터의 링크가 동작하지 않으므로, 데이터셋의 URL을 수정
 multi30k.URL["train"] = "https://raw.githubusercontent.com/neychev/small_DL_repo/master/datasets/Multi30k/training.tar.gz"
 multi30k.URL["valid"] = "https://raw.githubusercontent.com/neychev/small_DL_repo/master/datasets/Multi30k/validation.tar.gz"
-multi30k.URL["test"] = "https://raw.githubusercontent.com/neychev/small_DL_repo/master/datasets/Multi30k/mmt16_task1_test.tar.gz"
+multi30k.URL["SinChangSeop"] = "https://raw.githubusercontent.com/neychev/small_DL_repo/master/datasets/Multi30k/mmt16_task1_test.tar.gz"
 
 # --------------------------------------------------------------------------------------
 

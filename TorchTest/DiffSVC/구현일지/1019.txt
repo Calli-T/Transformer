@@ -1,0 +1,49 @@
+16~19일 실행하면서 요약
+- 일단 잘되는지 확인하기 위해서 prophesier의 코드(를 포크한 것)의 환경을 섬세하게 맞추놓았다.
+워낙 많은 라이브러리의 의존성과 충돌이 났기 때문에, rocm 6과 torch 2.3을 조합한 새로운 venv에서 진행하였다
+
+이 프로젝트의 TorchTest/GitClone/kor_diff_svc에 있는 코드는 실행에 실패했으며 코드 확인용이다
+
+reverse_engineering... directory에 바로 있는 동명의 디렉터리에 실행해둔 환경이 존재한다
+거기 사용법은 note.txt에 있으며 raw나 data/binary/[프로젝트명]이나 infer.py등등 손대야할게 많다.
+
+- 2000 step 단위로 저장되더라
+
+----- 코드 구조 알아낸거,할거 간단 요약 -----
+일단 코드 상속이 basetask -> tts -> fs2 -> SVCtask 순서이며
+모르는 코드가 나오면 위에 가보면 될듯
+
+일단 모델이 여러개 있는데 뭐에서 뭘 연결하는지 알아보자
+사용한 코드는 끝에 NSF Hifi-GAN이 존재함(보코더가 있음)
+
+저걸 pl_utils.py의 basetrainer 클래스로 학습을 하는 거 같은데, 거기 DDP같이 어려운 개념도 구현되어 있더라
+아마 예전 코드들에서 상속받은듯?
+
+확산 모델들을 잘 보면 모델하고 정/역 과정을 굴리는 코드가 분리되어 있던데,
+저 학습 코드 basetrainer이런거 코드가 1000줄도 넘는데, 이걸 다 읽을 능력이 없으니
+모델 연결 구조만 파악한다음 다시 구현하자
+
+1. 일단 SVCtask class가 가장 상속의 아래쪽이고, 거기 output이 있으니 거기서부터 시작하면 될듯?
+그리고 DiffSinger논문 파헤쳐둔게 있을테니 그거랑 대조해보면 될듯
+
+(폐기)
+2. 그리고 model파일 있으니 이거 구조 뜯어보면 될듯
+https://jseobyun.tistory.com/99
+이거 읽어보면 ckpt파일에는 모델 구조가 없다고 한다!!!
+세상에 맙소사...
+
+1번 안으로 간다
+
+-----
+SVC_task.py에서, DIFF_DECODERS는 람다함수로 디코더(아마도 확산에서 사용될 모델)을 정의한다.
+network.diff.net import DiffNet의 코드와 hp['audio_num_mel_bins']코드로 보아
+config에 적힌 초매개변수에서 멜 밴드 수를 가져와서 DiffNet의 instance를 만든다.
+(53번째 줄의 코드로 보아 wavenet은 잡음 제거(예측) 함수이다)
+
+모델의 구조 제작은 같은 클래스의 build_tts_model()에서 행해지는데,
+위에서 람다로 선언한 denoise_fn을 GaussDiff cls에 넣어 선언된다.
+※1 fs2에도 같은 이름의 함수가 있으나, SVC에서 override됨
+※2 그럼에도 불구하고, 이는 단지 self의 field를 선언할 뿐이며, 이를 반환하기위한 함수는 fs2.py에 build_model(), 이를 반환받아 학습전 설정(fit)을 하는 함수는 pl_utils.py에 선언되어있다.
+
+-> 따라서 전반적인 모델의 구조는 DiffNet class와 GaussianDiffusion classs에 그 구조가 있다.
+특히, 노이즈 제거 함수에 들어갈 이런저런 임베딩은 GaussianDiffusion을 잘봐야함!
