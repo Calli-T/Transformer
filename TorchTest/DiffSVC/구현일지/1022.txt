@@ -1,0 +1,49 @@
+SVC_task.py의 50줄에
+모델선언(class guassianDiffusion)
+들어가는게 여럿 있다
+
+{ class GaussianDiffusion, network/diffusion.py
+
+    { # 생성자 매개변수
+        { #phone_encoder가 뭔가?
+            이는 TtsTask에서 발견할 수 있으며, 결론적으로는 그냥 HuBERT
+            그럼 HuBERT는 뭔가? 자기 지도 학습 모델인 BERT를 음성에 확장한 것이다.
+            https://velog.io/@9e0na/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0-Speech-HuBERT-Self-Supervised-Speech-RepresentationLearning-by-Masked-Prediction-of-Hidden-Units-2021-Summary
+            HuBERT는 BERT에서 왔는데,
+            이는 트랜스포머 인코더로 되어 있어 시퀀스 각 단어의 문맥을 고려한 벡터표현을 생성한다.
+            같은 의미에서 단어를 음성으로 바꾸면, 음성 시퀀스를 요약한 벡터 표현을 생성할 수 있다.
+            HuBERT의 핵심 아이디어는 K-means clustering을 사용해 음성 단위(음소)를 스스로 분리해내는 것이다.
+            요약: 해당 프로젝트의 음소정보 인코더는 HuBERT를 사용하며, 이는 음소 정보를 자기지도 학습으로 분리해낸다.
+
+            실습 내용 추가+) 이를 실습해본 코드는 TorchTest/DiffSVC/KOHubert/test1.py에 존재한다.
+            윈도우와 슬라이드가 존재하는 형태로, 음성 정보를 여럿으로 쪼개어
+            음소에 해당하는 벡터?를 만들어내는듯
+            [N, D, S]가 아니고 [N, S, D] 차원축을 사용하는듯하다.
+            벡터의 차원은 768이며 초당 16k번 샘플링되었는데, 잘 찾아보면 다른 모델도 있을듯
+            그리고 해당 프로젝트에서 사용한 세부 사항과 다를 수 있다.
+        }
+
+        out_dims는 멜 밴드 수를 말하는것같고,
+
+        denoise_fn은 잘알려진 잡음제거함수, wavenet사용
+
+        timesteps는 확산에 쓰는 시간단계 같고, 기본 1000
+        K_step은 뭐지? 이것도 기본 1000
+
+        loss_type은 l2, 이건 뭐 2차원 노름일거고
+
+        spec_min과 spec_max는 뭔지 모르겠다. 숫자가 쭉 나열됨
+        스펙트럼의 최소와 최대값으로 추정함
+    }
+
+    { # __init__(self, ...)
+    ※1 전체적으로 lucidrains의 class GaussianDiffusion과 상당히 유사하다
+
+        FastSpeech phone_encoder와 out_dims를 입력으로 주어 self.fs2로 선언한다.
+        ※2 여기선 오로지 FS모델의 입력으로만 phonetic encoder(=HuBERT)를 사용한다.
+        ※3 원본 DiffSinger의 FastSpeech2MIDI는 주석처리되어있다. GPT 피셜, 해당 모델은 MIDI정보를 받아 음성을 생성한다고 한다.
+        {   # class FastSpeech2, /modules/fastspeech/fs2.py
+
+        }
+    }
+}
