@@ -5,23 +5,7 @@ SVC_task.py의 50줄에
 { class GaussianDiffusion, network/diffusion.py
 
     { # 생성자 매개변수
-        { #phone_encoder가 뭔가?
-            이는 TtsTask에서 발견할 수 있으며, 결론적으로는 그냥 HuBERT
-            그럼 HuBERT는 뭔가? 자기 지도 학습 모델인 BERT를 음성에 확장한 것이다.
-            https://velog.io/@9e0na/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0-Speech-HuBERT-Self-Supervised-Speech-RepresentationLearning-by-Masked-Prediction-of-Hidden-Units-2021-Summary
-            HuBERT는 BERT에서 왔는데,
-            이는 트랜스포머 인코더로 되어 있어 시퀀스 각 단어의 문맥을 고려한 벡터표현을 생성한다.
-            같은 의미에서 단어를 음성으로 바꾸면, 음성 시퀀스를 요약한 벡터 표현을 생성할 수 있다.
-            HuBERT의 핵심 아이디어는 K-means clustering을 사용해 음성 단위(음소)를 스스로 분리해내는 것이다.
-            요약: 해당 프로젝트의 음소정보 인코더는 HuBERT를 사용하며, 이는 음소 정보를 자기지도 학습으로 분리해낸다.
-
-            실습 내용 추가+) 이를 실습해본 코드는 TorchTest/DiffSVC/KOHubert/test1.py에 존재한다.
-            윈도우와 슬라이드가 존재하는 형태로, 음성 정보를 여럿으로 쪼개어
-            음소에 해당하는 벡터?를 만들어내는듯
-            [N, D, S]가 아니고 [N, S, D] 차원축을 사용하는듯하다.
-            벡터의 차원은 768이며 초당 16k번 샘플링되었는데, 잘 찾아보면 다른 모델도 있을듯
-            그리고 해당 프로젝트에서 사용한 세부 사항과 다를 수 있다.
-        }
+        ※0 # phone_encoder이 뭔지는 후첨 설명에, 실제 어디서 사용하는지는 '충격적 진실'에 후술
 
         out_dims는 멜 밴드 수를 말하는것같고,
 
@@ -43,7 +27,42 @@ SVC_task.py의 50줄에
         ※2 여기선 오로지 FS모델의 입력으로만 phonetic encoder(=HuBERT)를 사용한다.
         ※3 원본 DiffSinger의 FastSpeech2MIDI는 주석처리되어있다. GPT 피셜, 해당 모델은 MIDI정보를 받아 음성을 생성한다고 한다.
         {   # class FastSpeech2, /modules/fastspeech/fs2.py
+            ※4 '충격적 진실' 이 프로젝트의 FastSpeech2의 생성자에서는 phonetic encoder를 주석 처리해놨다.
+                대신 forward함수에서 매개변수로 받아서 쓴다
 
+            그럼 뭘 받아서, 뭘 되돌려주는지 알아보자
+            일단 diffusion.py에서 self.fs2에 관한 코드는 사실상 결과를 반환받는 ret 하나 뿐이다.
+            ※5 cwtf0_norm이라는 함수가 있긴하더라. 혹시 나중에 사용할 일 있으면 후술함
+            ※6 fs2의 입력에 사용되는 것들은 너무 복잡하니, 뭘 출력하고 이걸 어디다 쓰는지에 집중하고 나중에 알아보자
+
+            diffusion.py의 ret부터 다시 시작
         }
     }
+}
+
+{ #phone_encoder가 뭔가?
+    이는 TtsTask에서 발견할 수 있으며, 결론적으로는 그냥 HuBERT
+    그럼 HuBERT는 뭔가? 자기 지도 학습 모델인 BERT를 음성에 확장한 것이다.
+    https://velog.io/@9e0na/%EB%85%BC%EB%AC%B8%EB%A6%AC%EB%B7%B0-Speech-HuBERT-Self-Supervised-Speech-RepresentationLearning-by-Masked-Prediction-of-Hidden-Units-2021-Summary
+    HuBERT는 BERT에서 왔는데,
+    이는 트랜스포머 인코더로 되어 있어 시퀀스 각 단어의 문맥을 고려한 벡터표현을 생성한다.
+    같은 의미에서 단어를 음성으로 바꾸면, 음성 시퀀스를 요약한 벡터 표현을 생성할 수 있다.
+    HuBERT의 핵심 아이디어는 K-means clustering을 사용해 음성 단위(음소)를 스스로 분리해내는 것이다.
+    요약: 해당 프로젝트의 음소정보 인코더는 HuBERT를 사용하며, 이는 음소 정보를 자기지도 학습으로 분리해낸다.
+
+    실습 내용 추가+) 이를 실습해본 코드는 TorchTest/DiffSVC/KOHubert/test1.py에 존재한다.
+    윈도우와 슬라이드가 존재하는 형태로, 음성 정보를 여럿으로 쪼개어
+    음소에 해당하는 벡터?를 만들어내는듯
+    [N, D, S]가 아니고 [N, S, D] 차원축을 사용하는듯하다.
+    벡터의 차원은 768이며 초당 16k번 샘플링되었는데, 잘 찾아보면 다른 모델도 있을듯
+    그리고 해당 프로젝트에서 사용한 세부 사항과 다를 수 있다.
+}
+
+{ fs2의 입력은 어디서 오는가? 에관한 고찰(진행중)
+ret을 받기위해 fs2에 입력으로 들어가는건 hubert, mel2ph...등등 여러가지이나,
+            diffusion.py에서는 이 'hubert'등 여러 매개변수가 어디에서 오는지 알려져있지 않다.
+            diffusion.py의 def forward는 SVC_task.py의 run_model에서 활용됨이 나타나있다.
+            ※5 당연한 얘기이지만, forward함수는 .forward의 형식이 아닌 인스턴스에 바로 괄호열고 사용하는 형태이다.
+            ※6 def run_model(self, ...):, training/task/SVC_task.py 에서 사용하는데,
+            어디서 오는건지는 나중에서 알아보고 ret의 출력에만 집중하자
 }
