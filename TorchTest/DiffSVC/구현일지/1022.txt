@@ -167,9 +167,32 @@ SVC_task.py의 50줄에
             매개변수로 norm_spec, t, decoder_inp_t를 사용한다
 
             {   # def p_losses, diffuion.py 207 line
+                ※16 norm_spec의 정체는 바로 x_0 값! q_sample에서 후술
+                t와 cond는 매개로 받아 왔고,
 
+                잡음은 무작위로 생성해주고,
+                그걸로 x_T를 q_sample함수로 뽑아줍니다.
+                ※17 재매개변수화 트릭 이미 적용되어있고, 이를 쉽게하기 위한 배열?텐서?도 이미 __init__에서 처리해둔듯
+                denoise_fn을 사용한 x_recon을 만들어준다
+                ※18 reprise) denoise_fn은 여기선 wavenet
+
+                그 외에는 loss_type에 따라 L1식 오차냐, L2식 오차냐에 따라르며
+                x_recon과 noise를 비교하여 오차를 뽑아낸다
+                ※19 nonpadding은 옵션인듯
             }
         }
+
+        한편, 학습이 아닌 추론의 경우 255 line부터 보면된다
+        use_gt_mel는 아무래도 ground truth mel spectrogram인듯하고, 이걸 infer.py의 기본옵션은 false이니 무시하고
+
+        264 line부터 시작
+        time step을 K_step으로 잡고
+        shape를 [N, C(1), D(멜 밴드 대역수), S(cond.shape[2]이니 아마도 시퀀스길이???)]로 잡고
+        무작위 잡음을 shape와 device에 맞춰 생성한 다음
+        pndm가속 여부에 따라 p_sample_plms혹은 p_sample함수를 사용하여 생성한다.
+
+        어느 쪽이든 생성 다하면 다시 축을 전치하고, 역정상화(denorm)하여 음악으로 만들어낸다음
+        이를 ret에 실어 보내주면 끝이다.
     }
 }
 
