@@ -140,7 +140,36 @@ SVC_task.py의 50줄에
             이는 156 line이며,
             다시 diffusion의 forward 함수로 돌아와 어디에서 뭐가 쓰이는지 확인해보자
         }
-        232 line 부터 시작
+
+        받아온 ret의 decoder_inp의 형태 [N, S, D]를 [N, D, S]로 치환한 것이 cond이다
+        hubert.shape의 첫 값으로 배치 크기 N을 뽑아오고, 가속 장치 정보를 뽑아온다
+
+        추론이 아닐 때(= 학습중일 때) Batch2Loss.module4에 넣어 학습하는듯하다.
+        클래스명을 보니 Batch째로 넣어 Loss를 가져오는듯하다.
+        매개변수로는
+        [   self.p_losses (loss 뽑아주는 함수),
+            self.norm_spec 함수의 반환값(ref_mels를 매개로 받아 self.spec_min값을 사용해 처리하는듯),
+            cond, ret, self.K_step, b, device]를 사용한다.]
+
+        {   # class Batch2Loss.module4
+            해당 클래스는 여러 학습 모듈을 static 함수 형태로 모아둔 class다
+            def module4는 ret에 'diff_loss'항목을 추가해주는 함수이며, 주석에는 이렇게 적혀있다
+            spec을 입력으로, decoder_inp를 조건부로 사용하여 확산(모델)을 학습한다.
+            norm_spec은 normalized된 spec이라되어있다.
+            spec, 그러니까 specification이 정확하게 뭔지는 모르겠다???
+
+            timestep t는 0~K_step사이 무작위 값을 batch_size만큼 뽑아주고,
+            norm_spec은 전치, 차원축 추가를 통해 [N, C, H, W]식의 텐서 모양을 잡아주는 모양이다.
+            주석에는 [B, 1, M, T]라 되어있다.
+            추측) [N, S, D]를 [N, 1, D, S] 즉 배치/채널/차원/시퀀스로 바꾼게 아닌가싶다.
+
+            마지막 줄에는 ret에 'diff_loss'를 추가해주는데, 가져온 오차만드는 함수를 사용한다.
+            매개변수로 norm_spec, t, decoder_inp_t를 사용한다
+
+            {   # def p_losses, diffuion.py 207 line
+
+            }
+        }
     }
 }
 
