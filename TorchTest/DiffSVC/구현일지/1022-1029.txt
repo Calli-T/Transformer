@@ -196,6 +196,9 @@ SVC_task.py의 50줄에
     }
 }
 
+-----
+
+
 { #phone_encoder가 뭔가?
     이는 TtsTask에서 발견할 수 있으며, 결론적으로는 그냥 HuBERT
     그럼 HuBERT는 뭔가? 자기 지도 학습 모델인 BERT를 음성에 확장한 것이다.
@@ -214,6 +217,15 @@ SVC_task.py의 50줄에
     그리고 해당 프로젝트에서 사용한 세부 사항과 다를 수 있다.
 }
 
+다음 할일
+1. 진입각 살펴보기
+2. wavenet 실행해보기
+3. Embedding 실제로 만들어보기
+4. 빠진 벽돌, 예를들어 f0 to course 같은거 원리 확인해보기
+5. 샘플링 기법 PNDM 논문 보기
+
+-----
+
 { fs2의 입력은 어디서 오는가? 에관한 고찰(진행중)
 ret을 받기위해 fs2에 입력으로 들어가는건 hubert, mel2ph...등등 여러가지이나,
             diffusion.py에서는 이 'hubert'등 여러 매개변수가 어디에서 오는지 알려져있지 않다.
@@ -222,3 +234,5 @@ ret을 받기위해 fs2에 입력으로 들어가는건 hubert, mel2ph...등등 
             ※6 def run_model(self, ...):, training/task/SVC_task.py 에서 사용하는데,
             어디서 오는건지는 나중에서 알아보고 ret의 출력에만 집중하자
 }
+
+-----
