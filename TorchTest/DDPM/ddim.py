@@ -253,11 +253,17 @@ class DDIM:
         torch.save(self.network.state_dict(), f'./models/unet.pt')
         torch.save(self.ema_network.state_dict(), f'./models/ema-unet.pt')
 
-    def load(self):
-        self.network.load_state_dict(torch.load(f'./models/unet.pt', map_location=device))
-        self.ema_network.load_state_dict(torch.load(f'./models/ema-unet.pt', map_location=device))
-        self.mean = torch.tensor(np.load(f'./models/mean.npy')).to(device)
-        self.std = torch.tensor(np.load(f'./models/std.npy')).to(device)
+    def load(self, dir=None):
+        if dir is None:
+            self.network.load_state_dict(torch.load(f'./models/flowers/unet.pt', map_location=device))
+            self.ema_network.load_state_dict(torch.load(f'./models/flowers/ema-unet.pt', map_location=device))
+            self.mean = torch.tensor(np.load(f'./models/flowers/mean.npy')).to(device)
+            self.std = torch.tensor(np.load(f'./models/flowers/std.npy')).to(device)
+        else:
+            self.network.load_state_dict(torch.load(f'{dir}/unet.pt', map_location=device))
+            self.ema_network.load_state_dict(torch.load(f'{dir}/ema-unet.pt', map_location=device))
+            self.mean = torch.tensor(np.load(f'{dir}/mean.npy')).to(device)
+            self.std = torch.tensor(np.load(f'{dir}/std.npy')).to(device)
 
     '''
         def set_mean_and_std(self, mean, std):
@@ -310,11 +316,10 @@ class DDIM:
 
 ddim = DDIM()
 ddim.set_datasets_from_path("./datasets/flower")
-# ddim.train_steps()
-ddim.train()
 
-'''
-# 확산 단계
+# ddim.train()
+
+'''# 확산 단계
 ddim.load()
 gallery = ddim.generate(8, 10, None, True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
 summarized = gallery[0::8] # 뭔가 매핑으로 좀 더 깔끔하게 자르는게 가능할지도?
@@ -322,7 +327,6 @@ for i in range(7):
     summarized = np.concatenate((summarized, gallery[i+1::8]), axis=0)
 show_images(summarized, 8, 11)
 '''
-
 
 
 '''
@@ -339,13 +343,12 @@ for i in range(5):
 show_images(gallery, 5, 11)
 '''
 
-'''
+ddim.load('models/flowers')
 # 샘플 뜨기, detach/numpy/to cpu/permute 등은 처리과정, seed 고정은 역확산 횟수와 성능차이 확인용
 torch.manual_seed(42)
 sample = ddim.generate(9, 100).permute(0, 2, 3, 1).to('cpu').detach().numpy()
 print(sample.shape)
 show_images(sample, 3, 3)
-'''
 
 '''
 # ema test 코드
