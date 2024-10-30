@@ -187,7 +187,7 @@ class DDPM:
         np.save('models/flowers/mean.npy', self.mean.detach().cpu().numpy())
         np.save('models/flowers/std.npy', self.std.detach().cpu().numpy())
 
-    # SinChangSeop 스탭이 따로 필요한지? train 함수를 완성하자
+    # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
         cost = 0.0
 
@@ -348,7 +348,7 @@ show_images(sample, 3, 3)
 '''
 
 '''
-# ema SinChangSeop 코드
+# ema test 코드
 # https://www.zijianhu.com/post/pytorch/ema/
 
 with torch.no_grad():
