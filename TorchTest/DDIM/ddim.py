@@ -333,7 +333,7 @@ show_images(summarized, 8, 11)
 # 구면 선형 보간을 활용한 이미지num, step, initial
 gallery = np.zeros((55, IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.float32)
 for i in range(5):
-    outs = None
+    outputs = None
     inits = torch.randn(2, 3, IMAGE_SIZE, IMAGE_SIZE).to(device)
 
     for idx, ratio in enumerate(np.arange(0.0, 1.1, 0.1)):
@@ -343,7 +343,7 @@ for i in range(5):
 show_images(gallery, 5, 11)
 '''
 
-ddim.load('models/flowers')
+ddim.load('models/flower')
 # 샘플 뜨기, detach/numpy/to cpu/permute 등은 처리과정, seed 고정은 역확산 횟수와 성능차이 확인용
 torch.manual_seed(42)
 sample = ddim.generate(9, 100).permute(0, 2, 3, 1).to('cpu').detach().numpy()

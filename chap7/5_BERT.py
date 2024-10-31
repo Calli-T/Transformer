@@ -27,7 +27,7 @@ train, valid, test = np.split(df.sample(frac=1, random_state=42), [int(0.6 * len
 print(train.head(5).to_markdown())
 print(f"Training Data Size : {len(train)}")
 print(f"Validation Data Size : {len(valid)}")
-print(f"Testing Data Size : {len(SinChangSeop)}")
+print(f"Testing Data Size : {len(test)}")
 '''
 
 
