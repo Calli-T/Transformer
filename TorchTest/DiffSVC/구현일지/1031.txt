@@ -1,0 +1,10 @@
+DDPM에 코드 리팩터링중
+파이프라인 같은건 간단하게 다 만들어 놨고, DDIM 알고리즘을 DDPM으로 바꾸는 작업해야한다
+
+alpha_cumprod나 sqaure 이런거 타임 라인 하나 만들어 놔야함
+그건 hparams에 저장된 steps? timesteps 두고 그걸로 처리해야함
+
+논문의 Algorithm 2: Sampling에
+sigma_t_z항과, 앞에 계수에 1/sqrt(alpha_t)가 뭔지 좀 알아보자
+
+가우시안디퓨전.py의 p_sample이 샘플링 하는 코드니 그거 보고 만들면 된다!

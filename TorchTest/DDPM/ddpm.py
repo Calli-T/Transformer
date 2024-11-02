@@ -57,7 +57,7 @@ class DDPM:
         return pred_noises, pred_images
 
     # 역방향 확산의 반복부터 다시 시작하면된다
-    def reverse_diffusion(self, initial_noise, diffusion_steps=None, return_all_t=False):
+    def p_sample_loop_ddim(self, initial_noise, diffusion_steps=None, return_all_t=False):
         if diffusion_steps is None:
             diffusion_steps = self.reverse_diffusion_steps
 
@@ -98,6 +98,9 @@ class DDPM:
         else:
             return pred_images
 
+    def p_sample_loop_ddpm(self, initial_noise, diffusion_steps=None, return_all_t=False):
+        pass
+
     def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
             initial_noise = torch.randn(num_images, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE']).to(
@@ -107,7 +110,7 @@ class DDPM:
             self.network.eval()
             self.ema_network.eval()
 
-            generated_images = self.reverse_diffusion(initial_noise, diffusion_steps, return_all_t=return_all_t)
+            generated_images = self.p_sample_loop_ddim(initial_noise, diffusion_steps, return_all_t=return_all_t)
             generated_images = self.denomalize(generated_images)
 
             self.network.train()
@@ -115,17 +118,6 @@ class DDPM:
 
         return generated_images
 
-    '''
-    # 데이터로더, 평균, 표준 편차 모두 여기서 세팅
-    def set_datasets_from_path(self, path):
-        train_dataloader, mean, std = getDataLoader(path)
-        self.mean = torch.FloatTensor(mean).to(self.hparams['device'])
-        self.std = torch.FloatTensor(std).to(self.hparams['device'])
-        self.train_dataloader = train_dataloader
-
-        np.save(f'{self.hparams["model_path"]}/mean.npy', self.mean.detach().cpu().numpy())
-        np.save(f'{self.hparams["model_path"]}/std.npy', self.std.detach().cpu().numpy())
-    '''
 
     # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
