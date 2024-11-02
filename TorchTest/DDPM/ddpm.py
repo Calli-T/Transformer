@@ -1,7 +1,7 @@
 from diff.unet import UNet
 from utils import show_images
 
-import tqdm
+from tqdm import tqdm
 from torch import optim, nn
 import torch
 from collections import OrderedDict
@@ -9,13 +9,19 @@ import numpy as np
 
 
 class DDPM:
-    def __init__(self, hparams, train_dataloader):
+    def __init__(self, hparams, train_dataloader=None):
         self.hparams = hparams
 
+        # 레이어 정규화, 샘플 각각에 대해서 수행함
         self.normalizer = nn.LayerNorm([3, hparams['IMAGE_SIZE'], hparams['IMAGE_SIZE']]).to(
-            self.hparams['device'])  # 레이어 정규화, 샘플 각각에 대해서 수행함
+            self.hparams['device'])
+
+        # model
         self.network = UNet(hparams).to(hparams['device'])
         self.ema_network = UNet(hparams).to(hparams['device'])
+
+        # schedule
+        self.sqrt_alphas, self.sqrt_betas, self.alpha_bars = self.set_schedule(hparams["steps"])
 
         self.loss = 0.0
 
@@ -49,7 +55,6 @@ class DDPM:
                                 signal_rates.view([-1, 1, 1, 1]))
 
         return pred_noises, pred_images
-
 
     # 역방향 확산의 반복부터 다시 시작하면된다
     def p_sample_loop_ddim(self, initial_noise, diffusion_steps=None, return_all_t=False):
@@ -93,37 +98,58 @@ class DDPM:
         else:
             return pred_images
 
-    def denoise_ddpm(self, prev_images, noise_rates, signal_rates, training):
+    def pred_noise(self, noisy_images, noise_rates, training):
         if training:
-            network = self.network
+            return self.network.forward(noise_rates ** 2, noisy_images)
         else:
-            network = self.ema_network
+            return self.ema_network.forward(noise_rates ** 2, noisy_images)
 
-        z = torch.randn(prev_images.shape[0], 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
-        z = z.to(self.hparams['device'])
-
-        # current_images = prev_images -
-
-        '''pred_noises = network.forward(noise_rates ** 2, noisy_images)
-        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
-                                signal_rates.view([-1, 1, 1, 1]))'''
-
-        # return pred_noises, pred_images
-
-    def p_sample_loop_ddpm(self, initial_noise, diffusion_steps=None, return_all_t=False):
-        num_images = initial_noise.shape[0]
-        step_size = 1.0 / diffusion_steps
+    def p_sample_loop_ddpm(self, num_images, initial_noise=None, return_all_t=False):
+        steps = self.hparams["steps"]
 
         if initial_noise is None:
-            initial_noise = torch.randn(num_images, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
-            initial_noise = initial_noise.to(self.hparams['device'])
+            x_t = torch.randn(num_images, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
+            x_t = x_t.to(self.hparams['device'])
+        else:
+            x_t = initial_noise
 
-        current_images = initial_noise
-        prev_noise = None
+        with torch.no_grad():
+            self.network.eval()
+            self.ema_network.eval()
 
-        step_footprint = initial_noise.detach()
+            for t in tqdm(reversed(range(1, steps + 1))):
+                sqrt_alpha_t = self.sqrt_alphas[t]
+                sqrt_beta_t = self.sqrt_betas[t]
+                alpha_bar_t = self.alpha_bars[t]
 
-        for step in range(diffusion_steps):
+                # 모델이 예측한 잡음
+                epsilon_theta = self.pred_noise(x_t, noise_rates=sqrt_beta_t.repeat(num_images), training=False)
+
+                # 역방향 샘플링 공식에 따른 x_t-1 추정
+                mean = (1 / sqrt_alpha_t) * (
+                        x_t - (sqrt_beta_t ** 2 / (np.sqrt(1 - alpha_bar_t))) * epsilon_theta)
+
+                # 분산 추가
+                if t > 0:
+                    sigma_t = sqrt_beta_t
+                    noise = sigma_t * torch.randn_like(x_t)
+                    x_t = mean + noise
+                '''else:
+                    noise = 0'''
+
+                print(x_t)
+
+            self.network.train()
+            self.ema_network.train()
+
+        return self.denomalize(x_t)
+
+        '''current_images = initial_noise
+        prev_noise = None'''
+
+        '''step_footprint = initial_noise.detach()
+
+        for step in range(steps):
             diffusion_times = [1 - step * step_size for _ in range(num_images)]
             noise_rates, signal_rates = self.diffusion_schedule(
                 torch.FloatTensor(diffusion_times)
@@ -154,7 +180,7 @@ class DDPM:
         if return_all_t:
             return step_footprint
         else:
-            return pred_images
+            return pred_images'''
 
     def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
@@ -255,6 +281,24 @@ class DDPM:
         noise_rates = torch.sin(diffusion_angles)
 
         return noise_rates, signal_rates
+
+    def set_schedule(self, t):
+        min_signal_rate = 0.02
+        max_signal_rate = 0.95
+
+        start_angle = torch.acos(torch.Tensor([max_signal_rate]))
+        end_angle = torch.acos(torch.Tensor([min_signal_rate]))
+
+        temp = torch.Tensor([x for x in range(0, t + 1)])
+
+        diffusion_angles = start_angle + temp * (end_angle - start_angle)
+
+        # sqrt alphas & sqrt betas
+        signal_rates = torch.cos(diffusion_angles)
+        noise_rates = torch.sin(diffusion_angles)
+        alpha_bars = torch.cumprod(signal_rates ** 2, dim=0)
+
+        return signal_rates.numpy(), noise_rates.numpy(), alpha_bars.numpy()
 
 
 '''

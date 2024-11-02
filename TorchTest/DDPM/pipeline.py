@@ -38,13 +38,23 @@ for batch in train_dataloader:
 from ddpm import DDPM
 import numpy as np
 from utils import show_images
-ddpm = DDPM(hparams, train_dataloader)
-print(ddpm)
 
+ddpm = DDPM(hparams)  # , train_dataloader)
+# print(ddpm.diffusion_schedule([x for x in range(1, 11)]))
+# print([x for x in range(1, 11)])
+# print(ddpm.set_schedule(5))
 ddpm.load()
+gallery = ddpm.p_sample_loop_ddpm(3).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+
+print(gallery)
+print(gallery.shape)
+show_images(gallery, 1, 3)
+
+'''ddpm.load()
 gallery = ddpm.generate(8, 10, None, True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-summarized = gallery[0::8] # 뭔가 매핑으로 좀 더 깔끔하게 자르는게 가능할지도?
+summarized = gallery[0::8]  # 뭔가 매핑으로 좀 더 깔끔하게 자르는게 가능할지도?
 for i in range(7):
-    summarized = np.concatenate((summarized, gallery[i+1::8]), axis=0)
-show_images(summarized, 8, 11)
+    summarized = np.concatenate((summarized, gallery[i + 1::8]), axis=0)
+show_images(summarized, 8, 11)'''
+
 # ddpm.train()
