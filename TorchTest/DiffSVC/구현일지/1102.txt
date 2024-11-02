@@ -25,3 +25,7 @@ with torch.no_grad():와 model의 .eval()을 잊지말자
 기기 한계 일듯 ㅋㅋㅋㅋㅋ
 
 3. x_t에서 x_0로 갈 수록 값이 0에 가까워 지다가 결국 nan이 되어버린다.
+드디어 원인을 찾았다!!!!!!!!
+alpha_cumprod는 무한정 소수를 곱해버리니 끝에 가면 0이 되어버렸던것
+GPT의 말대로 log의 힘을 빌어보자
+torch.log(alpha_t_cumprod)

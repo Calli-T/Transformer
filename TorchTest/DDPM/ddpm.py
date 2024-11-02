@@ -117,7 +117,7 @@ class DDPM:
             self.network.eval()
             self.ema_network.eval()
 
-            for t in tqdm(reversed(range(1, steps + 1))):
+            for t in tqdm(reversed(range(0, steps + 1))):
                 sqrt_alpha_t = self.sqrt_alphas[t]
                 sqrt_beta_t = self.sqrt_betas[t]
                 alpha_bar_t = self.alpha_bars[t]
@@ -133,11 +133,10 @@ class DDPM:
                 if t > 0:
                     sigma_t = sqrt_beta_t
                     noise = sigma_t * torch.randn_like(x_t)
-                    x_t = mean + noise
-                '''else:
-                    noise = 0'''
-
-                print(x_t)
+                else:
+                    noise = 0
+                print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
+                x_t = mean + noise
 
             self.network.train()
             self.ema_network.train()

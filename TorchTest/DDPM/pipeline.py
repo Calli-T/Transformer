@@ -42,13 +42,14 @@ from utils import show_images
 ddpm = DDPM(hparams)  # , train_dataloader)
 # print(ddpm.diffusion_schedule([x for x in range(1, 11)]))
 # print([x for x in range(1, 11)])
-# print(ddpm.set_schedule(5))
+print(ddpm.set_schedule(1000))
+
+'''
 ddpm.load()
 gallery = ddpm.p_sample_loop_ddpm(3).permute(0, 2, 3, 1).to('cpu').detach().numpy()
 
-print(gallery)
-print(gallery.shape)
 show_images(gallery, 1, 3)
+'''
 
 '''ddpm.load()
 gallery = ddpm.generate(8, 10, None, True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
