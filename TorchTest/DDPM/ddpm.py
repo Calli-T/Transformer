@@ -6,6 +6,7 @@ from torch import optim, nn
 import torch
 from collections import OrderedDict
 import numpy as np
+from math import log2, pow
 
 
 class DDPM:
@@ -21,7 +22,11 @@ class DDPM:
         self.ema_network = UNet(hparams).to(hparams['device'])
 
         # schedule
-        self.sqrt_alphas, self.sqrt_betas, self.alpha_bars = self.set_schedule(hparams["steps"])
+        # self.sqrt_alphas, self.sqrt_betas, self.alpha_bars = self.set_schedule(hparams["steps"])
+        self.sqrt_alphas = None
+        self.sqrt_betas = None
+        self.alpha_bars = None
+        self.set_schedule(hparams["steps"])
 
         self.loss = 0.0
 
@@ -121,6 +126,7 @@ class DDPM:
                 sqrt_alpha_t = self.sqrt_alphas[t]
                 sqrt_beta_t = self.sqrt_betas[t]
                 alpha_bar_t = self.alpha_bars[t]
+                # print(alpha_bar_t)
 
                 # 모델이 예측한 잡음
                 epsilon_theta = self.pred_noise(x_t, noise_rates=sqrt_beta_t.repeat(num_images), training=False)
@@ -135,8 +141,11 @@ class DDPM:
                     noise = sigma_t * torch.randn_like(x_t)
                 else:
                     noise = 0
-                print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
+
+                if t > 0:
+                    print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
                 x_t = mean + noise
+
 
             self.network.train()
             self.ema_network.train()
@@ -288,16 +297,23 @@ class DDPM:
         start_angle = torch.acos(torch.Tensor([max_signal_rate]))
         end_angle = torch.acos(torch.Tensor([min_signal_rate]))
 
-        temp = torch.Tensor([x for x in range(0, t + 1)])
+        temp = torch.Tensor([1 / t * x for x in range(0, t + 1)])
 
         diffusion_angles = start_angle + temp * (end_angle - start_angle)
 
         # sqrt alphas & sqrt betas
         signal_rates = torch.cos(diffusion_angles)
         noise_rates = torch.sin(diffusion_angles)
-        alpha_bars = torch.cumprod(signal_rates ** 2, dim=0)
 
-        return signal_rates.numpy(), noise_rates.numpy(), alpha_bars.numpy()
+        self.sqrt_alphas = signal_rates.numpy()
+        self.sqrt_betas = noise_rates.numpy()
+        # self.alpha_bars = self.set_schedule(hparams["steps"])
+
+        log2_alpha_bars = np.array([log2(x) for x in (self.sqrt_alphas ** 2)]).cumsum()
+        alpha_bars = np.array([max(pow(2, x), 0.00001) for x in log2_alpha_bars])
+
+        self.alpha_bars = alpha_bars
+        return signal_rates.numpy(), noise_rates.numpy(), alpha_bars
 
 
 '''

@@ -29,3 +29,8 @@ with torch.no_grad():와 model의 .eval()을 잊지말자
 alpha_cumprod는 무한정 소수를 곱해버리니 끝에 가면 0이 되어버렸던것
 GPT의 말대로 log의 힘을 빌어보자
 torch.log(alpha_t_cumprod)
+
+4. 그러나 cumprod의 값을 로그와 Max(cumprod, 1e-5)로 정상화 해도 값이 무진장 튀는것 똑같더라
+https://github.com/hojonathanho/diffusion/blob/master/diffusion_tf/diffusion_utils.py
+에서 코드를 읽어보고 이를 파훼해보자
+값이 마이너스로 치달아 그림이 검은색이 되는 문제가 있으니, 이를 해결해야한다.
