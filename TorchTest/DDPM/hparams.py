@@ -13,4 +13,8 @@ hparams = {
     "mean": 0.0,
     "std": 1.0,
     "steps": 1000,
+    "EMA": 0.999,
+    "LEARNING_RATE": 0.001,
+    "WEIGHT_DECAY": 0.0001,
+    "EPOCHS": 5000,
 }

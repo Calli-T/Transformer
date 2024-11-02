@@ -1,0 +1,14 @@
+완전 오리지널 DDPM 코드에서 p_sample은 문자 그대로
+평균 + 잡음 * 분산이다
+
+ddpm 논문에서 algorithm2에 나와있는 sample 과정에서,
+앞쪽에 1/sqrt(alpha_t)붙은 항은
+x_t에 붙은 잡음이 제거된 pred_xstart이다.
+
+뒤의 시그마는 노이즈의 분산이며, 이를 잡음에 곱하여 더하는 것으로 x_t-1를 샘플링했던 것이다.
+
+IDDPM의 코드에서는 q_mean_posteriror_variance등 이것저것을 사용하여
+q(x_t-1|x_t, x_0)를 구현해둔것 같다.
+
+요약하자면, 단순히 p_sample 하는것은 그저 x_t를 생성하는 과정이며
+우리는 x_t-1를 생성하기 위해 이 값을 변형하여 사용하여야 한다

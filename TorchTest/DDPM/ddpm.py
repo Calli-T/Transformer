@@ -20,16 +20,12 @@ class DDPM:
         self.loss = 0.0
 
         # hyper
-        self.EMA = 0.999
-        self.reverse_diffusion_steps = 20
-        self.LEARNING_RATE = 1e-3
-        self.WEIGHT_DECAY = 1e-4
-        self.EPOCHS = 5000
+        self.ddim_steps = 20
 
-        # train_set 평균 절대 오차/RMSprop사용 -> L1 loss/RMSprop사용
+        # L1 vs MSE
         self.criterion = nn.L1Loss().to(hparams['device'])  # nn.MSELoss().to(device)  # nn.L1Loss().to(device)
-        self.ratio = 0.5
-        self.optimizer = optim.AdamW(self.network.parameters(), lr=self.LEARNING_RATE, weight_decay=self.WEIGHT_DECAY)
+        self.optimizer = optim.AdamW(self.network.parameters(), lr=self.hparams["LEARNING_RATE"],
+                                     weight_decay=self.hparams["WEIGHT_DECAY"])
 
         self.train_dataloader = train_dataloader
         self.mean = torch.FloatTensor(hparams['mean']).to(self.hparams['device'])
@@ -42,24 +38,23 @@ class DDPM:
         return images
 
     # denoise함수 테스트중
-    def denoise(self, noisy_images, noise_rates, signal_rates, training):
+    def denoise_ddim(self, noisy_images, noise_rates, signal_rates, training):
         if training:
             network = self.network
         else:
             network = self.ema_network
 
         pred_noises = network.forward(noise_rates ** 2, noisy_images)
-
-        # 차원 혹은 차원 축 정렬
         pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
                                 signal_rates.view([-1, 1, 1, 1]))
 
         return pred_noises, pred_images
 
+
     # 역방향 확산의 반복부터 다시 시작하면된다
     def p_sample_loop_ddim(self, initial_noise, diffusion_steps=None, return_all_t=False):
         if diffusion_steps is None:
-            diffusion_steps = self.reverse_diffusion_steps
+            diffusion_steps = self.ddim_steps
 
         num_images = initial_noise.shape[0]
         step_size = 1.0 / diffusion_steps
@@ -75,8 +70,8 @@ class DDPM:
             noise_rates = noise_rates.to(self.hparams['device'])
             signal_rates = signal_rates.to(self.hparams['device'])
 
-            pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=True  # False
+            pred_noises, pred_images = self.denoise_ddim(
+                current_images, noise_rates, signal_rates, training=False
             )
 
             if return_all_t:
@@ -98,8 +93,68 @@ class DDPM:
         else:
             return pred_images
 
+    def denoise_ddpm(self, prev_images, noise_rates, signal_rates, training):
+        if training:
+            network = self.network
+        else:
+            network = self.ema_network
+
+        z = torch.randn(prev_images.shape[0], 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
+        z = z.to(self.hparams['device'])
+
+        # current_images = prev_images -
+
+        '''pred_noises = network.forward(noise_rates ** 2, noisy_images)
+        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
+                                signal_rates.view([-1, 1, 1, 1]))'''
+
+        # return pred_noises, pred_images
+
     def p_sample_loop_ddpm(self, initial_noise, diffusion_steps=None, return_all_t=False):
-        pass
+        num_images = initial_noise.shape[0]
+        step_size = 1.0 / diffusion_steps
+
+        if initial_noise is None:
+            initial_noise = torch.randn(num_images, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
+            initial_noise = initial_noise.to(self.hparams['device'])
+
+        current_images = initial_noise
+        prev_noise = None
+
+        step_footprint = initial_noise.detach()
+
+        for step in range(diffusion_steps):
+            diffusion_times = [1 - step * step_size for _ in range(num_images)]
+            noise_rates, signal_rates = self.diffusion_schedule(
+                torch.FloatTensor(diffusion_times)
+            )
+            noise_rates = noise_rates.to(self.hparams['device'])
+            signal_rates = signal_rates.to(self.hparams['device'])
+
+            pred_noises, pred_images = self.denoise(
+                current_images, noise_rates, signal_rates, training=False
+            )
+
+            prev_noise = pred_noises  # 다음 단계를 위한 예측 노이즈 저장
+
+            if return_all_t:
+                step_footprint = torch.concat([step_footprint, pred_images.detach()], 0)
+
+            # next_diffusion_times = diffusion_times - step_size
+            next_diffusion_times = [x - step_size for x in diffusion_times]
+            next_noise_rates, next_signal_rates = self.diffusion_schedule(
+                torch.FloatTensor(next_diffusion_times)
+            )
+            next_noise_rates = next_noise_rates.to(self.hparams['device'])
+            next_signal_rates = next_signal_rates.to(self.hparams['device'])
+
+            current_images = (next_signal_rates.view([-1, 1, 1, 1]) * pred_images +
+                              next_noise_rates.view([-1, 1, 1, 1]) * pred_noises)
+
+        if return_all_t:
+            return step_footprint
+        else:
+            return pred_images
 
     def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
@@ -117,7 +172,6 @@ class DDPM:
             self.ema_network.train()
 
         return generated_images
-
 
     # test 스탭이 따로 필요한지? train 함수를 완성하자
     def train_steps(self):
@@ -156,7 +210,7 @@ class DDPM:
             shadow_params = OrderedDict(self.ema_network.named_parameters())
 
             for name, param in model_params.items():
-                shadow_params[name].sub_((1.0 - self.EMA) * (shadow_params[name] - param))
+                shadow_params[name].sub_((1.0 - self.hparams["EMA"]) * (shadow_params[name] - param))
 
         cost /= (len(self.train_dataloader))  # * BATCH_SIZE)
 
@@ -164,7 +218,7 @@ class DDPM:
         return cost
 
     def train(self):
-        for epoch in range(self.EPOCHS):
+        for epoch in range(self.hparams["EPOCHS"]):
             cost = self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Loss: {cost:3f}')
 
