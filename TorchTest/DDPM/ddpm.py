@@ -6,7 +6,7 @@ from torch import optim, nn
 import torch
 from collections import OrderedDict
 import numpy as np
-from math import log2, pow
+from math import exp
 
 
 class DDPM:
@@ -32,6 +32,8 @@ class DDPM:
         self.posterior_log_variance_clipped = None
         self.posterior_mean_coef_for_x_start = None
         self.posterior_mean_coef_for_x_t = None
+        self.sqrt_recip_alpha_bars = None
+        self.sqrt_recipm1_alpha_bars = None
         self.set_schedule(hparams["steps"])
 
         self.loss = 0.0
@@ -121,11 +123,30 @@ class DDPM:
         else:
             return self.ema_network.forward(self.betas[t].repeat(num_images), x_t)
 
-    def p_mean_variance(self):
-        pass
+    def predict_start_from_noise(self, x_t, t, noise):
+        x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
+        return x_start
+        # return torch.clip(x_start, -1., 1.)
 
     def q_posterior(self, x_start, x_t, t):
-        pass
+        posterior_mean = self.posterior_mean_coef_for_x_start[t] * x_start + self.posterior_mean_coef_for_x_t[t] * x_t
+        # posterior_variance = self.posterior_variance[t]
+        posterior_log_variance_clipped = self.posterior_log_variance_clipped[t]
+
+        return posterior_mean, posterior_log_variance_clipped
+
+    def p_mean_variance(self, x_t, t, num_images):
+        epsilon_theta = self.pred_noise(x_t, t, training=False, num_images=num_images)
+        x_recon = self.predict_start_from_noise(x_t, t, epsilon_theta)
+
+        # 나중에 조건도 추가해줘야...
+        # x_recon = torch.clip(x_recon, -1, 1)
+
+        model_mean, posterior_log_variance_clipped = self.q_posterior(x_recon, x_t, t)
+
+        return model_mean, posterior_log_variance_clipped
+
+        # clip 코드 적어 둡시다
 
     def p_sample_loop_ddpm(self, num_images, initial_noise=None, return_all_t=False):
         steps = self.hparams["steps"]
@@ -136,42 +157,34 @@ class DDPM:
         else:
             x_t = initial_noise
 
+        step_footprint = x_t.detach()
+
         with torch.no_grad():
             self.network.eval()
             self.ema_network.eval()
 
             for t in tqdm(reversed(range(0, steps + 1))):
-                epsilon_theta = self.pred_noise(x_t, t, training=False, num_images=num_images)
+                model_mean, model_log_variance = self.p_mean_variance(x_t, t, num_images)
+                z = torch.randn_like(x_t)
 
-                '''
-                sqrt_alpha_t = self.sqrt_alphas[t]
-                sqrt_beta_t = self.sqrt_betas[t]
-                alpha_bar_t = self.alpha_bars[t]
-                # print(alpha_bar_t)
-
-                # 모델이 예측한 잡음
-                epsilon_theta = self.pred_noise(x_t, noise_rates=sqrt_beta_t.repeat(num_images), training=False)
-
-                # 역방향 샘플링 공식에 따른 x_t-1 추정
-                mean = (1 / sqrt_alpha_t) * (
-                        x_t - (sqrt_beta_t ** 2 / (np.sqrt(1 - alpha_bar_t))) * epsilon_theta)
-
-                # 분산 추가
                 if t > 0:
-                    sigma_t = sqrt_beta_t
-                    noise = sigma_t * torch.randn_like(x_t)
+                    x_t = model_mean + z * exp(0.5 * model_log_variance)
                 else:
-                    noise = 0
+                    x_t = model_mean
 
-                if t > 0:
-                    print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
-                x_t = mean + noise
-                '''
+                if return_all_t:
+                    step_footprint = torch.concat([step_footprint, x_t.detach()], 0)
+
+                # print(f'{x_t[0][0][0][0]} {model_mean[0][0][0][0]} {noise[0][0][0][0]}')
 
             self.network.train()
             self.ema_network.train()
 
-        return self.denomalize(x_t)
+        if return_all_t:
+            return self.denomalize(step_footprint)
+        else:
+            return self.denomalize(x_t)
+        # return self.denomalize(x_t)
 
     def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
@@ -279,9 +292,7 @@ class DDPM:
 
         start_angle = torch.acos(torch.Tensor([max_signal_rate]))
         end_angle = torch.acos(torch.Tensor([min_signal_rate]))
-
         temp = torch.Tensor([1 / t * x for x in range(0, t + 1)])
-
         diffusion_angles = start_angle + temp * (end_angle - start_angle)
 
         # sqrt alphas & sqrt betas
@@ -292,7 +303,7 @@ class DDPM:
         self.alphas = self.sqrt_alphas ** 2
         self.betas = self.sqrt_betas ** 2
 
-        self.alpha_bars = np.cumprod(self.alphas, axis=0)
+        self.alpha_bars = np.maximum(np.cumprod(self.alphas, axis=0), 1e-5)
         self.alpha_bars_prev = np.append(1., self.alpha_bars[:-1])
 
         # for posterior distribution q(x_t-1 | x_t, x_0)
@@ -302,11 +313,16 @@ class DDPM:
         # ※ 시작할 때 값이 분산 값이 0이여서 미니멈 걸었놨다더라, 왜 sqrt안쓰고 log -> exp(.5배)해서 빼내는지는 나중에 알아보자
         '''
         self.posterior_variance = self.betas * (1. - self.alpha_bars_prev) / (1. - self.alpha_bars)
-        self.posterior_log_variance_clipped = np.log(np.maximum(self.posterior_variance, 1e-20))
+        self.posterior_log_variance_clipped = np.log(np.append(self.posterior_variance[1], self.posterior_variance[
+                                                                                           1:]))  # np.log(np.maximum(self.posterior_variance, 1e-20))
         self.posterior_mean_coef_for_x_start = self.betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
         self.posterior_mean_coef_for_x_t = (1. - self.alpha_bars_prev) * self.sqrt_alphas / (1. - self.alpha_bars)
 
-        return signal_rates.numpy(), noise_rates.numpy(), self.posterior_mean_coef_for_x_t
+        # for predict x_0
+        self.sqrt_recip_alpha_bars = np.sqrt(1. / self.alpha_bars)
+        self.sqrt_recipm1_alpha_bars = np.sqrt((1. / self.alpha_bars) - 1)
+
+        return signal_rates.numpy(), noise_rates.numpy(), self.sqrt_recipm1_alpha_bars
 
 
 '''
@@ -412,3 +428,28 @@ signal_rates, noise_rates = offset_cosine_diffusion_schedule(diffusion_times)
 print(signal_rates.shape, noise_rates.shape)
 
 '''
+
+'''
+                sqrt_alpha_t = self.sqrt_alphas[t]
+                sqrt_beta_t = self.sqrt_betas[t]
+                alpha_bar_t = self.alpha_bars[t]
+                # print(alpha_bar_t)
+
+                # 모델이 예측한 잡음
+                epsilon_theta = self.pred_noise(x_t, noise_rates=sqrt_beta_t.repeat(num_images), training=False)
+
+                # 역방향 샘플링 공식에 따른 x_t-1 추정
+                mean = (1 / sqrt_alpha_t) * (
+                        x_t - (sqrt_beta_t ** 2 / (np.sqrt(1 - alpha_bar_t))) * epsilon_theta)
+
+                # 분산 추가
+                if t > 0:
+                    sigma_t = sqrt_beta_t
+                    noise = sigma_t * torch.randn_like(x_t)
+                else:
+                    noise = 0
+
+                if t > 0:
+                    print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
+                x_t = mean + noise
+                '''

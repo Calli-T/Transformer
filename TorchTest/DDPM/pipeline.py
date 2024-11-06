@@ -43,7 +43,7 @@ ddpm = DDPM(hparams)  # , train_dataloader)
 # print(ddpm.diffusion_schedule([x for x in range(1, 11)]))
 # print([x for x in range(1, 11)])
 
-sche = ddpm.set_schedule(1000)
+'''sche = ddpm.set_schedule(1000)
 sen = ""
 for i in range(0, len(sche[0])):
     sen += (str(sche[2][i]) + " ")
@@ -53,13 +53,13 @@ for i in range(0, len(sche[0])):
         sen = ""
 
     if i % 100 == 0:
-        print()
+        print()'''
 
 
-'''ddpm.load()
+ddpm.load()
 gallery = ddpm.p_sample_loop_ddpm(3).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-
-show_images(gallery, 1, 3)'''
+print(gallery.shape)
+show_images(gallery, 1, 3)
 
 
 '''ddpm.load()
