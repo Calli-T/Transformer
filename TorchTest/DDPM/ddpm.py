@@ -109,11 +109,23 @@ class DDPM:
         else:
             return pred_images
 
-    def pred_noise(self, noisy_images, noise_rates, training):
+    '''def pred_noise(self, noisy_images, noise_rates, training):
         if training:
             return self.network.forward(noise_rates ** 2, noisy_images)
         else:
-            return self.ema_network.forward(noise_rates ** 2, noisy_images)
+            return self.ema_network.forward(noise_rates ** 2, noisy_images)'''
+
+    def pred_noise(self, x_t, t, training, num_images):
+        if training:
+            return self.network.forward(self.betas[t].repeat(num_images), x_t)
+        else:
+            return self.ema_network.forward(self.betas[t].repeat(num_images), x_t)
+
+    def p_mean_variance(self):
+        pass
+
+    def q_posterior(self, x_start, x_t, t):
+        pass
 
     def p_sample_loop_ddpm(self, num_images, initial_noise=None, return_all_t=False):
         steps = self.hparams["steps"]
@@ -129,6 +141,8 @@ class DDPM:
             self.ema_network.eval()
 
             for t in tqdm(reversed(range(0, steps + 1))):
+                epsilon_theta = self.pred_noise(x_t, t, training=False, num_images=num_images)
+
                 '''
                 sqrt_alpha_t = self.sqrt_alphas[t]
                 sqrt_beta_t = self.sqrt_betas[t]
