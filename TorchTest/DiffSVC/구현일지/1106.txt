@@ -1,0 +1,9 @@
+호출 순서 p_sample -> p_mean_variance -> q_posterior
+
+# calc ~~~ q(x_t|x_{t-1})이라 된 부분은 학습에 쓰는 것 같다. (우리 코드는 재매개변수화 트릭으로 처리되었음)
+# calc for posterior 어쩌고가 샘플리에 사용하는 부분 같음
+
+※ DDPM과 DDIM 구현 코드 이론 풀이, 예제, 코드 리뷰
+https://brunch.co.kr/@leadbreak/21
+
+※ 예제 코드에서는 후위분산을 계산 할 때, 1e-20으로 최소값을 둔다!

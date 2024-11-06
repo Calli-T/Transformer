@@ -22,10 +22,16 @@ class DDPM:
         self.ema_network = UNet(hparams).to(hparams['device'])
 
         # schedule
-        # self.sqrt_alphas, self.sqrt_betas, self.alpha_bars = self.set_schedule(hparams["steps"])
+        self.alphas = None
+        self.betas = None
         self.sqrt_alphas = None
         self.sqrt_betas = None
         self.alpha_bars = None
+        self.alpha_bars_prev = None
+        self.posterior_variance = None
+        self.posterior_log_variance_clipped = None
+        self.posterior_mean_coef_for_x_start = None
+        self.posterior_mean_coef_for_x_t = None
         self.set_schedule(hparams["steps"])
 
         self.loss = 0.0
@@ -123,6 +129,7 @@ class DDPM:
             self.ema_network.eval()
 
             for t in tqdm(reversed(range(0, steps + 1))):
+                '''
                 sqrt_alpha_t = self.sqrt_alphas[t]
                 sqrt_beta_t = self.sqrt_betas[t]
                 alpha_bar_t = self.alpha_bars[t]
@@ -145,50 +152,12 @@ class DDPM:
                 if t > 0:
                     print(f'{mean[0][0][0][0]} {noise[0][0][0][0]} {x_t[0][0][0][0]}')
                 x_t = mean + noise
-
+                '''
 
             self.network.train()
             self.ema_network.train()
 
         return self.denomalize(x_t)
-
-        '''current_images = initial_noise
-        prev_noise = None'''
-
-        '''step_footprint = initial_noise.detach()
-
-        for step in range(steps):
-            diffusion_times = [1 - step * step_size for _ in range(num_images)]
-            noise_rates, signal_rates = self.diffusion_schedule(
-                torch.FloatTensor(diffusion_times)
-            )
-            noise_rates = noise_rates.to(self.hparams['device'])
-            signal_rates = signal_rates.to(self.hparams['device'])
-
-            pred_noises, pred_images = self.denoise(
-                current_images, noise_rates, signal_rates, training=False
-            )
-
-            prev_noise = pred_noises  # 다음 단계를 위한 예측 노이즈 저장
-
-            if return_all_t:
-                step_footprint = torch.concat([step_footprint, pred_images.detach()], 0)
-
-            # next_diffusion_times = diffusion_times - step_size
-            next_diffusion_times = [x - step_size for x in diffusion_times]
-            next_noise_rates, next_signal_rates = self.diffusion_schedule(
-                torch.FloatTensor(next_diffusion_times)
-            )
-            next_noise_rates = next_noise_rates.to(self.hparams['device'])
-            next_signal_rates = next_signal_rates.to(self.hparams['device'])
-
-            current_images = (next_signal_rates.view([-1, 1, 1, 1]) * pred_images +
-                              next_noise_rates.view([-1, 1, 1, 1]) * pred_noises)
-
-        if return_all_t:
-            return step_footprint
-        else:
-            return pred_images'''
 
     def generate(self, num_images, diffusion_steps, initial_noise=None, return_all_t=False):
         if initial_noise is None:
@@ -304,16 +273,26 @@ class DDPM:
         # sqrt alphas & sqrt betas
         signal_rates = torch.cos(diffusion_angles)
         noise_rates = torch.sin(diffusion_angles)
-
         self.sqrt_alphas = signal_rates.numpy()
         self.sqrt_betas = noise_rates.numpy()
-        # self.alpha_bars = self.set_schedule(hparams["steps"])
+        self.alphas = self.sqrt_alphas ** 2
+        self.betas = self.sqrt_betas ** 2
 
-        log2_alpha_bars = np.array([log2(x) for x in (self.sqrt_alphas ** 2)]).cumsum()
-        alpha_bars = np.array([max(pow(2, x), 0.00001) for x in log2_alpha_bars])
+        self.alpha_bars = np.cumprod(self.alphas, axis=0)
+        self.alpha_bars_prev = np.append(1., self.alpha_bars[:-1])
 
-        self.alpha_bars = alpha_bars
-        return signal_rates.numpy(), noise_rates.numpy(), alpha_bars
+        # for posterior distribution q(x_t-1 | x_t, x_0)
+        '''
+        # ※ 후위 분산은 DDPM 3.2장에 보면 그냥 β로 써도 별 상관 없다더라
+        # posterior_standard_deviation = np.sqrt(posterior_variance)
+        # ※ 시작할 때 값이 분산 값이 0이여서 미니멈 걸었놨다더라, 왜 sqrt안쓰고 log -> exp(.5배)해서 빼내는지는 나중에 알아보자
+        '''
+        self.posterior_variance = self.betas * (1. - self.alpha_bars_prev) / (1. - self.alpha_bars)
+        self.posterior_log_variance_clipped = np.log(np.maximum(self.posterior_variance, 1e-20))
+        self.posterior_mean_coef_for_x_start = self.betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
+        self.posterior_mean_coef_for_x_t = (1. - self.alpha_bars_prev) * self.sqrt_alphas / (1. - self.alpha_bars)
+
+        return signal_rates.numpy(), noise_rates.numpy(), self.posterior_mean_coef_for_x_t
 
 
 '''
