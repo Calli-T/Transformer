@@ -19,5 +19,14 @@ TRAIN_FLAGS="--lr 1e-4 --batch_size 128 --schedule_sampler loss-second-moment"
 
 python3 image_sample.py --model_path ./cifar10_uncond_vlb_50M_500K.pt $MODEL_FLAGS $DIFFUSION_FLAGS
 
+
+
+
+
+
+
+
+
+
 ### 모델->샘플뜨기->시각화
 python3 model_visualizer.py --model_path ./cifar10_uncond_vlb_50M_500K.pt $MODEL_FLAGS $DIFFUSION_FLAGS
