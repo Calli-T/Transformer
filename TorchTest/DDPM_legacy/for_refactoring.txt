@@ -1,0 +1,7 @@
+DDIM을 DDPM으로 리팩터링 하기전에 할 것들
+1. 일단 어떤 코드에 뭐가 들어있나 파악
+
+해야할것
+1. hparams dict로 통합한 구조 만들기
+2. pipeline 만들기
+3. ddpm용 생성기 구축(가능하면 1 hparams랑 연계해서, timestep-schedule이랑 tensor도 만들어서 등록해 둘 것)
