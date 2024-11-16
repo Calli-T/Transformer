@@ -21,8 +21,6 @@ tensor([937.2500, 937.2500, 937.2500, 937.2500, 937.2500, 937.2500, 937.2500,
 tensor([3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773,
         3773, 3773, 3773, 3773], device='cuda:0')
 
-
-
 emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
 time_embed_dim = model_channels * 4
@@ -39,3 +37,10 @@ time_embed_dim = model_channels * 4
 
 정현파 임베딩은 Transformer모델에서 주로 사용한다고들 한다
 학습 기반 임베딩은 다양한 신경망에서 사용된다고 한다
+
+할일 1. 모델에 맞춰 UNetModel선언하도록 매개변수 조절
+-> Unconditional CIFAR-10 with the L_vlb objective and cosine noise schedule에 맞춤
+
+할일 2. timesteps를 scaling하여 보내주도록 코드 수정
+할일 3. model forward가 동작하는지 확인
+할일 4. 생성한 값들 픽셀 [0, 1] / [0, 255] scaling 정보 확인

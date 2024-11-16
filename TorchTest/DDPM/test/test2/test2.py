@@ -3,8 +3,8 @@ from unet import UNetModel
 unet = UNetModel(
     in_channels=3,
     model_channels=128,
-    out_channels=3,
-    num_res_blocks=2,
+    out_channels=6,
+    num_res_blocks=3,
     attention_resolutions=tuple([4, 8]),
     dropout=0.0,
     channel_mult=(1, 2, 3, 4),
