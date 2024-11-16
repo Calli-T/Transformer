@@ -7,6 +7,7 @@ import torch
 from collections import OrderedDict
 import numpy as np
 from math import exp
+import math
 
 
 class DDPM:
@@ -24,14 +25,14 @@ class DDPM:
         # schedule
         self.alphas = None
         self.betas = None
-        self.sqrt_alphas = None
-        self.sqrt_betas = None
+        '''self.sqrt_alphas = None
+        self.sqrt_betas = None'''
         self.alpha_bars = None
         self.alpha_bars_prev = None
         self.posterior_variance = None
         self.posterior_log_variance_clipped = None
-        self.posterior_mean_coef_for_x_start = None
-        self.posterior_mean_coef_for_x_t = None
+        self.posterior_mean_coef1 = None
+        self.posterior_mean_coef2 = None
         self.sqrt_recip_alpha_bars = None
         self.sqrt_recipm1_alpha_bars = None
         self.set_schedule(hparams["steps"])
@@ -42,7 +43,7 @@ class DDPM:
         self.ddim_steps = 20
 
         # L1 vs MSE
-        self.criterion = nn.L1Loss().to(hparams['device'])  # nn.MSELoss().to(device)  # nn.L1Loss().to(device)
+        self.criterion = nn.MSELoss().to(hparams['device'])  # nn.L1Loss().to(hparams['device']) # nn.L1Loss().to(device)
         self.optimizer = optim.AdamW(self.network.parameters(), lr=self.hparams["LEARNING_RATE"],
                                      weight_decay=self.hparams["WEIGHT_DECAY"])
 
@@ -125,11 +126,14 @@ class DDPM:
 
     def predict_start_from_noise(self, x_t, t, noise):
         x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
-        return x_start
-        # return torch.clip(x_start, -1., 1.)
+        # return x_start
+        return torch.clip(x_start, -1., 1.)
+        # return self.normalizer(x_start)
 
     def q_posterior(self, x_start, x_t, t):
-        posterior_mean = self.posterior_mean_coef_for_x_start[t] * x_start + self.posterior_mean_coef_for_x_t[t] * x_t
+        posterior_mean = (self.posterior_mean_coef1[t] * x_start
+                          +
+                          self.posterior_mean_coef2[t] * x_t)
         # posterior_variance = self.posterior_variance[t]
         posterior_log_variance_clipped = self.posterior_log_variance_clipped[t]
 
@@ -138,9 +142,7 @@ class DDPM:
     def p_mean_variance(self, x_t, t, num_images):
         epsilon_theta = self.pred_noise(x_t, t, training=False, num_images=num_images)
         x_recon = self.predict_start_from_noise(x_t, t, epsilon_theta)
-
-        # 나중에 조건도 추가해줘야...
-        # x_recon = torch.clip(x_recon, -1, 1)
+        # x_recon = torch.clip(x_recon, -1., 1.)
 
         model_mean, posterior_log_variance_clipped = self.q_posterior(x_recon, x_t, t)
 
@@ -148,7 +150,7 @@ class DDPM:
 
         # clip 코드 적어 둡시다
 
-    def p_sample_loop_ddpm(self, num_images, initial_noise=None, return_all_t=False):
+    def p_sample_loop_ddpm(self, num_images, return_all_t=False, initial_noise=None):
         steps = self.hparams["steps"]
 
         if initial_noise is None:
@@ -163,7 +165,7 @@ class DDPM:
             self.network.eval()
             self.ema_network.eval()
 
-            for t in tqdm(reversed(range(0, steps + 1))):
+            for t in tqdm(reversed(range(0, steps))):
                 model_mean, model_log_variance = self.p_mean_variance(x_t, t, num_images)
                 z = torch.randn_like(x_t)
 
@@ -175,7 +177,8 @@ class DDPM:
                 if return_all_t:
                     step_footprint = torch.concat([step_footprint, x_t.detach()], 0)
 
-                # print(f'{x_t[0][0][0][0]} {model_mean[0][0][0][0]} {noise[0][0][0][0]}')
+                #print(
+                #    f'x_t: {x_t[0][0][0][0]}, model_mean: {model_mean[0][0][0][0]}, z: {z[0][0][0][0]}, exvar: {exp(0.5 * model_log_variance)}')
 
             self.network.train()
             self.ema_network.train()
@@ -247,12 +250,58 @@ class DDPM:
         # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
         return cost
 
+    def train_steps_t_big(self):
+        cost = 0.0
+
+        for batch in tqdm(self.train_dataloader):
+            batch = batch.to(self.hparams['device'])
+            images = self.normalizer(batch)
+            noises = torch.randn(batch.shape).to(self.hparams['device'])
+
+            # 이미지 수만큼 신호비와 잡음비를 뽑아낸다
+            diffusion_times = np.random.randint(low=0, high=self.hparams["steps"], size=len(batch))
+            # print(diffusion_times[:10])
+            signal_rates = torch.Tensor(np.sqrt(self.alpha_bars[diffusion_times])).to(self.hparams['device'])
+            noise_rates = torch.Tensor(np.sqrt(1. - self.alpha_bars[diffusion_times])).to(self.hparams['device'])
+            '''print(diffusion_times[:5])
+            print(signal_rates[:5])
+            print(noise_rates[:5])
+            print()'''
+
+            # 정방향 확산 과정은 한 큐에!
+            noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), images) + torch.mul(
+                noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
+
+            # u-net을 통한 잡음 예측
+            pred_noises, pred_images = self.denoise_ddim(noisy_images, noise_rates, signal_rates, training=True)
+            loss = self.criterion(noises, pred_noises)
+            # print(self.loss)
+
+            # 이거 제대로 되긴 하는가? self 달아 줘야 할 지도 모른다?
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            cost += loss
+
+        # ema 신경망에 카피
+        with torch.no_grad():
+            model_params = OrderedDict(self.network.named_parameters())
+            shadow_params = OrderedDict(self.ema_network.named_parameters())
+
+            for name, param in model_params.items():
+                shadow_params[name].sub_((1.0 - self.hparams["EMA"]) * (shadow_params[name] - param))
+
+        cost /= (len(self.train_dataloader))  # * BATCH_SIZE)
+
+        # print(f'Epoch: {self.EPOCHS:4d}, Cost: {cost:3f}')
+        return cost
+
     def train(self):
         for epoch in range(self.hparams["EPOCHS"]):
-            cost = self.train_steps()
+            cost = self.train_steps_t_big()  # self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Loss: {cost:3f}')
 
-            if (epoch + 1) % 5 == 0:
+            if (epoch + 1) % 20 == 0:
                 # 보여주기용 무작위 생성
                 generates = self.generate(9, 20).permute(0, 2, 3, 1).to('cpu').detach().numpy()
                 show_images(generates, 3, 3)
@@ -287,7 +336,7 @@ class DDPM:
         return noise_rates, signal_rates
 
     def set_schedule(self, t):
-        min_signal_rate = 0.02
+        '''min_signal_rate = 0.02
         max_signal_rate = 0.95
 
         start_angle = torch.acos(torch.Tensor([max_signal_rate]))
@@ -297,32 +346,40 @@ class DDPM:
 
         # sqrt alphas & sqrt betas
         signal_rates = torch.cos(diffusion_angles)
-        noise_rates = torch.sin(diffusion_angles)
-        self.sqrt_alphas = signal_rates.numpy()
-        self.sqrt_betas = noise_rates.numpy()
-        self.alphas = self.sqrt_alphas ** 2
-        self.betas = self.sqrt_betas ** 2
+        noise_rates = torch.sin(diffusion_angles)'''
 
-        self.alpha_bars = np.maximum(np.cumprod(self.alphas, axis=0), 1e-5)
+        betas = []
+        for i in range(t):
+            t1 = i / t
+            t2 = (i + 1) / t
+            alpha_bar_t1 = math.cos((t1 + 0.008) / 1.008 * math.pi / 2) ** 2
+            alpha_bar_t2 = math.cos((t2 + 0.008) / 1.008 * math.pi / 2) ** 2
+            betas.append(min(1 - alpha_bar_t2 / alpha_bar_t1, 0.999))  # max_beta))
+        betas = np.array(betas, dtype=np.float64)
+        alphas = 1.0 - betas
+        self.alphas = alphas
+        self.betas = betas
+
+        self.alpha_bars = np.cumprod(alphas, axis=0)
         self.alpha_bars_prev = np.append(1., self.alpha_bars[:-1])
 
+        # for what?
+        self.sqrt_recip_alpha_bars = np.sqrt(1.0 / self.alpha_bars)
+        self.sqrt_recipm1_alpha_bars = np.sqrt(1.0 / self.alpha_bars - 1)
+
         # for posterior distribution q(x_t-1 | x_t, x_0)
+        self.posterior_variance = betas * (1. - self.alpha_bars_prev) / (1. - self.alpha_bars)
+        self.posterior_log_variance_clipped = np.log(np.append(self.posterior_variance[1], self.posterior_variance[1:]))
+        self.posterior_mean_coef1 = betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
+        self.posterior_mean_coef2 = (1. - self.alpha_bars_prev) * np.sqrt(alphas) / (1. - self.alpha_bars)
+
         '''
         # ※ 후위 분산은 DDPM 3.2장에 보면 그냥 β로 써도 별 상관 없다더라
         # posterior_standard_deviation = np.sqrt(posterior_variance)
         # ※ 시작할 때 값이 분산 값이 0이여서 미니멈 걸었놨다더라, 왜 sqrt안쓰고 log -> exp(.5배)해서 빼내는지는 나중에 알아보자
         '''
-        self.posterior_variance = self.betas * (1. - self.alpha_bars_prev) / (1. - self.alpha_bars)
-        self.posterior_log_variance_clipped = np.log(np.append(self.posterior_variance[1], self.posterior_variance[
-                                                                                           1:]))  # np.log(np.maximum(self.posterior_variance, 1e-20))
-        self.posterior_mean_coef_for_x_start = self.betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
-        self.posterior_mean_coef_for_x_t = (1. - self.alpha_bars_prev) * self.sqrt_alphas / (1. - self.alpha_bars)
 
-        # for predict x_0
-        self.sqrt_recip_alpha_bars = np.sqrt(1. / self.alpha_bars)
-        self.sqrt_recipm1_alpha_bars = np.sqrt((1. / self.alpha_bars) - 1)
-
-        return signal_rates.numpy(), noise_rates.numpy(), self.sqrt_recipm1_alpha_bars
+        return self.alphas, self.betas, self.posterior_log_variance_clipped
 
 
 '''

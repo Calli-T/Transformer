@@ -34,3 +34,7 @@ p_mean_variance 함수에서는 x_t에 대한 잡음을 예측,
 x_start와 x_t, 그리고 (7)식을 가지고 가중평균을, 즉 잡음이 한 단계 제거된 이미지를 보내줌,
 q_posterior함수는 x_t, t, noise를 가지고 x_start를(x_0라고는 하더라) 예측, 여기 쓰이는 함수는 predict_start_from_noise
 predict_start_from_noise함수는 x_t와 noise를 가지고 x_0 예측?
+
+cosine schedule이 뭔가 이상하니 IDDPM을 동작시킬 때 __init__의 값을
+print()하여 확인해보자, 확실히 뭔가 다르므로
+스케쥴 작성법을 IDDPM의 것으로 변환해볼 필요가 있다, 값이 달라도 너무 다르거든

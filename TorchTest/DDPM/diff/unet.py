@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from math import log as ln
+from math import log as ln, exp
 
 # --------------------blocks--------------------
 class ResidualBlock(nn.Module):
@@ -155,6 +155,13 @@ class UNet(nn.Module):
                                  dim=2)
         return embedding.permute(2, 0, 1)  # NCHW 규격을 지키도록 다시 코딩해보자
 
+    def sinusoidal_embedding_wide(self, var):
+        freq = torch.linspace(ln(1.0), ln(10000.0), self.NOISE_EMBEDDING_SIZE // 2)
+        angular_speeds = 2.0 * torch.pi * freq
+        embedding = torch.concat([torch.sin(angular_speeds * var), torch.cos(angular_speeds * var)],
+                                 dim=2)
+        return embedding.permute(2, 0, 1)
+
     # 얘는 float list를 받습니다
     def nchw_tensor_sinusoidal_embedding(self, variances):
         if torch.is_tensor(variances):
@@ -162,7 +169,7 @@ class UNet(nn.Module):
 
         embeddings = []
         for var in variances:
-            embeddings.append(self.sinusoidal_embedding(torch.tensor([[[var]]], dtype=torch.float32)))
+            embeddings.append(self.sinusoidal_embedding_wide(torch.tensor([[[var]]], dtype=torch.float32)))
 
         return torch.stack(embeddings, dim=0).to(self.device)
 

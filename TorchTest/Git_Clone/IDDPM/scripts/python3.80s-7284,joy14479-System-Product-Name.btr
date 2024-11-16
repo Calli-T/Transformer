@@ -1,0 +1,15 @@
+
+python3:7284 terminated with signal 11 at PC=705ed84b2078 SP=705f3e3fefb0.  Backtrace:
+/mnt/additional/projects/Transformer/venv/lib/python3.10/site-packages/torch/lib/libamdhip64.so(+0x2b2078)[0x705ed84b2078]
+/mnt/additional/projects/Transformer/venv/lib/python3.10/site-packages/torch/lib/libamdhip64.so(+0x7007d)[0x705ed827007d]
+/mnt/additional/projects/Transformer/venv/lib/python3.10/site-packages/torch/lib/libamdhip64.so(__hipUnregisterFatBinary+0x14)[0x705ed83e2a44]
+/mnt/additional/projects/Transformer/venv/lib/python3.10/site-packages/torch/lib/libmagma.so(+0xb7d4272)[0x705e9efd4272]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45495)[0x705f42445495]
+/lib/x86_64-linux-gnu/libc.so.6(on_exit+0x0)[0x705f42445610]
+/lib/x86_64-linux-gnu/libinfinipath.so.4(+0x42a7)[0x705f3e4082a7]
+/lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x705f42442520]
+/lib/x86_64-linux-gnu/libc.so.6(+0x91117)[0x705f42491117]
+/lib/x86_64-linux-gnu/libc.so.6(pthread_cond_wait+0x211)[0x705f42493a41]
+/mnt/additional/projects/Transformer/venv/lib/python3.10/site-packages/numpy/core/../../numpy.libs/libopenblas64_p-r0-15028c96.3.21.so(+0x33743b)[0x705f3f73743b]
+/lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x705f42494ac3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x705f42526850]

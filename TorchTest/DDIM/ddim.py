@@ -315,7 +315,7 @@ class DDIM:
 
 
 ddim = DDIM()
-ddim.set_datasets_from_path("./datasets/flower")
+ddim.set_datasets_from_path("./datasets/flower_t_[0, 1]")
 
 # ddim.train()
 
@@ -343,7 +343,7 @@ for i in range(5):
 show_images(gallery, 5, 11)
 '''
 
-ddim.load('models/flower')
+ddim.load('models/flower_t_[0, 1]')
 # 샘플 뜨기, detach/numpy/to cpu/permute 등은 처리과정, seed 고정은 역확산 횟수와 성능차이 확인용
 torch.manual_seed(42)
 sample = ddim.generate(9, 100).permute(0, 2, 3, 1).to('cpu').detach().numpy()
