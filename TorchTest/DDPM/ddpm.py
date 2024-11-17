@@ -24,29 +24,29 @@ class DDPM:
             in_channels=3,
             model_channels=128,
             out_channels=6,
-            num_res_blocks=3,
-            attention_resolutions=tuple([4, 8]),
+            num_res_blocks=2,
+            attention_resolutions=tuple([16]),
             dropout=0.0,
-            channel_mult=(1, 2, 3, 4),
+            channel_mult=(1, 1, 2, 2, 4, 4),
             num_classes=None,
             use_checkpoint=False,
-            num_heads=4,
+            num_heads=1,
             num_heads_upsample=-1,
-            use_scale_shift_norm=True,
+            use_scale_shift_norm=False,
         ).to(self.hparams['device'])
         self.ema_network = UNet(
             in_channels=3,
             model_channels=128,
             out_channels=6,
-            num_res_blocks=3,
-            attention_resolutions=tuple([4, 8]),
+            num_res_blocks=2,
+            attention_resolutions=tuple([16]),
             dropout=0.0,
-            channel_mult=(1, 2, 3, 4),
+            channel_mult=(1, 1, 2, 2, 4, 4),
             num_classes=None,
             use_checkpoint=False,
-            num_heads=4,
+            num_heads=1,
             num_heads_upsample=-1,
-            use_scale_shift_norm=True,
+            use_scale_shift_norm=False,
         ).to(self.hparams['device'])
 
         # schedule
@@ -588,4 +588,36 @@ print(signal_rates.shape, noise_rates.shape)
         noise_rates = torch.sin(diffusion_angles)
 
         return noise_rates, signal_rates
+'''
+
+'''
+Unconditional ImageNet-64 with the L_vlb objective and cosine noise schedule
+        self.network = UNet(
+            in_channels=3,
+            model_channels=128,
+            out_channels=6,
+            num_res_blocks=3,
+            attention_resolutions=tuple([4, 8]),
+            dropout=0.0,
+            channel_mult=(1, 2, 3, 4),
+            num_classes=None,
+            use_checkpoint=False,
+            num_heads=4,
+            num_heads_upsample=-1,
+            use_scale_shift_norm=True,
+        ).to(self.hparams['device'])
+        self.ema_network = UNet(
+            in_channels=3,
+            model_channels=128,
+            out_channels=6,
+            num_res_blocks=3,
+            attention_resolutions=tuple([4, 8]),
+            dropout=0.0,
+            channel_mult=(1, 2, 3, 4),
+            num_classes=None,
+            use_checkpoint=False,
+            num_heads=4,
+            num_heads_upsample=-1,
+            use_scale_shift_norm=True,
+        ).to(self.hparams['device'])
 '''
