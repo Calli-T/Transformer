@@ -17,6 +17,7 @@ tensor([937.2500, 937.2500, 937.2500, 937.2500, 937.2500, 937.2500, 937.2500,
             return t.float() * (1000.0 / self.num_timesteps)
         return t
 무슨 num_timesteps를 쓰던 간에 [0, 1000] 사이로 스케일링한다
+※ 확인 결과 time_stepembedding에만 이를 사용한것같다
 
 tensor([3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773, 3773,
         3773, 3773, 3773, 3773], device='cuda:0')
@@ -41,6 +42,34 @@ time_embed_dim = model_channels * 4
 할일 1. 모델에 맞춰 UNetModel선언하도록 매개변수 조절
 -> Unconditional CIFAR-10 with the L_vlb objective and cosine noise schedule에 맞춤
 
-할일 2. timesteps를 scaling하여 보내주도록 코드 수정
-할일 3. model forward가 동작하는지 확인
-할일 4. 생성한 값들 픽셀 [0, 1] / [0, 255] scaling 정보 확인
+할일 2. model.load 코드 만들기
+-> 했음, test_forward코드가 테스트용 코드
+모델 패러미터 잘 맞춰서 들어가면 충분히 state_dict로도 load가능
+
+할일 3. timesteps를 scaling하여 보내주도록 코드 수정
+-> def scaling_time_step에 반영
+
+할일 4. model forward가 동작하는지 확인
+-> 정상 작동하나, learned_sigma == True의 경우 채널이 2배로 늘어나므로 전용 코드로 커팅해야함
+※ learned_simga에 관한 학술 자료를 좀 찾아볼것, 왜 채널을 2배로?
+
+할일 5. 생성한 값들 픽셀 [0, 1] / [0, 255] scaling 정보 확인
+-> 여기까지가 샘플링용
+-> 샘플링 까지 성공했으나 문제발생, timestep scaling과 schedule이 서로 안맞는 문제 발생
+-> 일단 hparams의 steps를 1000으로 두니 생성은 되나 그림 비슷한 괴상한 것이 나옴
+-> _scale_timesteps를 사용해서 4000의 steps를 1000개로 줄였다면, 923.25와 같은 소수점이 나올 수 밖에 없어, 문제는 timesteps은 그렇다고 치고 확산 schedule도 그렇게 맞춰야하나?
+할일 5-1. scale과 schedule 맞추기
+-> 1000으로 학습된 모델은 멀쩡히 동작하는지,LSUN bedroom model (lr=2e-5)로 체크해보자
+-> 저 모델은 하필 또 linear schedule...
+할일 5-2 후위 분산에 뭐 어떤 변형이 있는지 확인
+-> learn_sigma True 기준으로, gaussian_diffusion.py의 ModelVarType.LEARNED_RANGE 쪽
+코드를 따라가며, 모델의 출력 채널도 3채널이 아닌 6채널 / 앞 셋은 출력, 뒤 셋은 모델의 추가 출력(후위 분산)이다
+-> 나중에 저게 이론적으로 어떤 의미를 갖는지 알아보고, 모델에서 뽑는 법은 뭔지 알아본다???
+-> 이를 구현해서 ddpm.py에 넣고
+-> 또 저게 어디서 learn_sigma 옵션을 어디서 받아오고(이건 매개변수 실행으로), 이걸 어디서 쓰는지 알아보자
+일단 확인된 learn_sigma 옵션이 사용되는곳은 out_channel의 개수가 3에서 6으로 늘어나는 차이밖에 없다
+-> GPT/gemini 쪼개진 값은 앞 3채널이 모델의 예측값, 뒷 3채널이 픽셀의 분산 (로그 분산임)
+이를 모두 예측하도록 하여 학습함으로 고정이 아닌 분산을 학습할 수 있고,
+이는 원본 논문 appendix에 있는 것이라고 함
+
+할일 6. hparams의 값들과 모델의 선언, 생성, 학습 등이 서로 일치하도록 코드 수정

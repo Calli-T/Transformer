@@ -12,7 +12,7 @@ from utils.dataloader import getDataLoader
 
 # - 2 -
 '''
-from diff.blocks import ResidualBlock, UpBlock, DownBlock
+from diff-legacy.blocks import ResidualBlock, UpBlock, DownBlock
 
 d = DownBlock(3, 64, 2).to(hparams['device'])
 u = UpBlock([224, 192], 96, 2).to(hparams['device'])
@@ -23,7 +23,7 @@ print(u)
 '''
 # - 3 -
 
-from diff.unet import UNet
+from diff-legacy.unet import UNet
 from utils.dataloader import getDataLoader
 import random
 
@@ -41,8 +41,8 @@ for batch in train_dataloader:
 # 학습하는 코드
 from utils.dataloader import getDataLoader
 
-train_dataloader = getDataLoader(hparams)
-print(hparams['std'].shape)
+'''train_dataloader = getDataLoader(hparams)
+print(hparams['std'].shape)'''
 
 from ddpm import DDPM
 import numpy as np
@@ -67,12 +67,12 @@ for i in range(0, len(sche[0])):
         if i % 100 == 0:
             print(i)'''
 
-'''# 견본 몇 개 떠주는 코드
+# 견본 몇 개 떠주는 코드
 ddpm = DDPM(hparams)
 ddpm.load()
-gallery = ddpm.p_sample_loop_ddpm(3).permute(0, 2, 3, 1).to('cpu').detach().numpy()
+gallery = ddpm.p_sample_loop_ddpm(4).to('cpu').detach().numpy() #.permute(0, 2, 3, 1).to('cpu').detach().numpy()
 print(gallery.shape)
-show_images(gallery, 1, 3)'''
+show_images(gallery, 2, 2)
 
 '''# 구간 잘라서 확산 new 코드
 ddpm = DDPM(hparams)
@@ -91,7 +91,21 @@ show_images(summarized, 8, 11)'''
 # ddpm.train()
 
 '''# UNet 위치 임베딩 코드 수정용 테스트
-from diff.unet import UNet
+from diff-legacy.unet import UNet
 
 unet = UNet(hparams).to(hparams['device'])
 print(unet.nchw_tensor_sinusoidal_embedding([0.34, 0.7]).shape)'''
+
+'''# 다른 모델 시험
+ddpm = DDPM(hparams)
+ddpm.load()
+print(ddpm.test_forward().shape)'''
+
+'''
+    def get_pixel(self, sample):
+        sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
+        sample = sample.permute(0, 2, 3, 1)
+        sample = sample.contiguous()
+
+        return sample
+'''

@@ -7,8 +7,8 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fp16_util import convert_module_to_f16, convert_module_to_f32
-from nn import (
+from .fp16_util import convert_module_to_f16, convert_module_to_f32
+from .nn import (
     SiLU,
     conv_nd,
     linear,
@@ -282,7 +282,7 @@ class QKVAttention(nn.Module):
         model.total_ops += th.DoubleTensor([matmul_ops])
 
 
-class UNetModel(nn.Module):
+class UNet(nn.Module):
     """
     The full UNet model with attention and timestep embedding.
 
@@ -531,7 +531,7 @@ class UNetModel(nn.Module):
         return result
 
 
-class SuperResModel(UNetModel):
+class SuperResModel(UNet):
     """
     A UNetModel that performs super-resolution.
 

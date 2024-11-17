@@ -1,7 +1,0 @@
-
-python3:7944 terminated with signal 11 at PC=7034a22453fc SP=7ffe2fe9bf20.  Backtrace:
-/lib/x86_64-linux-gnu/libc.so.6(+0x453fc)[0x7034a22453fc]
-/lib/x86_64-linux-gnu/libc.so.6(on_exit+0x0)[0x7034a2245610]
-/lib/x86_64-linux-gnu/libc.so.6(+0x29d97)[0x7034a2229d97]
-/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7034a2229e40]
-python3(_start+0x25)[0x5c36db37d605]

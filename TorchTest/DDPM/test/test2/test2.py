@@ -1,4 +1,4 @@
-from unet import UNetModel
+'''from unet import UNetModel
 
 unet = UNetModel(
     in_channels=3,
@@ -13,7 +13,7 @@ unet = UNetModel(
     num_heads=4,
     num_heads_upsample=-1,
     use_scale_shift_norm=True,
-)
+)'''
 
 '''
 attention_ds = []
