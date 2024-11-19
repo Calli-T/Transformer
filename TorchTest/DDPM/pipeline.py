@@ -70,42 +70,6 @@ for i in range(0, len(sche[0])):
 # 견본 몇 개 떠주는 코드
 ddpm = DDPM(hparams)
 ddpm.load()
-gallery = ddpm.p_sample_loop_ddpm(16).to('cpu').detach().numpy() #.permute(0, 2, 3, 1).to('cpu').detach().numpy()
+gallery = ddpm.p_sample_loop_ddpm(5, trace_diffusion=True).to('cpu').detach().numpy()
 print(gallery.shape)
-show_images(gallery, 4, 4)
-
-'''# 구간 잘라서 확산 new 코드
-ddpm = DDPM(hparams)
-ddpm.load()
-gallery = ddpm.p_sample_loop_ddpm(1, return_all_t=True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-show_images(gallery[:10], 1, 10)
-'''
-# 구간 잘라서 확산 단계를 보여주는 코드, 나중에 쓸것
-'''ddpm.load()
-gallery = ddpm.generate(8, 10, None, True).permute(0, 2, 3, 1).to('cpu').detach().numpy()
-summarized = gallery[0::8]  # 뭔가 매핑으로 좀 더 깔끔하게 자르는게 가능할지도?
-for i in range(7):
-    summarized = np.concatenate((summarized, gallery[i + 1::8]), axis=0)
-show_images(summarized, 8, 11)'''
-
-# ddpm.train()
-
-'''# UNet 위치 임베딩 코드 수정용 테스트
-from diff-legacy.unet import UNet
-
-unet = UNet(hparams).to(hparams['device'])
-print(unet.nchw_tensor_sinusoidal_embedding([0.34, 0.7]).shape)'''
-
-'''# 다른 모델 시험
-ddpm = DDPM(hparams)
-ddpm.load()
-print(ddpm.test_forward().shape)'''
-
-'''
-    def get_pixel(self, sample):
-        sample = ((sample + 1) * 127.5).clamp(0, 255).to(torch.uint8)
-        sample = sample.permute(0, 2, 3, 1)
-        sample = sample.contiguous()
-
-        return sample
-'''
+show_images(gallery, 11, 5)
