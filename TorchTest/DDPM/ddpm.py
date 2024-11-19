@@ -78,28 +78,13 @@ class DDPM:
             self.mean = None
             self.std = None
 
-    def denomalize(self, images):
-        images = torch.clamp(self.mean + self.std * images, min=0, max=1)
-        return images
 
-    # denoise함수 테스트중
-    def denoise(self, noisy_images, noise_rates, signal_rates, training):
-        if training:
-            network = self.network
-        else:
-            network = self.ema_network
-
-        pred_noises = network.forward(noise_rates ** 2, noisy_images)
-        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
-                                signal_rates.view([-1, 1, 1, 1]))
-
-        return pred_noises, pred_images
 
     def pred_noise(self, x_t, t, training, num_images):
         if training:
-            return self.network.forward(x_t, self.timestep_scaling(t, num_images))
+            return self.network.forward(x_t, self.t_embedding_scaling(t, num_images))
         else:
-            return self.ema_network.forward(x_t, self.timestep_scaling(t, num_images))
+            return self.ema_network.forward(x_t, self.t_embedding_scaling(t, num_images))
 
     def predict_start_from_noise(self, x_t, t, noise):
         x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
@@ -183,6 +168,18 @@ class DDPM:
         else:
             return self.convert_output_to_hex(x_t)
 
+    def denoise(self, noisy_images, noise_rates, signal_rates, training):
+        if training:
+            network = self.network
+        else:
+            network = self.ema_network
+
+        pred_noises = network.forward(noise_rates ** 2, noisy_images)
+        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
+                                signal_rates.view([-1, 1, 1, 1]))
+
+        return pred_noises, pred_images
+
     def train_steps_t_big(self):
         cost = 0.0
 
@@ -191,9 +188,8 @@ class DDPM:
             images = self.normalizer(batch)
             noises = torch.randn(batch.shape).to(self.hparams['device'])
 
-            # 이미지 수만큼 신호비와 잡음비를 뽑아낸다
+            # 배치만큼 신호비 alpha와 잡음비 beta를 가져옴
             diffusion_times = np.random.randint(low=0, high=self.hparams["steps"], size=len(batch))
-            # print(diffusion_times[:10])
             signal_rates = torch.Tensor(np.sqrt(self.alpha_bars[diffusion_times])).to(self.hparams['device'])
             noise_rates = torch.Tensor(np.sqrt(1. - self.alpha_bars[diffusion_times])).to(self.hparams['device'])
 
@@ -295,7 +291,7 @@ class DDPM:
 
         return model_output, model_var_values
 
-    def timestep_scaling(self, t, num_batch):
+    def t_embedding_scaling(self, t, num_batch):
         # for timestep embedding
 
         return torch.FloatTensor([(t / self.hparams["steps"]) * 1000 for x in range(num_batch)]).to(
@@ -349,4 +345,18 @@ Unconditional ImageNet-64 with the L_vlb objective and cosine noise schedule
             num_heads_upsample=-1,
             use_scale_shift_norm=True,
         ).to(self.hparams['device'])
+'''
+
+'''
+    def denoise(self, noisy_images, noise_rates, signal_rates, training):
+        if training:
+            network = self.network
+        else:
+            network = self.ema_network
+
+        pred_noises = network.forward(noise_rates ** 2, noisy_images)
+        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
+                                signal_rates.view([-1, 1, 1, 1]))
+
+        return pred_noises, pred_images
 '''

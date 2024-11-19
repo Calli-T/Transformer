@@ -2,15 +2,15 @@ from hparams import hparams
 
 print(hparams)
 
-# - 1 -
+# - DataLoader -
 
-from utils.dataloader import getDataLoader
+'''from utils.dataloader import getDataLoader
 
-# train_dataloader = getDataLoader(hparams)
-# print(hparams['std'].shape)
+train_dataloader = getDataLoader(hparams)
+print(hparams['std'].shape)'''
 
 
-# - 2 -
+# - Blocks -
 '''
 from diff-legacy.blocks import ResidualBlock, UpBlock, DownBlock
 
@@ -21,7 +21,7 @@ print(u)
 '''
 
 '''
-# - 3 -
+# - UNet -
 
 from diff-legacy.unet import UNet
 from utils.dataloader import getDataLoader
