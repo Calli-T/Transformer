@@ -90,8 +90,7 @@ class DDPM:
         return pred_noises, pred_images
 
     def pred_noise(self, x_t, t, training):
-        num_images = self.hparams["BATCH_SIZE_SAMPLE"]
-
+        # num_images = self.hparams["BATCH_SIZE_SAMPLE"]
         # training일 경우 t가 하나의 값이 아니므로 그걸 복제해서 쓰면안되고 각각의 t에 대해 스케일링을 싹 다 해줘야한다
         if training:
             return self.network.forward(x_t, self.t_embedding_scaling(t, is_training=True))
@@ -199,8 +198,10 @@ class DDPM:
                 noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
 
             # u-net을 통한 잡음 예측
-            pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
-            # pred_noises = self.pred_noise(noisy_images, t, training=True, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
+            # pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
+            pred_noises = self.pred_noise(noisy_images, diffusion_times, training=True) #, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
+            if self.hparams["learn_sigma"]:
+                pred_noises, _ = self.output_split_channel(pred_noises)
             loss = self.criterion(noises, pred_noises)
 
             self.optimizer.zero_grad()
@@ -297,6 +298,7 @@ class DDPM:
         # for timestep embedding
 
         if is_training:
+            print([(step / self.hparams["steps"]) * 1000 for step in t])
             # 배치의 각 샘플에 각기 다른 t, 각기 다른 샘플링 값
             return torch.FloatTensor(
                 [(step / self.hparams["steps"]) * 1000 for step in t]).to(self.hparams['device'])

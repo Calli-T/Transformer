@@ -27,7 +27,7 @@ def getImgsFromDir(img_path, img_size):
 
 
 def preprocess(_imgs, repeat):
-    _imgs = np.float32(_imgs).swapaxes(3, 1).swapaxes(2, 3) / 255.0
+    _imgs = (np.float32(_imgs).swapaxes(3, 1).swapaxes(2, 3) / 255.0) * 2 - 1.0
 
     _mean = np.mean(_imgs, axis=0)
     _std = np.std(_imgs, axis=0)
