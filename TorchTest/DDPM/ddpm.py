@@ -61,7 +61,6 @@ class DDPM:
 
         self.loss = 0.0
 
-
         # L1 vs MSE
         self.criterion = nn.MSELoss().to(
             hparams['device'])  # nn.L1Loss().to(hparams['device']) # nn.L1Loss().to(device)
@@ -90,11 +89,14 @@ class DDPM:
 
         return pred_noises, pred_images
 
-    def pred_noise(self, x_t, t, training, num_images):
+    def pred_noise(self, x_t, t, training):
+        num_images = self.hparams["BATCH_SIZE_SAMPLE"]
+
+        # training일 경우 t가 하나의 값이 아니므로 그걸 복제해서 쓰면안되고 각각의 t에 대해 스케일링을 싹 다 해줘야한다
         if training:
-            return self.network.forward(x_t, self.t_embedding_scaling(t, num_images))
+            return self.network.forward(x_t, self.t_embedding_scaling(t, is_training=True))
         else:
-            return self.ema_network.forward(x_t, self.t_embedding_scaling(t, num_images))
+            return self.ema_network.forward(x_t, self.t_embedding_scaling(t, is_training=False))
 
     def predict_start_from_noise(self, x_t, t, noise):
         x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
@@ -120,7 +122,7 @@ class DDPM:
         return model_log_variance
 
     def p_mean_variance(self, x_t, t, num_images):
-        epsilon_theta = self.pred_noise(x_t, t, training=False, num_images=num_images)
+        epsilon_theta = self.pred_noise(x_t, t, training=False)  # , num_images=num_images)
 
         if epsilon_theta.shape[1] == 6 or self.hparams["learn_sigma"]:
             epsilon_theta, model_var_values = self.output_split_channel(epsilon_theta)
@@ -198,6 +200,7 @@ class DDPM:
 
             # u-net을 통한 잡음 예측
             pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
+            # pred_noises = self.pred_noise(noisy_images, t, training=True, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
             loss = self.criterion(noises, pred_noises)
 
             self.optimizer.zero_grad()
@@ -290,11 +293,17 @@ class DDPM:
 
         return model_output, model_var_values
 
-    def t_embedding_scaling(self, t, num_batch):
+    def t_embedding_scaling(self, t, is_training=False):
         # for timestep embedding
 
-        return torch.FloatTensor([(t / self.hparams["steps"]) * 1000 for x in range(num_batch)]).to(
-            self.hparams['device'])
+        if is_training:
+            # 배치의 각 샘플에 각기 다른 t, 각기 다른 샘플링 값
+            return torch.FloatTensor(
+                [(step / self.hparams["steps"]) * 1000 for step in t]).to(self.hparams['device'])
+        else:
+            return torch.FloatTensor(
+                [(t / self.hparams["steps"]) * 1000 for x in range(self.hparams["BATCH_SIZE_SAMPLE"])]).to(
+                self.hparams['device'])
 
     def convert_output_to_hex(self, sample):
         # [-1, 1] to [0, 255]

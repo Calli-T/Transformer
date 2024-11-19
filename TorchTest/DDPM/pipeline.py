@@ -4,10 +4,6 @@ print(hparams)
 
 # - DataLoader -
 
-from utils.dataloader import getDataLoader
-
-train_dataloader = getDataLoader(hparams)
-
 '''from utils.dataloader import getDataLoader
 
 train_dataloader = getDataLoader(hparams)
@@ -59,6 +55,7 @@ ddpm.train()'''
 
 # ----
 
+# 스케줄 값 확인용
 '''ddpm = DDPM(hparams)
 sche = ddpm.set_schedule(hparams['steps'])
 sen = ""
@@ -71,9 +68,11 @@ for i in range(0, len(sche[0])):
         if i % 100 == 0:
             print(i)'''
 
+'''
 # 견본 몇 개 떠주는 코드
 ddpm = DDPM(hparams)
 ddpm.load()
 gallery = ddpm.p_sample_loop_ddpm(trace_diffusion=True).to('cpu').detach().numpy()
 print(gallery.shape)
 show_images(gallery, 11, 5)
+'''
