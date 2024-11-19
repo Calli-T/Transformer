@@ -70,9 +70,9 @@ for i in range(0, len(sche[0])):
 # 견본 몇 개 떠주는 코드
 ddpm = DDPM(hparams)
 ddpm.load()
-gallery = ddpm.p_sample_loop_ddpm(4).to('cpu').detach().numpy() #.permute(0, 2, 3, 1).to('cpu').detach().numpy()
+gallery = ddpm.p_sample_loop_ddpm(16).to('cpu').detach().numpy() #.permute(0, 2, 3, 1).to('cpu').detach().numpy()
 print(gallery.shape)
-show_images(gallery, 2, 2)
+show_images(gallery, 4, 4)
 
 '''# 구간 잘라서 확산 new 코드
 ddpm = DDPM(hparams)
