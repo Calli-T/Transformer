@@ -45,7 +45,7 @@ def getDataLoader(hparams):
     # imgs, _mean, _std = preprocess(getImgsFromDir('./fakesets'), DATASET_REPETITIONS)
 
     train_dataset = torch.FloatTensor(imgs)  # .permute(0, 3, 1, 2)
-    train_dataloader = DataLoader(train_dataset, batch_size=hparams['BATCH_SIZE'], shuffle=True, drop_last=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=hparams['BATCH_SIZE_TRAIN'], shuffle=True, drop_last=False)
 
     hparams['mean'] = _mean
     hparams['std'] = _std

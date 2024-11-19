@@ -4,6 +4,10 @@ print(hparams)
 
 # - DataLoader -
 
+from utils.dataloader import getDataLoader
+
+train_dataloader = getDataLoader(hparams)
+
 '''from utils.dataloader import getDataLoader
 
 train_dataloader = getDataLoader(hparams)
@@ -70,6 +74,6 @@ for i in range(0, len(sche[0])):
 # 견본 몇 개 떠주는 코드
 ddpm = DDPM(hparams)
 ddpm.load()
-gallery = ddpm.p_sample_loop_ddpm(5, trace_diffusion=True).to('cpu').detach().numpy()
+gallery = ddpm.p_sample_loop_ddpm(trace_diffusion=True).to('cpu').detach().numpy()
 print(gallery.shape)
 show_images(gallery, 11, 5)

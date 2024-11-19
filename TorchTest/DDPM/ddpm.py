@@ -78,7 +78,17 @@ class DDPM:
             self.mean = None
             self.std = None
 
+    def denoise(self, noisy_images, noise_rates, signal_rates, training):
+        if training:
+            network = self.network
+        else:
+            network = self.ema_network
 
+        pred_noises = network.forward(noise_rates ** 2, noisy_images)
+        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
+                                signal_rates.view([-1, 1, 1, 1]))
+
+        return pred_noises, pred_images
 
     def pred_noise(self, x_t, t, training, num_images):
         if training:
@@ -100,7 +110,7 @@ class DDPM:
 
         return posterior_mean, posterior_log_variance_clipped
 
-    def learned_range_var(self, t, model_var_values):
+    def learn_range_var(self, t, model_var_values):
         min_log = self.posterior_log_variance_clipped[t]
         max_log = np.log(self.betas[t])
         frac = (model_var_values + 1) / 2
@@ -114,7 +124,7 @@ class DDPM:
 
         if epsilon_theta.shape[1] == 6 or self.hparams["learn_sigma"]:
             epsilon_theta, model_var_values = self.output_split_channel(epsilon_theta)
-            model_var_values = self.learned_range_var(t, model_var_values)
+            model_var_values = self.learn_range_var(t, model_var_values)
 
         x_recon = self.predict_start_from_noise(x_t, t, epsilon_theta)
 
@@ -124,15 +134,16 @@ class DDPM:
 
         return model_mean, posterior_log_variance_clipped
 
-    def p_sample_loop_ddpm(self, num_images, trace_diffusion=False, initial_noise=None):
+    def p_sample_loop_ddpm(self, batch_size_sample=1, trace_diffusion=False, initial_noise=None):
         '''
-        :param num_images:
+        :param batch_size_sample:
         :param trace_diffusion: if True, each sample returns 11 steps for tracing.
         :param initial_noise: x_T will be replaced with this param.
         :return:
         '''
+        batch_size_sample = self.hparams["BATCH_SIZE_SAMPLE"]
         if initial_noise is None:
-            x_t = torch.randn(num_images, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
+            x_t = torch.randn(batch_size_sample, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE'])
             x_t = x_t.to(self.hparams['device'])
         else:
             x_t = initial_noise
@@ -146,7 +157,7 @@ class DDPM:
 
             # each cycle operates like func p_sample()
             for t in tqdm(reversed(range(0, self.hparams["steps"]))):
-                model_mean, model_log_variance = self.p_mean_variance(x_t, t, num_images)
+                model_mean, model_log_variance = self.p_mean_variance(x_t, t, batch_size_sample)
                 z = torch.randn_like(x_t)
 
                 if t > 0:
@@ -167,18 +178,6 @@ class DDPM:
             return self.convert_output_to_hex(step_footprint)
         else:
             return self.convert_output_to_hex(x_t)
-
-    def denoise(self, noisy_images, noise_rates, signal_rates, training):
-        if training:
-            network = self.network
-        else:
-            network = self.ema_network
-
-        pred_noises = network.forward(noise_rates ** 2, noisy_images)
-        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
-                                signal_rates.view([-1, 1, 1, 1]))
-
-        return pred_noises, pred_images
 
     def train_steps_t_big(self):
         cost = 0.0
