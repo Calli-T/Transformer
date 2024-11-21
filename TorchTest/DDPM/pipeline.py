@@ -1,4 +1,4 @@
-from hparams import hparams
+from TorchTest.DDPM.test.hparams import hparams
 
 print(hparams)
 
@@ -76,3 +76,24 @@ ddpm.load()
 gallery = ddpm.p_sample_loop_ddpm(trace_diffusion=True).to('cpu').detach().numpy()
 print(gallery.shape)
 show_images(gallery, 11, 8)'''
+
+# model visualize
+from ddpm import DDPM
+from args2hparams import get_hparams
+
+hparams = get_hparams()
+ddpm = DDPM(hparams)
+
+import torch
+from torchviz import make_dot
+
+init = torch.randn(hparams['BATCH_SIZE_SAMPLE'], 3, hparams['IMAGE_SIZE'], hparams['IMAGE_SIZE']).to(hparams['device'])
+test_t = ddpm.t_embedding_scaling(800)
+make_dot(ddpm.network.forward(init, test_t), dict(ddpm.network.named_parameters())).render("model_viz", format="png")
+
+'''
+def test_forward(self):
+        init = torch.randn(16, 3, self.hparams['IMAGE_SIZE'], self.hparams['IMAGE_SIZE']).to(self.hparams['device'])
+        test_t = self.timestep_scaling(3600, 16)
+        return self.network(init, test_t)
+'''
