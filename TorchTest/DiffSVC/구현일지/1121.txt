@@ -10,3 +10,12 @@ DIFFUSION_FLAGS="--steps 4000 --schedule_name cosine"
 TRAIN_FLAGS="--LEARNING_RATE 1e-4 --BATCH_SIZE_TRAIN 128"
 
 python3 args2hparams.py $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
+
+argparser 관련 코드 제작 완료,
+pipeline을 traning과 sampling 코드로 분리 완료
+
+다음 할일은
+1. UNet 뜯어보면서 크기별 모델 생성 구조 channel mult등 알아보기
+2. 음성 파일 Embedding 용 코드 제작
+3. Wavenet 시연하고 args 뽑아내기
+4. 이를 ddpm에 붙이기
