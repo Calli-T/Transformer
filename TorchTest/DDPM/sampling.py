@@ -1,8 +1,8 @@
-from args2hparams import get_default
+from args2hparams import get_hparams
 from ddpm import DDPM
 from utils import show_images
 
-hparams = get_default()
+hparams = get_hparams()
 
 ddpm = DDPM(hparams)
 ddpm.load()

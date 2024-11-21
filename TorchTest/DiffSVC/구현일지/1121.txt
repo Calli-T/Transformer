@@ -1,2 +1,12 @@
 dataloader에 BGR을 RGB 순서로 바꾸는 코드를 넣어놨다
 argparser 관련 코드를 만들어야함
+
+-argparser는 default와 합치는 코드 만들어야함,
+-openai가 쓰는 args이름이랑 내가 만든거랑 args명 헷갈리지 말것
+-여러 플래그를 묶어서 한 꺼번에 넣어 실행 가능, 그 방법은 다음과 같음
+
+MODEL_FLAGS="--IMAGE_SIZE 64 --num_channels 128 --num_res_blocks 3 --learn_sigma True"
+DIFFUSION_FLAGS="--steps 4000 --schedule_name cosine"
+TRAIN_FLAGS="--LEARNING_RATE 1e-4 --BATCH_SIZE_TRAIN 128"
+
+python3 args2hparams.py $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS

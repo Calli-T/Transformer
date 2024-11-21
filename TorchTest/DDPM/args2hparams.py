@@ -1,6 +1,34 @@
+import argparse
+
 from torch import device, cuda
 
 device = device('cuda' if cuda.is_available() else 'cpu')
+
+
+def get_parsed_dict():
+    parser = argparse.ArgumentParser()
+    keys_int = ['IMAGE_SIZE', 'in_channels', 'out_channels', 'num_res_blocks', 'num_channels', 'num_heads',
+                'BATCH_SIZE_TRAIN', 'DATASET_REPETITION',
+                'EPOCHS', 'save_interval', 'BATCH_SIZE_SAMPLE', 'steps']
+    keys_float = ['dropout', 'LEARNING_RATE', 'WEIGHT_DECAY', 'EMA', ]
+    keys_str = ['data_path', 'model_path', 'schedule_name', "attention_resolutions"]
+    keys_bool = ['learn_sigma', 'use_scale_shift_norm', ]
+
+    for key in keys_int:
+        parser.add_argument(f'--{key}', default=None, type=int, help='')
+    for key in keys_float:
+        parser.add_argument(f'--{key}', default=None, type=float, help='')
+    for key in keys_str:
+        parser.add_argument(f'--{key}', default=None, type=str, help='')
+    for key in keys_bool:
+        parser.add_argument(f'--{key}', default=None, type=bool, help='')
+
+    return vars(parser.parse_args())
+
+
+'''args_dict = get_parsed_dict()
+for arg in args_dict:
+    print(f'{arg}: {args_dict[arg]}')'''
 
 
 def get_default():
@@ -17,7 +45,7 @@ def get_default():
         "num_heads": 1,
         "use_scale_shift_norm": False,
 
-        "attention_resolutions": tuple([16]),
+        "attention_resolutions": "16",
         "channel_mult": (1, 1, 2, 2, 4, 4),
         # for training
         "BATCH_SIZE_TRAIN": 2,
@@ -37,6 +65,35 @@ def get_default():
     }
 
 
+def get_hparams():
+    defaults = get_default()
+    args_parsed = get_parsed_dict()
+
+    for key in args_parsed:
+        if args_parsed[key] is not None:
+            defaults[key] = args_parsed[key]
+
+    if defaults["IMAGE_SIZE"] == 256:
+        defaults["channel_mult"] = (1, 1, 2, 2, 4, 4)
+    elif defaults["IMAGE_SIZE"] == 64:
+        defaults["channel_mult"] = (1, 2, 3, 4)
+    elif defaults["IMAGE_SIZE"] == 32:
+        defaults["channel_mult"] = (1, 2, 2, 2)
+
+    attention_ds = []
+    for res in defaults["attention_resolutions"].split(","):
+        attention_ds.append(defaults["IMAGE_SIZE"] // int(res))
+
+    defaults["attention_resolutions"] = tuple(attention_ds)
+
+    return defaults
+
+
+'''args_dict = get_hparams()
+for arg in args_dict:
+    print(f'{arg}: {args_dict[arg]}')'''
+
+# print(get_default().keys())
 '''
 DIFFUSION_FLAGS list
 diffusion_steps

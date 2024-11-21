@@ -1,0 +1,5 @@
+MODEL_FLAGS="--IMAGE_SIZE 64 --num_channels 128 --num_res_blocks 3 --learn_sigma True"
+DIFFUSION_FLAGS="--steps 4000 --schedule_name cosine"
+TRAIN_FLAGS="--LEARNING_RATE 1e-4 --BATCH_SIZE_TRAIN 128"
+
+python3 args2hparams.py $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
