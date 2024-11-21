@@ -4,11 +4,10 @@ print(hparams)
 
 # - DataLoader -
 
-'''from utils.dataloader import getDataLoader
+from utils.dataloader import getDataLoader
 
 train_dataloader = getDataLoader(hparams)
-print(hparams['mean'])'''
-
+print(hparams['mean'])
 
 # - Blocks -
 '''
@@ -39,7 +38,7 @@ for batch in train_dataloader:
 # ---------------이하 테스트 코드
 
 # training
-from utils.dataloader import getDataLoader
+'''from utils.dataloader import getDataLoader
 
 train_dataloader = getDataLoader(hparams)
 print(hparams['std'].shape)
@@ -52,7 +51,7 @@ ddpm = DDPM(hparams, train_dataloader)  # DDPM(hparams)  # , train_dataloader)
 # print(ddpm.diffusion_schedule([x for x in range(1, 11)]))
 # print([x for x in range(1, 11)])
 ddpm.train()
-
+'''
 # ----
 
 # 스케줄 값 확인용
@@ -68,7 +67,6 @@ for i in range(0, len(sche[0])):
         if i % 100 == 0:
             print(i)'''
 
-
 # sampling
 '''from ddpm import DDPM
 from utils import show_images
@@ -77,4 +75,4 @@ ddpm = DDPM(hparams)
 ddpm.load()
 gallery = ddpm.p_sample_loop_ddpm(trace_diffusion=True).to('cpu').detach().numpy()
 print(gallery.shape)
-show_images(gallery, 11, 5)'''
+show_images(gallery, 11, 8)'''

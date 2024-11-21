@@ -68,26 +68,6 @@ class DDPM:
                                      weight_decay=self.hparams["WEIGHT_DECAY"])
 
         self.train_dataloader = train_dataloader
-        try:
-            self.mean = torch.FloatTensor(hparams['mean']).to(self.hparams['device'])
-            self.std = torch.FloatTensor(hparams['std']).to(self.hparams['device'])
-            np.save(f'{hparams["model_path"]}/mean.npy', hparams['mean'])
-            np.save(f'{hparams["model_path"]}/std.npy', hparams['std'])
-        except:
-            self.mean = None
-            self.std = None
-
-    def denoise(self, noisy_images, noise_rates, signal_rates, training):
-        if training:
-            network = self.network
-        else:
-            network = self.ema_network
-
-        pred_noises = network.forward(noise_rates ** 2, noisy_images)
-        pred_images = torch.div((noisy_images - torch.mul(noise_rates.view([-1, 1, 1, 1]), pred_noises)),
-                                signal_rates.view([-1, 1, 1, 1]))
-
-        return pred_noises, pred_images
 
     def pred_noise(self, x_t, t, training):
         # num_images = self.hparams["BATCH_SIZE_SAMPLE"]
@@ -199,7 +179,8 @@ class DDPM:
 
             # u-net을 통한 잡음 예측
             # pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
-            pred_noises = self.pred_noise(noisy_images, diffusion_times, training=True) #, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
+            pred_noises = self.pred_noise(noisy_images, diffusion_times,
+                                          training=True)  #, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
             if self.hparams["learn_sigma"]:
                 pred_noises, _ = self.output_split_channel(pred_noises)
             loss = self.criterion(noises, pred_noises)
@@ -226,7 +207,7 @@ class DDPM:
             cost = self.train_steps_t_big()  # self.train_steps()
             print(f'Epoch: {epoch + 1:4d}, Loss: {cost:3f}')
 
-            if (epoch + 1) % 20 == 0:
+            if (epoch + 1) % self.hparams["save_interval"] == 0:
                 torch.save(self.network.state_dict(), f'{self.hparams["model_path"]}/unet-{epoch + 1}.pt')
                 torch.save(self.ema_network.state_dict(), f'{self.hparams["model_path"]}/ema-unet-{epoch + 1}.pt')
 
@@ -239,11 +220,11 @@ class DDPM:
         self.ema_network.load_state_dict(
             torch.load(f'{self.hparams["model_path"]}/ema-unet.pt', map_location=self.hparams['device']))
 
-        try:
+        '''try:
             self.mean = torch.tensor(np.load(f'{self.hparams["model_path"]}/mean.npy')).to(self.hparams['device'])
             self.std = torch.tensor(np.load(f'{self.hparams["model_path"]}/std.npy')).to(self.hparams['device'])
         except:
-            print("mean std not found")
+            print("mean std not found")'''
 
     def set_schedule(self):
         t = self.hparams["steps"]
@@ -298,8 +279,6 @@ class DDPM:
         # for timestep embedding
 
         if is_training:
-            print([(step / self.hparams["steps"]) * 1000 for step in t])
-            # 배치의 각 샘플에 각기 다른 t, 각기 다른 샘플링 값
             return torch.FloatTensor(
                 [(step / self.hparams["steps"]) * 1000 for step in t]).to(self.hparams['device'])
         else:

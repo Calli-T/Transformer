@@ -19,6 +19,7 @@ def getImgsFromDir(img_path, img_size):
             try:
                 img = cv2.resize(cv2.imread(f_path_name), dsize=(img_size, img_size),
                                  interpolation=cv2.INTER_LINEAR)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 imglist.append(img)
             except:
                 print
