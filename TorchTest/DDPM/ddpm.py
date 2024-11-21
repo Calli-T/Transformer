@@ -19,31 +19,31 @@ class DDPM:
         # model
         self.network = UNet(
             in_channels=3,
-            model_channels=128,
-            out_channels=6,
-            num_res_blocks=2,
-            attention_resolutions=tuple([16]),
-            dropout=0.0,
-            channel_mult=(1, 1, 2, 2, 4, 4),
+            model_channels=hparams["num_channels"],
+            out_channels=hparams["out_channels"],
+            num_res_blocks=hparams["num_res_blocks"],
+            attention_resolutions=hparams["attention_resolutions"],
+            dropout=hparams["dropout"],
+            channel_mult=hparams["channel_mult"],
             num_classes=None,
             use_checkpoint=False,
-            num_heads=1,
+            num_heads=hparams["num_heads"],
             num_heads_upsample=-1,
-            use_scale_shift_norm=False,
+            use_scale_shift_norm=hparams["use_scale_shift_norm"],
         ).to(self.hparams['device'])
         self.ema_network = UNet(
             in_channels=3,
-            model_channels=128,
-            out_channels=6,
-            num_res_blocks=2,
-            attention_resolutions=tuple([16]),
-            dropout=0.0,
-            channel_mult=(1, 1, 2, 2, 4, 4),
+            model_channels=hparams["num_channels"],
+            out_channels=hparams["out_channels"],
+            num_res_blocks=hparams["num_res_blocks"],
+            attention_resolutions=hparams["attention_resolutions"],
+            dropout=hparams["dropout"],
+            channel_mult=hparams["channel_mult"],
             num_classes=None,
             use_checkpoint=False,
-            num_heads=1,
+            num_heads=hparams["num_heads"],
             num_heads_upsample=-1,
-            use_scale_shift_norm=False,
+            use_scale_shift_norm=hparams["use_scale_shift_norm"],
         ).to(self.hparams['device'])
 
         # schedule
@@ -180,7 +180,7 @@ class DDPM:
             # u-net을 통한 잡음 예측
             # pred_noises, pred_images = self.denoise(noisy_images, noise_rates, signal_rates, training=True)
             pred_noises = self.pred_noise(noisy_images, diffusion_times,
-                                          training=True)  #, num_images=self.hparams["BATCH_SIZE_SAMPLE"])
+                                          training=True)  # , num_images=self.hparams["BATCH_SIZE_SAMPLE"])
             if self.hparams["learn_sigma"]:
                 pred_noises, _ = self.output_split_channel(pred_noises)
             loss = self.criterion(noises, pred_noises)

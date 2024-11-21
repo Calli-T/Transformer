@@ -9,6 +9,8 @@ def get_default():
         # for model
         "IMAGE_SIZE": 256,
         "learn_sigma": True,
+        "in_channels": 3,
+        "out_channels": 6,
         "dropout": 0.0,
         "num_res_blocks": 2,
         "num_channels": 128,
@@ -20,8 +22,8 @@ def get_default():
         # for training
         "BATCH_SIZE_TRAIN": 2,
         "DATASET_REPETITION": 4,
-        "data_path": "./datasets/sunflower",
-        "model_path": "./models/sunflower",
+        "data_path": "./datasets/IDDPM_LSUN",
+        "model_path": "./models/IDDPM_LSUN",
         "LEARNING_RATE": 0.0001,
         "WEIGHT_DECAY": 0.00001,
         "EPOCHS": 200000,
@@ -63,4 +65,4 @@ batch_size 128
 schedule_sampler # 이게 대체 뭔...
 '''
 
-print(get_default())
+# print(get_default())
