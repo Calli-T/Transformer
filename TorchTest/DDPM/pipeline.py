@@ -1,13 +1,14 @@
 from hparams import hparams
+from args2hparams import get_default
 
 print(hparams)
 
 # - DataLoader -
 
-from utils.dataloader import getDataLoader
+'''from utils.dataloader import getDataLoader
 
 train_dataloader = getDataLoader(hparams)
-print(hparams['mean'])
+print(hparams['mean'])'''
 
 # - Blocks -
 '''

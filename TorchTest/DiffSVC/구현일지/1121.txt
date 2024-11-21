@@ -1,0 +1,2 @@
+dataloader에 BGR을 RGB 순서로 바꾸는 코드를 넣어놨다
+argparser 관련 코드를 만들어야함

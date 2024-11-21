@@ -220,12 +220,6 @@ class DDPM:
         self.ema_network.load_state_dict(
             torch.load(f'{self.hparams["model_path"]}/ema-unet.pt', map_location=self.hparams['device']))
 
-        '''try:
-            self.mean = torch.tensor(np.load(f'{self.hparams["model_path"]}/mean.npy')).to(self.hparams['device'])
-            self.std = torch.tensor(np.load(f'{self.hparams["model_path"]}/std.npy')).to(self.hparams['device'])
-        except:
-            print("mean std not found")'''
-
     def set_schedule(self):
         t = self.hparams["steps"]
 
