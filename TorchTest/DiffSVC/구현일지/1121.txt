@@ -23,3 +23,4 @@ https://artiper.tistory.com/310
 3. Wavenet 시연하고 args 뽑아내기
 4. 이를 ddpm에 붙이기
 
++나중에확산 모델에서 그림 크기 자유자재로 조절하는거 어떻게 하는지 좀 알아보자
