@@ -1,0 +1,78 @@
+(1121에서 넘어온것도 포함) 다음 할일은
+1. UNet 뜯어보면서 크기별 모델 생성 구조 channel mult등 알아보기
+2. 음성 파일 Embedding 용 코드 제작
+3. Wavenet 시연하고 args 뽑아내기
+4. 이를 ddpm에 붙이기
+5. 가속 알고리즘 (이름 기억안남) 논문보고 구현하기
+
+나중에 할일은
+1. 모델에서 그림 크기 자유자재로 조절하는거 어떻게 하는지 좀 알아보자
+2. DDIM 새로 구현해놓기
+3. DDPM 알고리즘 요약 해놓기
+4. 민트 사진 모아다가 학습시켜서 ddpm의 성능을 최종적으로 확인하기
+
+일단 2와 3을 해보기 위해 10/19 이후의 기록을 찾아보자
+그리고 이를 kor_diff_svc의 코드와 교차 검증해보자
+
+---------------------------------------------
+
+1123
+일단 1122일에 적어놓은 할일중 2번과 3번을 동시에 하고 있다
+
+(Gemini와의 대화과정에서 알아낸 사실, 구라핑이 아니길 바라자)
+1. Wavenet으로 잡음을 예측한다
+Wavenet은 음성을 직접적으로 생성하는 모델이다.
+긴 의존 관계와 음성의 복잡한 패턴을 잡아내는(모델링하는) 잠재력이 있으므로
+DiffSinger에서는 이를 활용하여 음성 자체가 아닌 잡음을 예측하는 것으로 활용한다.
+
+(kor_diff_svc에서 diffusion.py와 net.py 등 코드를 까보면서 알아낸 사실)
+1. cond는 forward에서 서로 같다. 전역적 조건인듯함
+근데 그게 잘라낸 음성 조각 중 어떤 형태를 띄고있는지는 알아봐야할듯,
+추측) 서로 다른 조각에서는 cond가 다름
+2.  'conditioning diffusion, use fastspeech2 encoder output as the condition' 라는 문구에서,
+혹은 직접 코드를 까본 경험을 생각해보자면, fs2를 condition 제작기로 사용하여 diffusion model을 굴린다.
+3. register_buffer라는걸로 gpgpu와 상호작용하는듯? schedule관련 값들이 죄다 거기 들어가있더라
+추측) 속도 올리는건가? 나중에 알아볼것
+(추측) 근데 정확하게는 멜스펙트로그램에서 잡음을 예측하는 것인듯?
+-> 사실로 밝혀졌다
+4. p_losses라는 함수를 train_pipeline의 어떤 클래스에서 고정 메서드에 넣어 활용하는 구조이다.
+해당 클래스에 파이프라인 구조를 깔끔히하기 위한 것들을 한데 몰아넣은듯 하다.
+즉, 일반적인 ddpm의 학습 방식과 거의 같다.
+
+당장 할일
+(해결함)
+1. 대체 vocoder가 어디서 사용되는지 활용해보자
+wavenet과 diffusion의 코드는 HiFi-GAN관련 코드가 안보인다
+적어도 wavenet의 output이 mel-spectrogram이긴 해야 HiFi-GAN에 넣을텐데,
+대체 어디에 쓴단 말인가?
+일단 infer_tool의 def infer는 return에 after_infer를 명시하고 있으며
+after_infer함수는 vocoder를 사용해 spectrogram을 waveform으로 바꿀 것을 명시하고 있다.
+즉, 어딘가에서는 spectrogram이 사용된다
+지금 학습 돌리고 있으니 interval인 2000만 찍고 나서 print문 찍어서 추적해보자
+
+결론: DiffNet은 사실 mel-spectrogram에 대한 잡음 제거기이고,
+이를 Diffusion과 함께 사용하여 mel-spec을 생성하며
+생성된 mel-spec을 Vocoder에 던져 목소리로 만드는 것이다.
+GPT에게 코드 째로 던져줬더니 class DiffNet은 사실 wavenet이 아니고,
+[B, 80, T]와 같은 mel-spectrogram에 해당하는 차원이라고 한다
+그런데 코드를 읽어보니 80은 기본 값이고, 실제로 선언부에서는 하이퍼 파라미터 'audio_num_mel_bins'를 사용한다
+128이며, net.py의 코드를 읽어보면 출력도 128이다.
+
+(작업중)
+2. net.py 코드 가져오기
+순서는 net.py의 DiffNet코드 가져오기
+-> 쓰레기 값을 넣고 forward가 정상적으로 동작하는지 살펴보기
+-> 옛 코드들을 역설계하기
+-> 쓰레기 값을 넣고 forward가 정상적으로 동작하는지 살펴보기
+-> 그 둘을 병렬로 놓을 수 있는 구조 만들어 놓기(특히 기존 학습한 모델이 load되는지가 중요함)
+
+일단 테스트 코드는 /DiffSVC/Wavenet_mel에 작성중이다.
+
+(해결안됨)
+3.
+hubert와 fs2를 이용해 embedding 만드는 코드 가져오기
+-> hubert는 복잡하니 역설계는 나중에 하고 코드를 잘라 붙이는 정도에서 처리하자
+-> kor-hubert와 접목이 가능한지 알아보자
+
+4. ground truth mel spectrogram 생성하는 방법 보기
+-> 이미 구현된 방식과 다른 방식이 호환이 되는지 봐야한다.
