@@ -6,8 +6,12 @@ import torch.nn.functional as F
 
 from math import sqrt
 
-from utils.hparams import hparams
-from modules.commons.common_layers import Mish
+# from utils.hparams import hparams
+# from modules.commons.common_layers import Mish
+from act_func import Mish
+
+# hparams는 class 선언의 매개변수로 주는 것으로 변경
+# from temp_hparams import hparams
 
 Linear = nn.Linear
 ConvTranspose2d = nn.ConvTranspose2d
@@ -80,11 +84,12 @@ class ResidualBlock(nn.Module):
         residual, skip = torch.chunk(y, 2, dim=1)
         # Using torch.split instead of torch.chunk to avoid using onnx::Slice
         # residual, skip = torch.split(y, torch.div(y.shape[1], 2), dim=1)
-        
+
         return (x + residual) / sqrt(2.0), skip
 
+
 class DiffNet(nn.Module):
-    def __init__(self, in_dims=80):
+    def __init__(self, hparams):
         super().__init__()
         self.params = params = AttrDict(
             # Model params
@@ -93,6 +98,7 @@ class DiffNet(nn.Module):
             residual_channels=hparams['residual_channels'],
             dilation_cycle_length=hparams['dilation_cycle_length'],
         )
+        in_dims = hparams['audio_num_mel_bins']
         self.input_projection = Conv1d(in_dims, params.residual_channels, 1)
         self.diffusion_embedding = SinusoidalPosEmb(params.residual_channels)
         dim = params.residual_channels
