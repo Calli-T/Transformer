@@ -13,6 +13,7 @@ Toys/Failed/SacredConverter/models/
 *.gz
 *.png
 *.onnx
+*.ckpt
 
 #
 source/
