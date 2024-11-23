@@ -67,23 +67,28 @@ GPT에게 코드 째로 던져줬더니 class DiffNet은 사실 wavenet이 아�
 -> 그 둘을 병렬로 놓을 수 있는 구조 만들어 놓기(특히 기존 학습한 모델이 load되는지가 중요함)
 
 일단 테스트 코드는 /DiffSVC/Wavenet_mel에 작성중이다.
-한거
+해결된거
 1) net.py original 코드 가져옴
 2) import에 Mish함수랑, hparams가져옴
 Mish는 DiffNet의 torch 코드를 최신화하는 refactoring 1차에,
 hparams는 ddpm이랑 결합하는 refactoring 2차에 새로 처리해놔야함
 3) 기존 모델 load하는 방법은 utils/__init__.py/의 def load_ckpt에 존재하는 것을 찾았음
-
-해야할거
-1) 위 3)의 코드를 test1.py에 붙여넣어 DiffNet의 load를 수행하여 호환성을 갖춰야함
+4) 위 3)의 코드를 test1.py에 붙여넣어 DiffNet의 load를 수행하여 호환성을 갖춰야함
 -> 저장되는 모델은 놀랍게도, class GaussianDiffusion의 값이다
 -> betas나 alpha_cumprod같은 schedule은 물론이고 내부에 포함된 모델들의 값이 전부 있다
 residual_layers.6.output_projection.weight가
 denoise_fn.residual_layers.6.output_projection.weight로 저장된 방식
 다른 ddpm구현과 달리,
 얘는 class GaussianDiffusion에 nn.Module을 상속해놨다 아 ㅋㅋㅋㅋㅋ
+state_dict에 denoise_fn이 붙은거만 가져와 key에 denoise_fn만 떼서 가져온다음 붙이면된다
+5) wavenet 코드 리팩토링, 토치 버전 올리기
+사실 Mish나 ReLU같이 활성화 함수 3군데만 다른거라 그냥 해도 모델 읽어오는거랑은 아무 관련없고
+나중에 forward했을 때 같은 값이 나오는지만 확인해보자,
 
-(해결안됨)
+해야할거
+
+
+해결안된거
 3.
 hubert와 fs2를 이용해 embedding 만드는 코드 가져오기
 -> hubert는 복잡하니 역설계는 나중에 하고 코드를 잘라 붙이는 정도에서 처리하자

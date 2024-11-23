@@ -63,3 +63,10 @@ https://roytravel.tistory.com/364
 
 pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/rocm5.4.2
 torch-rocm 다운받기
+
+1123일추가
+.gitignore 갱신 주문
+git rm -r --cached .
+git add .
+git commit -m "Update .gitignore"
+이러고나서 push하면된다

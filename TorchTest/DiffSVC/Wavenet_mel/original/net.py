@@ -3,12 +3,14 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+# from torch.nn import ReLU, Mish
+from act_func import Mish
 
 from math import sqrt
 
 # from utils.hparams import hparams
 # from modules.commons.common_layers import Mish
-from act_func import Mish
+
 
 # hparams는 class 선언의 매개변수로 주는 것으로 변경
 # from temp_hparams import hparams
@@ -126,7 +128,7 @@ class DiffNet(nn.Module):
         x = spec[:, 0]
         x = self.input_projection(x)  # x [B, residual_channel, T]
 
-        x = F.relu(x)
+        x = F.relu(x)  # ReLU(x)
         diffusion_step = self.diffusion_embedding(diffusion_step)
         diffusion_step = self.mlp(diffusion_step)
         skip = []
@@ -136,6 +138,6 @@ class DiffNet(nn.Module):
 
         x = torch.sum(torch.stack(skip), dim=0) / sqrt(len(self.residual_layers))
         x = self.skip_projection(x)
-        x = F.relu(x)
+        x = F.relu(x)  # ReLU(x)
         x = self.output_projection(x)  # [B, 80, T]
         return x[:, None, :, :]

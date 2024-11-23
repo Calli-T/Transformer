@@ -1,0 +1,5 @@
+개요
+이 디렉터리에는 DiffSinger를 개조하여 만든 DiffSVC의 핵심 모델중 하나인
+DiffNet의 코드가 담겨있다
+해당 코드는 Wavenet의 원리를 참고하였으나,
+raw waveform대신 mel-spectrogram을 입출력으로 사용한다
