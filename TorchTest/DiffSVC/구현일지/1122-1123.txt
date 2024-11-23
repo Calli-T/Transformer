@@ -86,7 +86,15 @@ state_dict에 denoise_fn이 붙은거만 가져와 key에 denoise_fn만 떼서 �
 나중에 forward했을 때 같은 값이 나오는지만 확인해보자,
 
 해야할거
-
+forward 구현하기
+알아낸것
+[B, M, T]는 각 Batch Mel_band, Time_frame 3개의 약자
+1) 입력에 spec은 [B, 1, M, T]의 형태이다
+일반적인 mel_spectrogram은 [B, M, T]의 형태이므로
+spec[:, 0]로 축 하나를 날려준다.
+그런데 대체 어디에서 raw2mel을 했길래 저런 형태가 나오는가?
+!!!코드를 분석해서 파형을 멜스펙트로그램으로 바꾸는 코드를 찾아야한다
+혹은 원래 짜놓은 코드와 호환이 가능한지 알아야한다!!!
 
 해결안된거
 3.
@@ -98,4 +106,9 @@ hubert와 fs2를 이용해 embedding 만드는 코드 가져오기
 -> 이미 구현된 방식과 다른 방식이 호환이 되는지 봐야한다.
 
 나중에 해야할거
+forward에 딴거랑 다르게 cond를 넣어주는데, 원본 ddpm과 다르게
+시작 noise에서 바로 만드는 것은 사용 불가능하므로(Voice 'Conversion')이다
+이를 어떻게 구현할지 GaussianDiffuion class를 분석하자
+
+아주아주 나중에 해야할거
 class를 통째로 저장해버리는 이
