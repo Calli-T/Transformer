@@ -13,10 +13,12 @@ load_ckpt(wavenet_mel, 'SinChangSeop/model_ckpt_steps_30000.ckpt')
 wavenet_mel.to(device)
 '''
 :param spec: [B, 1, M, T]
-        :param diffusion_step: [B, 1]
-        :param cond: [B, M, T]
+        :param diffusion_step: [B, 1] -> [B, ] 실제로는 1축 텐서이니 앞의 ,1은 무시할것
+        :param cond: [B, M, T] -> 이거 M이 mel-band 수가 아니고, hidden 값과 관련있는 것 같다
 '''
-temp_spec = torch.randn((384, 1, 128, 1)).to(device)
-temp_step = torch.randint(0, 1000, (1, 1)).to(device)
-temp_cond = torch.randn((1, 256, 1)).to(device)
+'''
+temp_spec = torch.randn((2, 1, 128, 1)).to(device)
+temp_step = torch.randint(0, 1000, (2,)).to(device)
+temp_cond = torch.randn((2, 256, 1)).to(device)
 print(wavenet_mel(temp_spec, temp_step, temp_cond))
+'''

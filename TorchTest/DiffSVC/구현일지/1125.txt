@@ -1,0 +1,57 @@
+번외 - 아주 머나먼 시간 이후에 알아볼 일
+CoMoSVC라는게 실시간 변환에 최적화되어있다고한다
+
+확인한 바로는
+DiffNet의 forward의 값 3개는 각각
+spec은 [Batch, 1, Mel-band, Time-sequence] 텐서,
+step은 [Batch, ] 텐서 ※ t값을 준다
+cond는 [Batch, hidden_size?, Time-sequence] 텐서이다
+
+이제 할 일
+입력용 mel-spectrogram과 cond,
+t와 diffusion 알고리즘 제작
+
+{   f0, pitch extraction 모델의 사용처 추적 과정
+신창섭 모델 30000steps로 테스트 해 본 결과 infer에서 왜? 인지는 모르겠으나
+functional.py에 어떤 코드를 손을 댈 필요가 있더라, 파이토치 버전의 문제인듯
+
+forward의 재료들은 각각의 모델, pe, parselmouth, hubert, crepe 등 각각의 모델이 따로 있는 것 같다
+DiffSinger의 논문과도 다르니 코드를 보는 수 밖에 없다
+
+https://github.com/YIEys/model
+여기 정보가 좀 있다
+
+infer의 run_clip의 옵션에 crepe와 pe가 모두 true이다????
+
+    { infer_tool.py - class Svc의 구조
+        infer에서 run_clip을 하면 인자로 보내주는 model의 class이며, 내부 필드로 GaussianDiffusion class의 instance를 가지고 있다
+        {   class Svc - def infer()
+            use_pe와 use_crepe를 모두 사용한다.
+            batch를 def.pre함수에서 받아오는데, 이 때 둘 중 use_crepe만 사용한다.
+            batch에는 hubert/spk_embed/mel2ph/f0/uv/energy/ref_mels가 모두 포함되어 있다.
+            {   class Svc - def pre()
+                ''' 딱히 안중요할듯 당장은?
+                    매개변수의 wav_fn과 accelerate는 각각 .wav파일 경로 관련정보와 ddpm가속 배율이며,
+                    파일 경로인 wav_fn과 화자인식명(프로젝트명)은 temp_dict로 들어간다
+                    이는 self.temporary_dict2processed_input으로 들어가서 처리된다
+                '''
+                이 때 use_crepe도 같이 넘어간다.
+                {   class Svc - def temporary_dict2processed_input()
+                    process data in temporary_dicts라는 주석으로 보아, 전처리인듯?
+
+                    config의 binarization_args의 하위 항목인 with_aligh, with_f0, with_hubert가 true임에 영향을 받으며,
+                    해당 값과 use_crepe가 모두 true이므로,
+                    해당 함수 내부의 함수 get_pitch()와 get_align()에서
+                    f0(ground-truth f0), pitch(coarse_f0)/mel2ph(음소의 시간적 정렬정보) 정보들을 가져오며
+                    이는 반환없이 processed_input이라는 dict에 담겨 최종적으로 반환된다
+                    ※1 f0의 해시값을 저장하여 이미 처리해놨는지 확인한다음 재사용하는듯하다 이는 윈도우프레임-시퀀스 때문인가???
+                    mel2ph정보는 mel-spectrogram과 hubert값을 사용하여 구한다.
+                    pitch 정보 2종은 wav와 mel을 사용하여 구한다. 이는 다시 미리학습된 crepe모델을 활용하는듯하다
+                    이는 get_pitch_crepe함수를 가져와서 활용한다
+                }
+            }
+        }
+
+    }
+}
+

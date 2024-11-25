@@ -49,13 +49,13 @@ def get_default():
         "channel_mult": (1, 1, 2, 2, 4, 4),
         # for training
         "BATCH_SIZE_TRAIN": 2,
-        "DATASET_REPETITION": 4,
-        "data_path": "./datasets/IDDPM_LSUN",
-        "model_path": "./models/IDDPM_LSUN",
+        "DATASET_REPETITION": 1,
+        "data_path": "./datasets/mint",
+        "model_path": "./models/mint",
         "LEARNING_RATE": 0.0001,
         "WEIGHT_DECAY": 0.00001,
         "EPOCHS": 200000,
-        "save_interval": 4000,
+        "save_interval": 100,
         "EMA": 0.999,
         # for sampling
         "BATCH_SIZE_SAMPLE": 2,

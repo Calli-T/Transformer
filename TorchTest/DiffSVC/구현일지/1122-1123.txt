@@ -86,28 +86,29 @@ state_dict에 denoise_fn이 붙은거만 가져와 key에 denoise_fn만 떼서 �
 나중에 forward했을 때 같은 값이 나오는지만 확인해보자,
 
 진행중인거
-forward 사용해보기
-알아낸것
-[B, M, T]는 각 Batch Mel_band, Time_frame 3개의 약자
-1) 입력에 spec은 [B, 1, M, T]의 형태이다
-일반적인 mel_spectrogram은 [B, M, T]의 형태이므로
-spec[:, 0]로 축 하나를 날려준다.
-그런데 대체 어디에서 raw2mel을 했길래 저런 형태가 나오는가?
-!!!코드를 분석해서 파형을 멜스펙트로그램으로 바꾸는 코드를 찾아야한다
-혹은 원래 짜놓은 코드와 호환이 가능한지 알아야한다!!!
-{   이게 없으면 forward가 불가능하다
-    2) hubert와 fs2를 이용해 embedding 만드는 코드 가져오기
-    -> hubert는 복잡하니 역설계는 나중에 하고 코드를 잘라 붙이는 정도에서 처리하자
-    -> kor-hubert와 접목이 가능한지 알아보자
+{   forward 사용해보기
+    알아낸것
+    [B, M, T]는 각 Batch Mel_band, Time_frame 3개의 약자
+    1) 입력에 spec은 [B, 1, M, T]의 형태이다
+    일반적인 mel_spectrogram은 [B, M, T]의 형태이므로
+    spec[:, 0]로 축 하나를 날려준다.
+    그런데 대체 어디에서 raw2mel을 했길래 저런 형태가 나오는가?
+    !!!코드를 분석해서 파형을 멜스펙트로그램으로 바꾸는 코드를 찾아야한다
+    혹은 원래 짜놓은 코드와 호환이 가능한지 알아야한다!!!
+    {   이게 없으면 forward가 불가능하다
+        2) hubert와 fs2를 이용해 embedding 만드는 코드 가져오기
+        -> hubert는 복잡하니 역설계는 나중에 하고 코드를 잘라 붙이는 정도에서 처리하자
+        -> kor-hubert와 접목이 가능한지 알아보자
 
-    3) ground truth mel spectrogram 생성하는 방법 보기
-    -> 이미 구현된 방식과 다른 방식이 호환이 되는지 봐야한다.
-}
-forward 임시로 random 값 넣기 위해, 대체 어떻게 hparams를 사용하는거고,
-실제로 들어가는 값은 또 뭔지 실행해보거나 코드 보면서 알아보자
-이는
-reverse_engineering_target/kor_diff_svc 아래에 만들어진 환경에서 처리할 수 있다.
-opencpop과 창섭 모델이 서로 다르니, net.py와 infer.py를 사태를 파악할것!!!!!!
+        3) ground truth mel spectrogram 생성하는 방법 보기
+        -> 이미 구현된 방식과 다른 방식이 호환이 되는지 봐야한다.
+    }
+    forward 임시로 random 값 넣기 위해, 대체 어떻게 hparams를 사용하는거고,
+    실제로 들어가는 값은 또 뭔지 실행해보거나 코드 보면서 알아보자
+    이는
+    reverse_engineering_target/kor_diff_svc 아래에 만들어진 환경에서 처리할 수 있다.
+    opencpop과 창섭 모델이 서로 다르니, net.py와 infer.py를 사태를 파악할것!!!!!!
+    }
 
 나중에 해야할거
 forward에 딴거랑 다르게 cond를 넣어주는데, 원본 ddpm과 다르게
