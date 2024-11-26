@@ -14,6 +14,7 @@ Toys/Failed/SacredConverter/models/
 *.png
 *.onnx
 *.ckpt
+*.jpeg
 
 #
 source/

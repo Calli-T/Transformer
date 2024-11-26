@@ -1,0 +1,120 @@
+번외 - 아주 머나먼 시간 이후에 알아볼 일
+CoMoSVC라는게 실시간 변환에 최적화되어있다고한다
+
+확인한 바로는
+DiffNet의 forward의 값 3개는 각각
+spec은 [Batch, 1, Mel-band, Time-sequence] 텐서,
+step은 [Batch, ] 텐서 ※ t값을 준다
+cond는 [Batch, hidden_size?, Time-sequence] 텐서이다
+
+이제 할 일
+입력용 mel-spectrogram과 cond,
+t와 diffusion 알고리즘 제작
+
+{   f0, pitch extraction 모델의 사용처 추적 과정
+신창섭 모델 30000steps로 테스트 해 본 결과 infer에서 왜? 인지는 모르겠으나
+functional.py에 어떤 코드를 손을 댈 필요가 있더라, 파이토치 버전의 문제인듯
+
+forward의 재료들은 각각의 모델, pe, parselmouth, hubert, crepe 등 각각의 모델이 따로 있는 것 같다
+DiffSinger의 논문과도 다르니 코드를 보는 수 밖에 없다
+-> parselmouth안쓰더라, pe로 crepe, mel2ph에 hubert를 쓴다
+
+https://github.com/YIEys/model
+여기 정보가 좀 있다
+
+infer의 run_clip의 옵션에 crepe와 pe가 모두 true이다????
+
+    { infer_tool.py - class Svc의 구조
+        infer에서 run_clip을 하면 인자로 보내주는 model의 class이며, 내부 필드로 GaussianDiffusion class의 instance를 가지고 있다
+        {   class Svc - def infer()
+            use_pe와 use_crepe를 모두 사용한다.
+            batch를 def.pre함수에서 받아오는데, 이 때 둘 중 use_crepe만 사용한다.
+            batch에는 hubert/spk_embed/mel2ph/f0/uv/energy/ref_mels가 모두 포함되어 있다.
+            {   class Svc - def pre()
+                ''' 딱히 안중요할듯 당장은?
+                    매개변수의 wav_fn과 accelerate는 각각 .wav파일 경로 관련정보와 ddpm가속 배율이며,
+                    파일 경로인 wav_fn과 화자인식명(프로젝트명)은 temp_dict로 들어간다
+                    이는 self.temporary_dict2processed_input으로 들어가서 처리된다
+                '''
+                이 때 use_crepe도 같이 넘어간다.
+                {   class Svc - def temporary_dict2processed_input()
+                    process data in temporary_dicts라는 주석으로 보아, 전처리인듯?
+
+                    config의 binarization_args의 하위 항목인 with_aligh, with_f0, with_hubert가 true임에 영향을 받으며,
+                    해당 값과 use_crepe가 모두 true이므로,
+                    해당 함수 내부의 함수 get_pitch()와 get_align()에서
+                    f0(ground-truth f0), pitch(coarse_f0)/mel2ph(음소의 시간적 정렬정보) 정보들을 가져오며
+                    이는 반환없이 processed_input이라는 dict에 담겨 최종적으로 반환된다
+                    ※1 f0의 해시값을 저장하여 이미 처리해놨는지 확인한다음 재사용하는듯하다 이는 윈도우프레임-시퀀스 때문인가???
+                    mel2ph정보는 mel-spectrogram과 hubert값을 사용하여 구한다.
+                    pitch 정보 2종은 wav와 mel을 사용하여 구한다. 이는 다시 미리학습된 crepe모델을 활용하는듯하다
+                    이는 get_pitch_crepe함수를 가져와서 활용한다
+
+                    wav와 mel은 다음과 같이 만든다
+                    wav, mel = VOCODERS[hparams['vocoder']].wav2spec(temp_dict['wav_fn'])
+                    그리고 config의 vocoder는 다음과 같다 (그 아래 값에 경로도 존재한다)
+                    network.vocoders.nsf_hifigan.NsfHifiGAN
+                    무슨 원리인지는 몰라도 nsf_hifigan.py를 참조하는듯하다???
+                    하여튼 거기 static def wav2spec 존재한다
+                    (hparams의 고유 값이 존재하여 이를 활용하며,
+                     여기서 실질적으로 STFT 등 멜스펙트로그램화가 이루어진다)
+
+                     f0, pitch, mel2ph, mel, wav, item_name(파일명), sec(시간초), len(멜길이)이
+                     processed_input에 최종적으로 담긴다
+                }
+
+                {   def getitem()
+                    temporary_dict2processed_input에서 처리한 것을 텐서로 만들어 dict sample에 담아 주는 역할인듯
+                    config에서 max_frames를 가져와 해당 값을 최대치로 하여 자른다
+                    ※1 energy는 spec에 후처리를 해서 얻는듯하다, log scale과 관련된 문제인듯
+                    ※2 f0와 uv는 norm_interp_f0라는 전용 함수를 사용한다 (이는 utils.pitch_utils에 존재한다)
+                    ※3 max_frames가 뭔지 알아보자??? 그리고 [1]개의 mel이 몇 초를 의미하는지 알아야한다
+                }
+
+                {   def processed_input2batch()
+                    utils.collate_1d함수로 패딩을 넣어 규격을 맞추고,
+                    입력을 최종적으로 batch로 만든다
+                }
+
+                3종의 함수를 거쳐, 최종적으로 batch를 return하는 것이 pre함수이다
+            }
+
+            { 재료를 손질해서
+                가져온 batch에서 (hparams의 use_spk_id가 false이므로) spk_emb를
+                hubert, mel, energy, mel2ph, uv,를 꺼내는데
+                f0는 뭔가 특이한 과정을 거친다
+                1) key를 12로 나눠 f0에 더하는데,
+                한 옥타브를 12반음으로 나누어 key값만큼 조절한다고 하나, 실제로는 전부 0.0이더라
+                2) 음 높이가 로그스케일로 1100? hparams값을 넘어가지 않도록 조절하여 비현실적인 음성을 쳐낸다
+                ???
+            } 이를
+            def diff_infer, 즉 모델에 넣고 결과를 가져오는 함수를 만들어 출력한다
+            최종적으로 model(GaussianDiffusion, DiffNet만을 말하는 것이 아니다)의 입력은 다음과 같다
+            -hubert
+            -spk_embed
+            -mel2ph
+            -f0
+            -ref_mels
+            -infer옵션
+
+            출력도 batch에 그대로 담기는 모양이다
+            새로 추가되는 것과 후처리는 다음과 같다
+            -outputs, (model의 mel_out을 model의 out2mel함수에 넣은것)
+            -mel2ph_pred (model의 output에 담긴 mel2ph)
+            -f0_gt (f0와 uv를 denorm한 hparams와 함께 denorm 한 것)
+
+            이후 use_pe가 true로 들어갔으므로
+            batch['f0_pred']는 후처리를 진행하며 이는 fastspeech.pe로 진행한다???
+
+            이후 3개를 after_infer()로 후처리하며,
+            사실 가장 중요한건 마지막에 return되는 wav_pred, 즉 audio/_audio이다
+
+            ※ 처리 과정 자체는 1022-1029.txt에 담긴 GaussianDiffusion.forward를 참고
+        }
+
+        f0_gt와 f0_pred는 일단 제쳐놓고,
+        audio는 soundfile.write로 음악 파일로 만들어주는듯?
+        return도 저 3개를 numpy로 바꾸어 처리한다
+    }
+}
+
