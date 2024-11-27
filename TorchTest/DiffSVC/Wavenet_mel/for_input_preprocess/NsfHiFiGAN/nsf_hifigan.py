@@ -1,9 +1,9 @@
 import os
 import torch
-from modules.nsf_hifigan.models import load_model, Generator
-from modules.nsf_hifigan.nvSTFT import load_wav_to_torch, STFT
-from utils.hparams import hparams
-from network.vocoders.base_vocoder import BaseVocoder, register_vocoder
+from models import load_model #, Generator
+from nvSTFT import load_wav_to_torch, STFT
+from base_vocoder import BaseVocoder, register_vocoder
+from temp_hparams import hparams
 
 @register_vocoder
 class NsfHifiGAN(BaseVocoder):
