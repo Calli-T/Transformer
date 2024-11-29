@@ -110,6 +110,7 @@ class STFT():
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     return torch.log(torch.clamp(x, min=clip_val) * C)
 
+
 # NsfHiFiGAN의 wav2spec을 해당 함수'만' 구현해둔것
 def wav2spec(inp_path, device=None):
     if device is None:
@@ -128,7 +129,3 @@ def wav2spec(inp_path, device=None):
         # log mel to log10 mel
         mel_torch = 0.434294 * mel_torch
         return wav_torch.cpu().numpy(), mel_torch.cpu().numpy()
-
-
-'''wav, mel = wav2spec('../raw/L-O-V-E.wav')
-print(wav.shape, mel.shape)'''

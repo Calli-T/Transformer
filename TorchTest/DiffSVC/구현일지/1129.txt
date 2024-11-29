@@ -1,3 +1,5 @@
+※ nsf_hifigan은 판매금지가 있더라? 라이센스를 다시 읽어보고 대체제를 찾아보던가 하자
+
 nsf_hifigan을 가져오는데서,
 일단 hparams를 모델이 init에 가져와서 사용하는 구조로 변경하여 하였으나
 static method wav2spec이 외부 데이터 hparams를 사용하는 static method였고
@@ -39,3 +41,11 @@ NsfHiFiGAN/test1_nsf_hifigan 보면 wav2mel의 예제 코드가 있다 ※ wav2s
 
 일단 경로 문제를 해결해야하나, 나중에 파이프라인 통합할 때(fs2에 넣을 때!) 하기 위해
 wav2spec_stand_alone에 wav2spec함수만 따로 떼어 구현해두었다
+crepe는 어째 모델을 따로 입력 받지 않으며, torchcrepe를 쓴다
+해당 함수는 data_gen_utils.py에 get_pitch_crepe에 있다
+
+일단 gt_f0와 coarse_f0를 얻는데 성공했다, 근데
+gt는 ground truth인데, coarse(거친)이 뭔가 알아봤더니
+사람의 음을 인지하는 기준(threshold)이 있고,
+이를 반영한 Melody scale로 변환하여 linear하게 다루도록 하는 방법인듯하다
+f0_to_coarse가 해당 기능을 구현한 함수이다(로그 스케일도 충실하다)
