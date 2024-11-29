@@ -28,3 +28,5 @@ Toys/tmp/
 Clone/
 
 TorchTest/Git_Clone/kor_diff_svc
+
+TorchTest/DiffSVC/Wavenet_mel/for_input_preprocess/NsfHiFiGAN/nsf_hifigan
