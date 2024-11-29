@@ -1,8 +1,6 @@
 from nsf_hifigan import NsfHifiGAN
-import torch
-
-'''state_dict = torch.load('nsf_hifigan/model')['generator']
-for key in state_dict.keys():
-    print(key)'''
 
 vocoder = NsfHifiGAN()
+# wav, mel = VOCODERS[hparams['vocoder']].wav2spec(temp_dict['wav_fn'])
+wav, mel = vocoder.wav2spec('../raw/L-O-V-E.wav')
+print(wav.shape, mel.shape)

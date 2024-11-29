@@ -13,3 +13,7 @@ test1.py에서 model의 load와 forward test를,
 for_input_preprocess
 model의 forward에 들어갈 input들을 전처리하는 코드들,
 클래스나 모델이 한 두개가 아니라서 따로 분리해놔야한다
+디렉터리 내역은
+raw는 음원
+SinChangSeop은 GaussianDiffusion 모델을 저장한 것이다
+cond 처리의시작은 NsfHifiGAN이며 여기서 음원을 raw wave와 mel spectrogram으로 변형한다
