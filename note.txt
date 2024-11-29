@@ -70,7 +70,3 @@ git rm -r --cached .
 git add .
 git commit -m "Update .gitignore"
 이러고나서 push하면된다
-
-git add 취소
-git add [head명]
-head 이름은 git log로찾을 수 있다
