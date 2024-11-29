@@ -50,3 +50,21 @@ gt는 ground truth인데, coarse(거친)이 뭔가 알아봤더니
 이를 반영한 Melody scale로 변환하여 linear하게 다루도록 하는 방법인듯하다
 f0_to_coarse가 해당 기능을 구현한 함수이다(로그 스케일도 충실하다)
 중간에 f0의 배열 길이가 줄어드는 구간이 있는데, 자세한 알고리즘은 모르겠으니 추후알아보자???
+
+그리고 중요한거 한가지!!!
+crepe의 코드는 device가 cuda 고정으로 되어있다!!! - 나중에 hparams에 device항목에
+영향을 받도록 합칠 때 코드를 바꿔야한다
+----- 여기까지 wav, mel, f0, mel-scale-f0 생성 코드 제작 완료 -----
+
+1. HuBERT에 관한 사실들 정리
+1) Hubert는 모델 자체가 GaussianDiffusion class에 phone_encoder 입력으로 들어간다
+1-1) 그런데 내부에서는 아무것도 안한다!
+1-2) forward할 때 외부에서 hubert로 처리한 결과물을 받아서 처리한다
+1-3) 결론: Hubert의 결과물 만이 fs2 모델에 입력으로 들어간다.
+2) hubert의 입력으로는 raw waveform이 들어간다
+2-1) 이는 infer_tool의 line 257에서 확인해볼 수 있다
+3) Hubert 모델의 코드는 preprocessing.hubertinfer에 있다
+3-1) 거기에는 Hubert 모델의 load 함수가 있다
+3-2) 거기에는 Hubert 모델의 encode 함수가 있다.
+3-3) 모델의 구조 자체는 import를 확인해봐야한다
+3-4) Hubert 모델은 checkpoint에 존재한다. 즉 GaussianDiffusion 모델 ckpt에 포함 x
