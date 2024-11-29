@@ -1,0 +1,25 @@
+nsf_hifigan을 가져오는데서,
+일단 hparams를 모델이 init에 가져와서 사용하는 구조로 변경하여 하였으나
+static method wav2spec이 외부 데이터 hparams를 사용하는 static method였고
+매개변수에 hparams를 주어 해결하려 하였으나 이번에는
+상속받은 클래스 base_vocoder의 양식과 충돌하여, 부모 클래스의 매개변수를 추후 수정해야한다!?!
+
+nsf_hifigan의 모델을 load 하는데서, generator의 load_state_dict와 충돌하는데
+cp_dict['generator']와 충돌하니 원본 모델에서는 key 값이 어떤지 참고를 해볼 필요가 있다
+unexpected key(s) 에러가 뜬다
+해당 값을 1129_2에 저장해두었다
+그리고 확인해보니 완전히 같은 값이다!!!
+대체 무엇이 문제인가 확인해보니, 원본 코드에 Generator 클래스가 2번 작성되어있다
+즉, 첫 번째 클래스는 씹혔다!!!
+
+두 번째 클래스와 여기에 필드로 들어간 클래스를 사용하여 Generator 클래스의 코드를 가져왔고
+이를 load하는 과정에서 SIGSEGV 오류가 떴으나
+cuda로 전환하니 문제가 사라졌다
+대체 왜 그런지는 모르겠으나
+GPT는 다음과 같이 설명하였다
+1. CUDA에서 문제가 해결된 이유는 GPU 메모리 컨텍스트와
+텐서 처리 방식 덕분에 메모리 충돌 문제가 방지되었기 때문일 가능성이 높습니다.
+CPU에서 동일한 오류를 방지하려면 초기화 상태를 철저히 점검하고,
+weight_norm 관련된 코드를 디버깅하며, PyTorch 버전 호환성을 확인하세요.
+2. weight_g와 weight_v 텐서가 GPU에 생성되었다면,
+remove_weight_norm도 GPU 상에서 실행되어야 이를 제대로 참조 및 삭제할 수 있습니다.
