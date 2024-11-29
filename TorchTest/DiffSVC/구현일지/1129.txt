@@ -36,3 +36,6 @@ NsfHiFiGAN/test1_nsf_hifigan 보면 wav2mel의 예제 코드가 있다 ※ wav2s
 3. mel2ph
 를 만들고
 이걸 fs2에 넣으면 된다
+
+일단 경로 문제를 해결해야하나, 나중에 파이프라인 통합할 때(fs2에 넣을 때!) 하기 위해
+wav2spec_stand_alone에 wav2spec함수만 따로 떼어 구현해두었다
