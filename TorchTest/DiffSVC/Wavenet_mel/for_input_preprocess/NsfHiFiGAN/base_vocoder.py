@@ -1,5 +1,3 @@
-import importlib
-
 VOCODERS = {}
 
 
@@ -20,9 +18,10 @@ class BaseVocoder:
         raise NotImplementedError
 
     @staticmethod
-    def wav2spec(wav_fn):
+    def wav2spec(wav_fn, hparams):
         """
 
+        :param hparams:
         :param wav_fn: str
         :return: wav, mel: [T, 80]
         """
