@@ -3,13 +3,7 @@ from io import BytesIO
 from pathlib import Path
 
 import numpy as np
-import torch
-
-from hubert_model import hubert_soft, get_units
-
-
-# from utils.hparams import hparams
-
+from .hubert_model import hubert_soft, get_units
 
 class Hubertencoder():
     def __init__(self, hparams):
