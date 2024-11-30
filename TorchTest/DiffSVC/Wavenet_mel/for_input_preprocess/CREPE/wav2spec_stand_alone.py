@@ -1,4 +1,4 @@
-_hparams = {
+'''_hparams = {
     "audio_sample_rate": 44100,
     "audio_num_mel_bins": 128,
     "fft_size": 2048,
@@ -129,3 +129,4 @@ def wav2spec(inp_path, device=None):
         # log mel to log10 mel
         mel_torch = 0.434294 * mel_torch
         return wav_torch.cpu().numpy(), mel_torch.cpu().numpy()
+'''
