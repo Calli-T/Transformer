@@ -1,0 +1,32 @@
+HuBERT 처리 과정 구현중
+1129의 HuBERT 내용 가져옴
+1) Hubert는 모델 자체가 GaussianDiffusion class에 phone_encoder 입력으로 들어간다
+1-1) 그런데 내부에서는 아무것도 안한다!
+1-2) forward할 때 외부에서 hubert로 처리한 결과물을 받아서 처리한다
+1-3) 결론: Hubert의 결과물 만이 fs2 모델에 입력으로 들어간다.
+2) hubert의 입력으로는 raw waveform이 들어간다
+2-1) 이는 infer_tool의 line 257에서 확인해볼 수 있다
+3) Hubert 모델의 코드는 preprocessing.hubertinfer에 있다
+3-1) 거기에는 Hubert 모델의 load 함수가 있다
+3-2) 거기에는 Hubert 모델의 encode 함수가 있다.
+3-3) 모델의 구조 자체는 import를 확인해봐야한다
+3-4) Hubert 모델은 checkpoint에 존재한다. 즉 GaussianDiffusion 모델 ckpt에 포함 x
+
+그렇다면 할일은
+1. HuBERT 코드 옮기기 -> 성공
+1) Hubertencoder class 코드 옮기기
+2) Hubert encode 하기
+예시 코드는 test1_hubert.py에 존재한다
+
+※ 원본 음원을 2번 읽어오는 문제에 관하여
+HuBERT의 코드도 자체적으로 raw_wav를 열어오는데, 이건 사실 CREPE나 NsFHiFiGAN이랑 중복이다
+단, wav2spec_stand_alone.py 출력 wav, mel을 보면 원본의 샘플링 레이트를 44100로 변형해서 준다
+원본은 해당 함수의 load_wav_to_torch에 있다
+2번 읽는것을 방지하기 위해서 코드를 리팩터링 해도 좋고, 코드 꼬이기 싫으면 그대로 둬도 상관없을듯?
+CREPE와 NsFHiFiGAN은 soundfile로 읽어오고, HuBERT는 librosa로 읽어온다
+
+※ 어떤 샘플링 레이트를 사용하건간에, 0.02초 단위(20ms)로 끊어주며, 채널은 256개이다
+
+2. mel2ph만들기
+infer_tool의 230 line에 존재
+본질적으로 hubert값을 mel에 대응시킨 것이다
