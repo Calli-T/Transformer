@@ -5,7 +5,7 @@ import os
 # 기준은 신창섭 모델에서 사용하던 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
 hparams = {
-    "relative_raw_wave_path": "raw/L-O-V-E.wav",
+    "raw_wave_path": "raw/L-O-V-E.wav",
 
     # for vocoder, NsfHiFiGAN
     # "vocoder": "nsf_hifigan.NsfHifiGAN",
@@ -22,7 +22,7 @@ hparams = {
 
     # for self_regressive_phonetic, HuBERT
     "hubert_gpu": True,
-    "pt_path": 'hubert/hubert_soft.pt',
+    "pt_path": 'HuBERT/hubert/hubert_soft.pt',
 
     # for Pitch Extractor, CREPE
     "f0_bin": 256,
