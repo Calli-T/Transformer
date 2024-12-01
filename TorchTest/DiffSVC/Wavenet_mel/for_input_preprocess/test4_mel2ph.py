@@ -10,12 +10,12 @@ hubert = Hubertencoder(hparams)
 hubert_encoded = hubert.encode(rel2abs(hparams['raw_wave_path']))
 
 mel2ph = get_align(mel, hubert_encoded)
-'''print(f'mel2ph.shape: {mel2ph.shape}')
-temp = ''
+
+'''temp = ''
 for idx, ph in enumerate(mel2ph):
     if idx % 10 == 0:
         print(temp)
         temp = ''
     temp += str(ph)
-    temp += ' ''''
-
+    temp += ' '
+print(f'mel2ph.shape: {mel2ph.shape}')'''
