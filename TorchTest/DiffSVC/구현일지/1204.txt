@@ -47,6 +47,34 @@ pitch_type: frame
 해야할 일
 1. fs의 condition 제작 구현
 위 2번에 필요한 레이어가 있으니 모델을 올려두고, 거기서 state_dict에서 가져오도록 해야할듯
+모델에 넣기 전에 infer_tool.py에서 어떻게 재료 손질을 하는지 보면 될듯
+266 line부터 시작
+
+fs는 일단은!
+일단은!
+for_model의 방법과 같이 원본 모델에서 필요한 부분만 읽어오는 것으로 하자
 
 2. f0_pred(f0_denorm) 제작 구현
 곁다리로 만들지만, 중요한 값이다.
+
+3. 디렉터리 구조 개편?
+for_input_process를 for_pre_post_process로 바꾼다.
+fs2(의 레이어 몇 개만 따온것)는 cond와 spec2wav에 모두 쓰이며
+wav2spec의 함수는 (코드 쓴 것에 따라 다르지만) nsf-hifigan class에 종속되어있다.
+
+혹은 모두 wav2spec은 stand alone하게 분리 가능하므로,
+f0_denorm도 (이건 모델의 레이어와는 관계없는 함수이다) 분리시키고,
+
+nsf_hifigan을 for_post_process로 분리, 원본 input_process에서 nsf_hifigan제거
+등등 좀 분리를 시키는 작업을 하면된다
+
+4. 병합된 원본 모델을 세부 나누는 코드
+그리고 원본과 다르게 모델을 분리해서 사용하므로,
+GaussianDiffusion을 fs2와 wavenet으로 분리하여 저장하는 코드를 만들자
+또한 wavenet쪽은 이미 원본 모델에서 필요한 부분만 읽어오는 코드로 만들어져있으므로,
+분리저장된 모델을 읽는 쪽으로 선회해야한다
+
+5. 디렉터리 구조 개편 & hparams의 path 변경 및 통합
+모델을 한 데 몰아서 다 저장하는 것으로 처리,
+이에 따른 path 등등 수정,
+hparams의 값들 하나의 파일로 병합
