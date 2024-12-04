@@ -50,15 +50,15 @@ def get_default():
         # for training
         "BATCH_SIZE_TRAIN": 2,
         "DATASET_REPETITION": 1,
-        "data_path": "./datasets/mint",
-        "model_path": "./models/mint",
+        "data_path": "./datasets/mint_mini",
+        "model_path": "./models/mint_mini",
         "LEARNING_RATE": 0.0001,
         "WEIGHT_DECAY": 0.00001,
         "EPOCHS": 200000,
-        "save_interval": 100,
+        "save_interval": 2000,
         "EMA": 0.999,
         # for sampling
-        "BATCH_SIZE_SAMPLE": 2,
+        "BATCH_SIZE_SAMPLE": 16,
         # for diffusion
         "schedule_name": "linear",
         "steps": 1000,

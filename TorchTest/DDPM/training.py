@@ -6,4 +6,5 @@ hparams = get_hparams()
 
 train_dataloader = getDataLoader(hparams)
 ddpm = DDPM(hparams, train_dataloader)
+ddpm.load()
 ddpm.train()

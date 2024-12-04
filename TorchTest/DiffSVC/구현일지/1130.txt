@@ -53,8 +53,12 @@ get_align은 mel-spectrogram과 음소 사이의 정렬(alignment)를 수행하�
 일단 남은건 for_input_preprocess에 mel2ph만들기, fs2에 넣어 cond 최종 제작이다
 mel2ph코드 테스트중
 
+-----
+1201
 mel2ph의 정체에 관한 추측 ???
 mel2ph는 연속적인 숫자의 시퀀스로 만들어지며, 시퀀스 안에서는 값이 같으나 연속적이다
 최대 값은 hubert.shape[0]를 따르나, 그 길이는 mel.shape[0]이다
 아무래도 그 음소가 무엇인지는 HuBERT 정보에 맡기고, 음소의 시작 정보만을 사용하는 듯하다
 ???
+
+diffusion.py의 232 line에 fs에 관한 코드가 시작된다

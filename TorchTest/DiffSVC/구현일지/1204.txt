@@ -1,0 +1,52 @@
+fs2로 decoder_inp를 만들어 내기 위해 알아보는 작업들
+알아낸 내용들
+{ 1. condition을 만들 때 나오는 f0_pred(f0_denorm)이 어디서, 왜 만들어지는가에 관한 내용
+    1). use_pe는 audio sample_rate가 24000일 경우에만 true이다
+    따라서 44,100 Hz로 진행할 경우
+    이는 infer_tool.py의 def infer안에서 use_pe를 확인해봐도 false로 나온다
+
+    2). use_pe가 false일 경우, batch['f0_pred']는 모델의 출력에서 f0_denorm를 가져오게된다
+    infer_tool.py, 165 line에 있다
+
+    3). nsf-hifigan은 spec2wav 작업에서 f0와 mel을 모두사용한다
+    그리고 그 f0는 f0_pred이다
+    이는 infer_tool.py, 199 line에 있다
+
+    4). f0_pred(=f0_denorm)를 만드는 것은 fs2.py line 229이다
+    즉, 해당 파일의 코드들은 condition(wavenet의 입력 가운데 하나)을 만들 뿐 아니라
+    f0(nsf-hifigan의 입력 중 하나,)의 예측도 같이 수행해낸다
+
+    5). f0_denorm을 만드는 코드가 속한 함수는 add_pitch이며,
+    이는 pitch 정보를 embedding하기 위한 함수이고,
+    forward에서 use_pitch_embed == True(hparams에 정의되어있다)를
+    만족하여 실행되는 동작이다.
+
+    결론: condition을 만드는 과정에서 f0_pred(=f0_denorm)도 만든 다음,
+    mel을 wav로 만들 때 mel과 함께 nsf_hifigan의 입력으로 쓰는 것이다.
+
+    추가) f0_gt는 가져온 f0에 후처리를 하는 것인듯하다
+    f0를 가져오는 과정 자체는 crepe의 그것이다
+    그러나 f0_gt는 어디다 쓰는지 알 수 없으며
+    infer_tool.py / plot.py / fs2.py 세 파일에서만 보인다
+    결론: f0_gt는 딱히 쓰이는 곳이 없는 것 같다
+}
+
+2. 모델에서 실제로 사용되는 레이어
+line 53부터 모델의 상태에 관한 내용
+class의 FastSpeech2 def __init__()에서 보이는 파라미터들의 내역은 다음과 같고,
+config_nsf.yaml에서 발췌 (갱신 필요)
+use_uv: false
+use_energy_embed: false
+use_pitch_embed: true
+audio_num_mel_bins: 128
+pitch_type: frame
+※ else의 코드인 pitch_predictor는 쓰이는 곳이 존재하지 않는다
+
+결론: mel_out의 Linear와 pitch_embed의 Embedding 딱 2개만 사용한다
+
+해야할 일
+1. fs의 condition 제작 구현
+위 2번에 필요한 레이어가 있으니 모델을 올려두고, 거기서 state_dict에서 가져오도록 해야할듯
+
+2. f0_pred(f0_denorm) 제작 구현
+곁다리로 만들지만, 중요한 값이다.
