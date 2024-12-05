@@ -41,7 +41,7 @@ def norm_interp_f0(_f0, _hparams):
 
     return _f0, uv
 
-
+# 노래 파일 '1개'에 대해 동작하도록 설계되었다
 def get_tensor_cond(item, _hparams):
     max_frames = hparams['max_frames']
     max_input_tokens = hparams['max_input_tokens']
