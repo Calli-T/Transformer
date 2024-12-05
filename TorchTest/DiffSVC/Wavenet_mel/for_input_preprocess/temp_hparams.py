@@ -6,6 +6,7 @@ import os
 device = device('cuda' if cuda.is_available() else 'cpu')
 hparams = {
     "raw_wave_path": "raw/L-O-V-E.wav",
+    "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
     # "vocoder": "nsf_hifigan.NsfHifiGAN",
@@ -30,8 +31,19 @@ hparams = {
     "f0_min": 40.0,
     # "audio_sample_rate": 44100,
     # "hop_size": 512,
+
+    # for condition integrate & preprocess
+    "max_frames": 42000,
+    "max_input_tokens": 60000,
+    "pitch_norm": "log",
 }
 
 
 def rel2abs(rel_path):
     return os.path.join(os.path.dirname(__file__), rel_path)
+
+
+def dir2list(raw_path):
+    abs_raw_path = rel2abs(raw_path)
+    name_list = os.listdir(abs_raw_path)
+    return [os.path.join(abs_raw_path, name) for name in name_list]
