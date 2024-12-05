@@ -67,6 +67,59 @@ print(sample['f0'].shape)
 print(sample['pitch'].shape)'''
 
 
+def condtion_integrate(item):
+    def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
+
+        """Convert a list of 1d tensors into a padded 2d tensor."""
+        size = max(v.size(0) for v in values) if max_len is None else max_len
+        res = values[0].new(len(values), size).fill_(pad_idx)
+
+        def copy_tensor(src, dst):
+            assert dst.numel() == src.numel()
+            if shift_right:
+                dst[1:] = src[:-1]
+                dst[0] = shift_id
+            else:
+                dst.copy_(src)
+
+        for i, v in enumerate(values):
+            copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+        return res
+
+    def collate_2d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None):
+        """Convert a list of 2d tensors into a padded 3d tensor."""
+        size = max(v.size(0) for v in values) if max_len is None else max_len
+        res = values[0].new(len(values), size, values[0].shape[1]).fill_(pad_idx)
+
+        def copy_tensor(src, dst):
+            assert dst.numel() == src.numel()
+            if shift_right:
+                dst[1:] = src[:-1]
+            else:
+                dst.copy_(src)
+
+        for i, v in enumerate(values):
+            copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+        return res
+
+    # item이 list라도 받아들일 수 있도록 개조해주자, 원본 코드는 list comprihension을 사용하였다
+    # 원본 코드는 batch를 만들도록 되어있다 함수명 자체가 processed_input2batch
+    # 원본 코드도 노래 하나씩만 넣는데 ??? filename list에 2개 넣어봐도 각각 따로한다
+    item['hubert'] = collate_2d([item['hubert']], 0.0)
+    item['f0'] = collate_1d([item['f0']], 0.0)
+    item['pitch'] = collate_1d([item['pitch']])
+    item['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
+    item['mel'] = collate_2d([item['mel']], 0.0)
+
+
+sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
+condtion_integrate(sample)
+print(sample['mel'].shape)
+print(sample['mel2ph'].shape)
+print(sample['hubert'].shape)
+print(sample['f0'].shape)
+print(sample['pitch'].shape)
+
 '''
 # vocoder = NsfHifiGAN(hparams)
 # wav, mel = vocoder.wav2spec(rel2abs(hparams['raw_wave_path']), hparams)
