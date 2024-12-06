@@ -180,3 +180,17 @@ denorm_f0, norm_interp_f0는 나중에 원본처럼 따로 빼야할 수도 있�
 !!
 이럴거면 f0, coarse_f0로 두 개를 가져올 필요가 없지 않나? 어차피 모델에서
 f0를 coarse시킬텐데??? item['pitch']를 나중에 날리던가 하자
+
+일단은 코드를 다 짜긴했으나
+cond_integrate.py의 194줄이 말썽을 일으키는 중이다
+텐서곱 과정에서, 49.7초의 wav음원은 약 18GiB의 VRAM을 사용한다
+그리고 6초로 잘라서 이를 해결해보았다(얘네들 10~15초로 자르는 이유가 그거인듯하다)
+결론: VRAM보고 자르는거를 생각하자
+{
+    그리고 f0[pitch_padding] = 0구간에서
+    IndexError: The shape of the mask [1, 518, 256] at index 2 does not match the shape of the indexed tensor [1, 518, 518, 256] at index 2
+    라는 오류가 난다
+    이거 f0가 패딩을 잘못 먹은것인지,
+    아니면 pitch_padding에 패딩을 넣어줘야하는 것인지
+    코드 한 번 보고 infer.py 한 번 실행시켜보면서 디버그 해보자
+}

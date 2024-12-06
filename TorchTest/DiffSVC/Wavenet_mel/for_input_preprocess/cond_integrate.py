@@ -63,14 +63,14 @@ def get_tensor_cond(item, _hparams):
     return item
 
 
-# (device가 적용된) tensor로 바뀐 cond들, 원본은 주로 넘파이 배열들이다
-sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
-print()
-print(sample['mel'].shape)
-print(sample['mel2ph'].shape)
-print(sample['hubert'].shape)
-print(sample['f0'].shape)
-print(sample['pitch'].shape)
+# # (device가 적용된) tensor로 바뀐 cond들, 원본은 주로 넘파이 배열들이다
+# sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
+# print()
+# print(sample['mel'].shape)
+# print(sample['mel2ph'].shape)
+# print(sample['hubert'].shape)
+# print(sample['f0'].shape)
+# print(sample['pitch'].shape)
 
 
 def get_collated_cond(item):
@@ -187,7 +187,7 @@ class ConditionEmbedding(nn.Module):
 
         decoder_inp = F.pad(encoder_out, [0, 0, 1, 0])
         mel2ph = items_dict['mel2ph'][..., None].repeat([1, 1, encoder_out.shape[-1]])
-        f0 = items_dict['f0']
+        # f0 = items_dict['f0']
         decoder_inp_origin = decoder_inp = torch.gather(decoder_inp, 1, mel2ph)
 
         tgt_nonpadding = (mel2ph > 0).float()[:, :, None]  # 그 값들 전부 0보단 클텐데?
@@ -223,13 +223,18 @@ def load_cond_embedding_state(_hparams):
     }
 
 
-'''
 # model load, state_dict에서 필요한 것만 가져온다
-# print(load_cond_embedding_state(hparams).keys())
 cond_emb_model = ConditionEmbedding(hparams)
 state_dict = load_cond_embedding_state(hparams)
 cond_emb_model.load_state_dict(state_dict)
-print(cond_emb_model)
-for name, param in cond_emb_model.named_parameters():
-    print(name, param.data)
-'''
+cond_emb_model.to(hparams['device'])
+# print(cond_emb_model)
+# for name, param in cond_emb_model.named_parameters():
+#     print(name, param.data)
+
+sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
+get_collated_cond(sample)
+
+cond_emb_model.eval()
+print(cond_emb_model(sample).shape)
+

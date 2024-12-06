@@ -7,7 +7,7 @@ device = device('cuda' if cuda.is_available() else 'cpu')
 hparams = {
     "project_name": "SinChangSeop",
 
-    "raw_wave_path": "raw/L-O-V-E.wav",
+    "raw_wave_path": "raw/L-O-V-E_[cut_6sec].wav",
     "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
