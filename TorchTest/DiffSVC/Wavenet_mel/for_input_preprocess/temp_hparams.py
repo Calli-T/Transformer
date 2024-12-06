@@ -5,6 +5,8 @@ import os
 # 기준은 신창섭 모델에서 사용하던 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
 hparams = {
+    "project_name": "SinChangSeop",
+
     "raw_wave_path": "raw/L-O-V-E.wav",
     "raw_dir_path": "raw",
 
@@ -36,6 +38,8 @@ hparams = {
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
+    "emb_model_path": "model_ckpt_steps_30000.ckpt",
+    "hidden_size": 256
 }
 
 

@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+from torch import nn
+import os
 
 from NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
 from temp_hparams import hparams, rel2abs, dir2list
@@ -41,6 +43,7 @@ def norm_interp_f0(_f0, _hparams):
 
     return _f0, uv
 
+
 # 노래 파일 '1개'에 대해 동작하도록 설계되었다
 def get_tensor_cond(item, _hparams):
     max_frames = hparams['max_frames']
@@ -58,6 +61,7 @@ def get_tensor_cond(item, _hparams):
     return item
 
 
+# (device가 적용된) tensor로 바뀐 cond들, 원본은 주로 넘파이 배열들이다
 '''sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
 print()
 print(sample['mel'].shape)
@@ -67,7 +71,7 @@ print(sample['f0'].shape)
 print(sample['pitch'].shape)'''
 
 
-def condtion_integrate(item):
+def get_collated_cond(item):
     def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
 
         """Convert a list of 1d tensors into a padded 2d tensor."""
@@ -112,100 +116,14 @@ def condtion_integrate(item):
     item['mel'] = collate_2d([item['mel']], 0.0)
 
 
-sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
-condtion_integrate(sample)
-print(sample['mel'].shape)
-print(sample['mel2ph'].shape)
-print(sample['hubert'].shape)
-print(sample['f0'].shape)
-print(sample['pitch'].shape)
-
-'''
-# vocoder = NsfHifiGAN(hparams)
-# wav, mel = vocoder.wav2spec(rel2abs(hparams['raw_wave_path']), hparams)
-# print(wav.shape, mel.shape)
-
-# from wav2spec_stand_alone import wav2spec
-# from NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
-from CREPE.crepe import get_pitch_crepe
-
-# from temp_hparams import hparams, rel2abs
-
-# wav, mel = NsfHifiGAN.wav2spec(rel2abs(hparams['raw_wave_path']), hparams)
-# gt_f0, coarse_f0 = get_pitch_crepe(wav, mel, hparams)
-# print(wav.shape, mel.shape)
-# print(gt_f0.shape, coarse_f0.shape)
-
-from HuBERT.hubertinfer import Hubertencoder
-
-# from temp_hparams import hparams, rel2abs
-
-# hubert = Hubertencoder(hparams)
-# hubert_encoded = hubert.encode(rel2abs(hparams['raw_wave_path']))
-# print(hubert_encoded.shape)
-
-from mel2ph.mel2ph import get_align
-
-# mel2ph = get_align(mel, hubert_encoded)
-'''
-
-# def condtion_integrate(_mel, _f0, _coarse_f0, _hubert_encoded, _mel2ph):
-#     def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
-#         """Convert a list of 1d tensors into a padded 2d tensor."""
-#         size = max(v.size(0) for v in values) if max_len is None else max_len
-#         res = values[0].new(len(values), size).fill_(pad_idx)
-#
-#         def copy_tensor(src, dst):
-#             assert dst.numel() == src.numel()
-#             if shift_right:
-#                 dst[1:] = src[:-1]
-#                 dst[0] = shift_id
-#             else:
-#                 dst.copy_(src)
-#
-#         for i, v in enumerate(values):
-#             copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
-#         return res
-#
-#     def collate_2d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None):
-#         """Convert a list of 2d tensors into a padded 3d tensor."""
-#         size = max(v.size(0) for v in values) if max_len is None else max_len
-#         res = values[0].new(len(values), size, values[0].shape[1]).fill_(pad_idx)
-#
-#         def copy_tensor(src, dst):
-#             assert dst.numel() == src.numel()
-#             if shift_right:
-#                 dst[1:] = src[:-1]
-#             else:
-#                 dst.copy_(src)
-#
-#         for i, v in enumerate(values):
-#             copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
-#         return res
-#
-#     '''
-#             Args:
-#                 samples: one batch of processed_input
-#             NOTE:
-#                 the batch size is controlled by hparams['max_sentences']
-#         '''
-#     hubert_encoded_ = collate_2d(_hubert_encoded, 0.0)
-#     f0_ = collate_1d(_f0, 0.0)
-#     pitch_ = collate_1d(_coarse_f0)
-#     mel2ph_ = collate_1d(_mel2ph, 0.0)  # 이거 없는 것도 if로 처리하더라
-#     mel_ = collate_2d(_mel, 0.0)
-#
-#     return hubert_encoded_, f0_, pitch_, mel2ph_, mel_
-#
-# # 오류 있음
-# vocoder, hubert = load_cond_model(hparams)
-# wav, mel, f0, coarse_f0, hubert_encoded, mel2ph = cond_preprocess(vocoder, hubert, hparams)
-# hubert_encoded, f0, pitch, mel2ph, mel = condtion_integrate(mel, f0, coarse_f0, hubert_encoded, mel2ph)
-# print(hubert_encoded.shape)
-# print(f0.shape)
-# print(pitch.shape)
-# print(mel2ph.shape)
-# print(mel.shape)
+# # collate로 패딩된 텐서!
+# sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
+# get_collated_cond(sample)
+# print(sample['mel'].shape)
+# print(sample['mel2ph'].shape)
+# print(sample['hubert'].shape)
+# print(sample['f0'].shape)
+# print(sample['pitch'].shape)
 
 '''
 def get_batch_dict(raw_dir_path, _vocoder, _hubert, _hparams):
@@ -222,3 +140,55 @@ vocoder, hubert = load_cond_model(hparams)
 wav, mel, f0, coarse_f0, hubert_encoded, mel2ph = cond_preprocess(vocoder, hubert, hparams)
 print(mel.shape, hubert_encoded.shape, mel2ph.shape, f0.shape)
 '''
+
+
+class ConditionEmbedding(nn.Module):
+    def __init__(self, _hparams):
+        super().__init__()
+        self.hidden_size = _hparams['hidden_size']
+        self.out_dims = _hparams['audio_num_mel_bins']
+
+        self.padding_idx = 0
+        self.pitch_embed = nn.Embedding(300, self.hidden_size, self.padding_idx)
+        nn.init.normal_(self.pitch_embed.weight, mean=0, std=self.hidden_size ** -0.5)
+        nn.init.constant_(self.pitch_embed.weight[self.padding_idx], 0)
+
+        self.mel_out = nn.Linear(self.hidden_size, self.out_dims, bias=True)
+        nn.init.xavier_uniform_(self.mel_out.weight)
+        nn.init.constant_(self.mel_out.bias, 0)
+
+    def forward(self, mel):
+        pass
+
+
+def load_cond_embedding_state(_hparams):
+    model_path = rel2abs(os.path.join(hparams['project_name'], hparams['emb_model_path']))
+    model_state_dict = torch.load(model_path, map_location='cpu')['state_dict']
+    '''
+    fs2_list = [key for key in state_dict.keys()]
+    fs2_mask = [True if key.split('.')[1] == 'fs2' else False for key in fs2_list]
+    fs2_list = np.array(fs2_list)[fs2_mask]
+    for key in fs2_list:
+        print(key)
+    '''
+    '''
+    model.fs2.mel_out.weight
+    model.fs2.mel_out.bias
+    model.fs2.pitch_embed.weight
+    '''
+    # 대체 학습이 끝난 모델의 역치가 왜 전부 0이지???
+    # print(state_dict["model.fs2.mel_out.bias"])
+    return {
+        "mel_out.weight": model_state_dict["model.fs2.mel_out.weight"],
+        "mel_out.bias": model_state_dict["model.fs2.mel_out.bias"],
+        "pitch_embed.weight": model_state_dict["model.fs2.pitch_embed.weight"],
+    }
+
+
+# print(load_cond_embedding_state(hparams).keys())
+cond_emb_model = ConditionEmbedding(hparams)
+state_dict = load_cond_embedding_state(hparams)
+cond_emb_model.load_state_dict(state_dict)
+print(cond_emb_model)
+for name, param in cond_emb_model.named_parameters():
+    print(name, param.data)

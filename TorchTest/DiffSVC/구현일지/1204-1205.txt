@@ -122,3 +122,24 @@ collate와 fs2에 넣는것해야하고
 collate작업할 때 맨 앞 텐서의 맨 앞축의 차원이 1인데, 이거 배치가 아니었다
 노래는 무조건 1개만 들어가도록 되어있다. 혹은 제작자가 그렇게 바꿔놨거나 ㅋㅋㅋㅋ
 혹시 학습 때 여러개를 동시에 넣는 것인가?????
+
+----- 1206 -----
+state_dict에서 다음 3개만 가져온다
+model.fs2.mel_out.weight
+model.fs2.mel_out.bias
+model.fs2.pitch_embed.weight
+
+그런 다음 model.fs2를 떼버린 state를 가져오고
+class ConditionEmbedding을 새로이 선언한다
+
+pitch_embed의 경우 hparams의 값으로 초기화한 nn.Embedding 계층이다.
+여러 값들은 hidden_size에 비례한 값으로, padding은 0으로 시작한다
+
+mel_out의 경우 hparams를 사용한 linear 층이다.
+초기화가 가중치는 제이비어, 역치는 0으로 시작된다
+※ bias는 학습이 '끝난' 모델도 0이더라???
+※ 걍 설정을 잘못해서 저리된건지, 원래 이런건지, 레거시 코드인지는 학습하면서 알아보자
+
+pitch의 embedding은 이산적으로 300개의 값을 입력으로 받아 256개의 차원으로 변형하는데
+대체 왜 300개의 값인지는 모르겠다?????
+forward의 코드를 짜면서 왜 그리 짜였는지 확인해보자
