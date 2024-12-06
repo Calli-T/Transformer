@@ -143,3 +143,40 @@ mel_out의 경우 hparams를 사용한 linear 층이다.
 pitch의 embedding은 이산적으로 300개의 값을 입력으로 받아 256개의 차원으로 변형하는데
 대체 왜 300개의 값인지는 모르겠다?????
 forward의 코드를 짜면서 왜 그리 짜였는지 확인해보자
+
+각종 반환 값들 정리
+1. mel2ph, fs2에서도 반환하기는 하나,
+정작 diffusion에서 사용하는것은 입력한 condition을 만드는데 사용된 forward의 mel2ph이다
+-> fs2에서 mel2ph를 반환하지 않도록한다
+2. mel2wav(spec2wav)는 nsf-hifigan의 경우, f0_pred를 사용한다
+infer_tool.py 199 line에서 확인 가능하다
+->
+한 편 f0_pred 값 자체는 use_pe가 true이므로, self.pe 모델을 사용하여 만든다
+이 모델은 xiaoma 모델을 load하며, 그 구조는 pe.py에 존재한다
+해당 모델은 mel-spectrogram을 f0로 바꾸는 역할을 한다
+거기서 나오는 f0_denorm_pred와, wavenet(denoise_fn)에서 나오는 mel_out을 가지고
+f0_pred를 만든다
+요약: mel_out, f0_denorm_pred -> f0_pred
+    f0_pred, mel_out -> wav
+    2단계를 거쳐서 spec2wav를 실행한다
+3. ret['pitch_pred']
+fs2에서도 만들고, pe(xiaoma, not crepe)에서도 만드나
+'아무장소에도' 쓰지 않는다, SVCTask에서도 안쓴다!!!
+-> 만들지 말것
+
+결론: fs2에서는 ret['decoder_inp']만 신경쓰면된다
+
+현재 진행 상황
+fs2.py의 133 line까지 진행중
+나머지 값들은 어디에서 쓰고, 어디에서 만들고, 뭐를 무시할지 정해둠
+코드들이 뭐하는 건지는 1022-1029.txt를 참고하여 확인해보라!
+
+새로 알게된 것
+※ pitch는 가져온걸 안쓰고 forward에서 새로 만든다
+fs2, 내 코드에서는 EmbeddingModel의 forward에서 찾을 수 있다
+굳이 왜 그러냐면, 해당 값은 보간이 완료된 값이기 때문?
+!
+denorm_f0, norm_interp_f0는 나중에 원본처럼 따로 빼야할 수도 있겠다
+!!
+이럴거면 f0, coarse_f0로 두 개를 가져올 필요가 없지 않나? 어차피 모델에서
+f0를 coarse시킬텐데??? item['pitch']를 나중에 날리던가 하자

@@ -1,11 +1,12 @@
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 import os
 
 from NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
 from temp_hparams import hparams, rel2abs, dir2list
-from CREPE.crepe import get_pitch_crepe
+from CREPE.crepe import get_pitch_crepe, f0_to_coarse
 from HuBERT.hubertinfer import Hubertencoder
 from mel2ph.mel2ph import get_align
 
@@ -33,18 +34,19 @@ def norm_interp_f0(_f0, _hparams):
     # 기본 주파수를 로그스케일로 바꾸고, 보간하고, f0가 0인 곳을 uv 마스크로 만든다
     # 원본 코드랑 반대로, 반드시 numpy array만 받아주니 유의!
     uv = _f0 == 0
-
     _f0 = np.log2(_f0)
-
     if sum(uv) == len(_f0):
         _f0[uv] = 0
     elif sum(uv) > 0:
         _f0[uv] = np.interp(np.where(uv)[0], np.where(~uv)[0], _f0[~uv])
-
     return _f0, uv
 
 
-# 노래 파일 '1개'에 대해 동작하도록 설계되었다
+def denorm_f0(_f0):
+    return 2 ** _f0
+
+
+# 노래 파일 '1개'에 대해 동작하도록 설계되었다, 추가로 f0 보간도 여기서 한다
 def get_tensor_cond(item, _hparams):
     max_frames = hparams['max_frames']
     max_input_tokens = hparams['max_input_tokens']
@@ -62,13 +64,13 @@ def get_tensor_cond(item, _hparams):
 
 
 # (device가 적용된) tensor로 바뀐 cond들, 원본은 주로 넘파이 배열들이다
-'''sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
+sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2abs(hparams['raw_wave_path'])), hparams)
 print()
 print(sample['mel'].shape)
 print(sample['mel2ph'].shape)
 print(sample['hubert'].shape)
 print(sample['f0'].shape)
-print(sample['pitch'].shape)'''
+print(sample['pitch'].shape)
 
 
 def get_collated_cond(item):
@@ -157,8 +159,44 @@ class ConditionEmbedding(nn.Module):
         nn.init.xavier_uniform_(self.mel_out.weight)
         nn.init.constant_(self.mel_out.bias, 0)
 
-    def forward(self, mel):
-        pass
+    def add_pitch(self, f0, mel2ph, ret):
+        # decoder_inp = decoder_inp.detach() + hparams['predictor_grad'] * (decoder_inp - decoder_inp.detach())
+
+        '''
+        f0_to_coarse 굳이 여기서 하는 이유?
+        uv로 unvoiced 구간을 날리고 그 사이를 보간한 뒤의 값이기 때문이다
+        item['pitch']는 날려도 되지 않을까?
+        '''
+        pitch_padding = (mel2ph == 0)
+        ret['f0_denorm'] = f0_denorm = denorm_f0(f0)
+        if pitch_padding is not None:
+            f0[pitch_padding] = 0
+
+        pitch = f0_to_coarse(f0_denorm, hparams)  # start from 0
+        # ret['pitch_pred'] = pitch.unsqueeze(-1)
+        pitch_embedding = self.pitch_embed(pitch)
+        return pitch_embedding
+
+    def forward(self, items_dict):
+        ret = {}
+
+        encoder_out = items_dict['hubert']
+        src_nonpadding = (items_dict['hubert'] != 0).any(-1)[:, :, None]
+        '''var_embed = 0
+        spk_embed_dur = spk_embed_f0 = spk_embed = 0'''
+
+        decoder_inp = F.pad(encoder_out, [0, 0, 1, 0])
+        mel2ph = items_dict['mel2ph'][..., None].repeat([1, 1, encoder_out.shape[-1]])
+        f0 = items_dict['f0']
+        decoder_inp_origin = decoder_inp = torch.gather(decoder_inp, 1, mel2ph)
+
+        tgt_nonpadding = (mel2ph > 0).float()[:, :, None]  # 그 값들 전부 0보단 클텐데?
+        pitch_inp = decoder_inp_origin * tgt_nonpadding  # + var_embed + spk_embed_f0) * tgt_nonpadding
+        # pitch_inp_ph = encoder_out * src_nonpadding  # + var_embed + spk_embed_f0)
+        decoder_inp = decoder_inp + self.add_pitch(pitch_inp, mel2ph, ret)
+        ret['decoder_inp'] = decoder_inp * tgt_nonpadding
+
+        return ret
 
 
 def load_cond_embedding_state(_hparams):
@@ -185,6 +223,8 @@ def load_cond_embedding_state(_hparams):
     }
 
 
+'''
+# model load, state_dict에서 필요한 것만 가져온다
 # print(load_cond_embedding_state(hparams).keys())
 cond_emb_model = ConditionEmbedding(hparams)
 state_dict = load_cond_embedding_state(hparams)
@@ -192,3 +232,4 @@ cond_emb_model.load_state_dict(state_dict)
 print(cond_emb_model)
 for name, param in cond_emb_model.named_parameters():
     print(name, param.data)
+'''
