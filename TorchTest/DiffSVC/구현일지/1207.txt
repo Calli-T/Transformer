@@ -4,3 +4,5 @@
 2. infer test
 3. training test이다
 
+그전에 간단히 모델 구분하고, 디렉터리 분리하는 작업 수행중
+utils/divide_model.py에 모델을 가르는 작업 수행중이다

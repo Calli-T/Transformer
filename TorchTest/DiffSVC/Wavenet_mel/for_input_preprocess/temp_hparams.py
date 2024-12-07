@@ -4,6 +4,7 @@ import os
 # nsf HiFiGAN에서 사용하는 hparams를 임시로 가져온것
 # 기준은 신창섭 모델에서 사용하던 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
+pt_epoch = 38100
 hparams = {
     "project_name": "SinChangSeop",
 
@@ -38,7 +39,7 @@ hparams = {
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
-    "emb_model_path": "model_ckpt_steps_30000.ckpt",
+    "emb_model_path": "EmbeddingModel/embedding_model_steps_38100.pt",  # "model_ckpt_steps_30000.ckpt",
     "hidden_size": 256
 }
 

@@ -202,27 +202,10 @@ class ConditionEmbedding(nn.Module):
 
 
 def load_cond_embedding_state(_hparams):
-    model_path = rel2abs(os.path.join(hparams['project_name'], hparams['emb_model_path']))
-    model_state_dict = torch.load(model_path, map_location='cpu')['state_dict']
-    '''
-    fs2_list = [key for key in state_dict.keys()]
-    fs2_mask = [True if key.split('.')[1] == 'fs2' else False for key in fs2_list]
-    fs2_list = np.array(fs2_list)[fs2_mask]
-    for key in fs2_list:
-        print(key)
-    '''
-    '''
-    model.fs2.mel_out.weight
-    model.fs2.mel_out.bias
-    model.fs2.pitch_embed.weight
-    '''
-    # 대체 학습이 끝난 모델의 역치가 왜 전부 0이지???
-    # print(state_dict["model.fs2.mel_out.bias"])
-    return {
-        "mel_out.weight": model_state_dict["model.fs2.mel_out.weight"],
-        "mel_out.bias": model_state_dict["model.fs2.mel_out.bias"],
-        "pitch_embed.weight": model_state_dict["model.fs2.pitch_embed.weight"],
-    }
+    model_path = rel2abs(hparams['emb_model_path'])
+    model_state_dict = torch.load(model_path, map_location='cpu')
+
+    return model_state_dict
 
 
 # model load, state_dict에서 필요한 것만 가져온다
