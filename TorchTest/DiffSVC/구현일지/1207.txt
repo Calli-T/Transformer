@@ -1,0 +1,6 @@
+이제 입력을 만들어내는것은 전부 다했으니
+큰 틀에서 순서는
+1. forward test
+2. infer test
+3. training test이다
+
