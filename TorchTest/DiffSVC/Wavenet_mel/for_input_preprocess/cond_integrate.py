@@ -5,7 +5,7 @@ from torch.nn import functional as F
 import os
 
 from NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
-from temp_hparams import hparams, rel2abs, dir2list
+# from temp_hparams import rel2abs, dir2list
 from CREPE.crepe import get_pitch_crepe, f0_to_coarse
 from HuBERT.hubertinfer import Hubertencoder
 from mel2ph.mel2ph import get_align
@@ -18,7 +18,7 @@ def load_cond_model(_hparams):
 def get_raw_cond(_vocoder, _hubert, _hparams, abs_raw_wav_path):
     wav, mel = _vocoder.wav2spec(abs_raw_wav_path, _hparams)
     f0, coarse_f0 = get_pitch_crepe(wav, mel, _hparams)
-    hubert_encoded = _hubert.encode(rel2abs(_hparams['raw_wave_path']))
+    hubert_encoded = _hubert.encode(abs_raw_wav_path)
     mel2ph = get_align(mel, hubert_encoded)
 
     return {"name": abs_raw_wav_path,
@@ -48,9 +48,9 @@ def denorm_f0(_f0):
 
 # 노래 파일 '1개'에 대해 동작하도록 설계되었다, 추가로 f0 보간도 여기서 한다
 def get_tensor_cond(item, _hparams):
-    max_frames = hparams['max_frames']
-    max_input_tokens = hparams['max_input_tokens']
-    device = hparams['device']
+    max_frames = _hparams['max_frames']
+    max_input_tokens = _hparams['max_input_tokens']
+    device = _hparams['device']
 
     f0, _ = norm_interp_f0(item['f0'], _hparams)  # 저 _는 uv다
 
@@ -201,12 +201,15 @@ class ConditionEmbedding(nn.Module):
         return ret
 
 
-def load_cond_embedding_state(_hparams):
-    model_path = rel2abs(hparams['emb_model_path'])
-    model_state_dict = torch.load(model_path, map_location='cpu')
+def load_cond_embedding_state(abs_cond_model_path):
+    # model_path = rel2abs(_hparams['emb_model_path'])
+    model_state_dict = torch.load(abs_cond_model_path, map_location='cpu')
 
     return model_state_dict
 
+'''
+from cond_integrate import *
+from temp_hparams import hparams
 
 # model load, state_dict에서 필요한 것만 가져온다
 cond_emb_model = ConditionEmbedding(hparams)
@@ -223,3 +226,5 @@ get_collated_cond(sample)
 cond_emb_model.eval()
 print(cond_emb_model(sample)['decoder_inp'].shape)
 print(cond_emb_model(sample)['f0_denorm'].shape)
+
+'''

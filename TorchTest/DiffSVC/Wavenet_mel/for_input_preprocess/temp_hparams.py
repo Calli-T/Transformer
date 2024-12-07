@@ -8,8 +8,8 @@ pt_epoch = 38100
 hparams = {
     "project_name": "SinChangSeop",
 
-    "raw_wave_path": "raw/L-O-V-E_[cut_6sec].wav",
-    "raw_dir_path": "raw",
+    "raw_wave_path": "../raw/L-O-V-E_[cut_6sec].wav",
+    # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
     # "vocoder": "nsf_hifigan.NsfHifiGAN",
@@ -42,7 +42,6 @@ hparams = {
     "emb_model_path": "EmbeddingModel/embedding_model_steps_38100.pt",  # "model_ckpt_steps_30000.ckpt",
     "hidden_size": 256
 }
-
 
 def rel2abs(rel_path):
     return os.path.join(os.path.dirname(__file__), rel_path)
