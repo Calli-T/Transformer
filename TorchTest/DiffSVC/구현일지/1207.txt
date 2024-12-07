@@ -6,3 +6,44 @@
 
 그전에 간단히 모델 구분하고, 디렉터리 분리하는 작업 수행중
 utils/divide_model.py에 모델을 가르는 작업 수행중이다
+
+※ (gpt 피셜) model1의 출력을 model2의 입력으로 쓸 때,
+양쪽의 패머리터가 모두 optimizer에 등록되어있다면
+back propagation 과정에서 torch가 자동으로
+model1과 model2를 동시에 학습시킨다고 한다.
+
+wavenet(혹은 denoise_fn)의 입력은 다음과 같다
+torch.Size([2, 1, 128, 300])
+torch.Size([2])
+torch.Size([2, 256, 300])
+torch.Size([2, 1, 128, 300])
+거기에 단 주석은 다음과 같다
+'''
+:param spec: [B, 1, M, T]
+:param diffusion_step: [B, 1] -> [B, ] 실제로는 1축 텐서이니 앞의 ,1은 무시할것
+:param cond: [B, M, T] -> 이거 M이 mel-band 수가 아니고, hidden 값과 관련있는 것 같다
+'''
+
+한편, embedding model의 출력은 다음과 같다
+torch.Size([1, 518, 256])
+torch.Size([1, 518])
+위는 cond, 아래는 f0_denorm일 것이다
+아마 cond는 [1, T, M]일 것이다
+{   VRAM / batch관련 잡소리
+    Batch의 크기는 1로 사실상 고정이며??? 10~15초의 음성일 것이다
+    ! 나중에 VRAM의 크기를 보고 BATCH의 크기를 자동으로 정하는 코드를 짜자
+    24,000 sample_rate에 6sec raw wave 기준 cond모델은 VRAM 12GiB에서 31%를 잡아먹더라
+    ! 나중에 모델별로 배치를 다르게 하는 작업도 가능할듯? 내부에 모델이 7개나 있다
+    ! VRAM의 최대 사용량을 정하는 옵션을 만들 수도 있을 듯 계산만 잘하면
+}
+cond는 입력하기전 코드에서 transpose(1, 2)처리하여 하는데, [1, T, M]을 [1, M, T]
+1은 배치 크기이니, 원본과 맞다!!!
+spec을 맞춰줘야 하는데,이건 mel이 어떻게 나오나 코드를 볼 필요가 있다
+test1_~~~.py를 보니 출력이 (518, 128)로 나오며 이는 [T, M]이다
+
+코드에서 diffusion.py의 264 line 부터 보면
+(use_gt_mel은 false이다, 원본 음원을 노이즈로 사용하지 '않는다')
+원본 음원의 cond를 액기스만 뽑아서 사용하며, mel은 폐기되고
+무작위 노이즈에서 시작한다 아 ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ
+어느 개인의 음성 특징은 '모델에' 저장되는 것이었다
+생각해보면 그게 맞긴 하겠지

@@ -18,9 +18,9 @@ wavenet_mel.to(hparams['device'])
         :param cond: [B, M, T] -> 이거 M이 mel-band 수가 아니고, hidden 값과 관련있는 것 같다
 '''
 
-temp_spec = torch.randn((2, 1, 128, 1)).to(hparams['device'])
-temp_step = torch.randint(0, 1000, (2,)).to(hparams['device'])
-temp_cond = torch.randn((2, 256, 1)).to(hparams['device'])
+temp_spec = torch.randn((2, 1, 128, 300)).to(hparams['device'])
+temp_step = torch.randint(0, 1000, (1,)).to(hparams['device'])
+temp_cond = torch.randn((2, 256, 300)).to(hparams['device'])
 print(temp_spec.shape)
 print(temp_step.shape)
 print(temp_cond.shape)
