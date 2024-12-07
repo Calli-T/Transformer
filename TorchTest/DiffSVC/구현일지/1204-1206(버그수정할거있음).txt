@@ -193,4 +193,32 @@ cond_integrate.py의 194줄이 말썽을 일으키는 중이다
     이거 f0가 패딩을 잘못 먹은것인지,
     아니면 pitch_padding에 패딩을 넣어줘야하는 것인지
     코드 한 번 보고 infer.py 한 번 실행시켜보면서 디버그 해보자
+    tgt_nonpadding의 값이 굉장히 수상하다
+    원본은 ([1, 500, 1])과 같이 뜨나, 내 것은[1, 518, 1, 256]로 뜬다
 }
+
+----- 1207 -----
+torch.Size([1, 288, 256])
+torch.Size([1, 496, 256])
+
+print(self.add_pitch(pitch_inp, items_dict['mel2ph'], ret).shape)
+print(decoder_inp.shape)
+버그난거
+torch.Size([1, 518, 256, 256])
+torch.Size([1, 518, 256])
+원본
+torch.Size([1, 500, 256])
+torch.Size([1, 500, 256])
+
+add_pitch함수의 반환값이 문제이다
+pitch_padding
+[1, 518]
+torch.Size([1, 500])
+같음
+
+print(f0_denorm.shape)
+torch.Size([1, 518, 256])
+torch.Size([1, 500])
+?????
+
+f0 대신 쓰지도 않을 pitch_inp를 넣어버린 것이 화근이었다

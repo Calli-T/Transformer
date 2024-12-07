@@ -147,6 +147,7 @@ print(mel.shape, hubert_encoded.shape, mel2ph.shape, f0.shape)
 class ConditionEmbedding(nn.Module):
     def __init__(self, _hparams):
         super().__init__()
+        self._hparams = _hparams
         self.hidden_size = _hparams['hidden_size']
         self.out_dims = _hparams['audio_num_mel_bins']
 
@@ -171,8 +172,8 @@ class ConditionEmbedding(nn.Module):
         ret['f0_denorm'] = f0_denorm = denorm_f0(f0)
         if pitch_padding is not None:
             f0[pitch_padding] = 0
-
-        pitch = f0_to_coarse(f0_denorm, hparams)  # start from 0
+        # print(f0_denorm.shape)
+        pitch = f0_to_coarse(f0_denorm, self._hparams)  # start from 0
         # ret['pitch_pred'] = pitch.unsqueeze(-1)
         pitch_embedding = self.pitch_embed(pitch)
         return pitch_embedding
@@ -181,19 +182,20 @@ class ConditionEmbedding(nn.Module):
         ret = {}
 
         encoder_out = items_dict['hubert']
-        src_nonpadding = (items_dict['hubert'] != 0).any(-1)[:, :, None]
+        # src_nonpadding = (items_dict['hubert'] != 0).any(-1)[:, :, None]
         '''var_embed = 0
         spk_embed_dur = spk_embed_f0 = spk_embed = 0'''
 
         decoder_inp = F.pad(encoder_out, [0, 0, 1, 0])
-        mel2ph = items_dict['mel2ph'][..., None].repeat([1, 1, encoder_out.shape[-1]])
+        mel2ph_ = items_dict['mel2ph'][..., None].repeat([1, 1, encoder_out.shape[-1]])
         # f0 = items_dict['f0']
-        decoder_inp_origin = decoder_inp = torch.gather(decoder_inp, 1, mel2ph)
+        # decoder_inp_origin =decoder_inp = torch.gather(decoder_inp, 1, mel2ph_)
+        decoder_inp = torch.gather(decoder_inp, 1, mel2ph_)
+        tgt_nonpadding = (items_dict['mel2ph'] > 0).float()[:, :, None]  # 그 값들 전부 0보단 클텐데?
+        # print(tgt_nonpadding.shape) # [1, 518, 1, 256]????
+        # pitch_inp = decoder_inp_origin * tgt_nonpadding  # + var_embed + spk_embed_f0) * tgt_nonpadding
 
-        tgt_nonpadding = (mel2ph > 0).float()[:, :, None]  # 그 값들 전부 0보단 클텐데?
-        pitch_inp = decoder_inp_origin * tgt_nonpadding  # + var_embed + spk_embed_f0) * tgt_nonpadding
-        # pitch_inp_ph = encoder_out * src_nonpadding  # + var_embed + spk_embed_f0)
-        decoder_inp = decoder_inp + self.add_pitch(pitch_inp, mel2ph, ret)
+        decoder_inp = decoder_inp + self.add_pitch(items_dict['f0'], items_dict['mel2ph'], ret)
         ret['decoder_inp'] = decoder_inp * tgt_nonpadding
 
         return ret
@@ -236,5 +238,5 @@ sample = get_tensor_cond(get_raw_cond(*load_cond_model(hparams), hparams, rel2ab
 get_collated_cond(sample)
 
 cond_emb_model.eval()
-print(cond_emb_model(sample).shape)
-
+print(cond_emb_model(sample)['decoder_inp'].shape)
+print(cond_emb_model(sample)['f0_denorm'].shape)
