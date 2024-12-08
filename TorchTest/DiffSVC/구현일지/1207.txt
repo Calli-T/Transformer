@@ -79,14 +79,37 @@ Wavenet_mel에는 모델과 cond모델의 관한 모든 테스트가 있기 때�
 생각해둔 구조는 다음과 같다 (대괄호는 dir)
 이 디렉터리 구조를 계속해서보강해나가자
 DiffSVC
--[wavenet]
+
+-[conds_before_embedding]
 --[하위모델1코드만]
 --[하위모델2코드만]
--[condition]
+--[하위모델3코드만]
+--[하위모델4코드만]
+--[하위모델5코드만]
+--conds2tensor.py ※ model_load와 사용은 다른곳으로 코드 옮김. 즉, 텐서화만
 -[diffusion]
+--[wavenet코드만]
+---net.py
+---load.pt ※ temp_load_ckpt.py는 무시, test1.py 의 코드를 개조
+---act_func.py ※ 나중에 net.py에 통합하거나, torch 기본 기능으로 전환후 삭제
+--[EmbeddingModel코드만]
+---cond_tensor2embedding.py
+--DDPM.py ※ GaussainDiffusion이나, 기타 다른 샘플링 기법 자체를 이름으로가능
 -[raw]
+--music1.wav
+--music2.wav
+--music3.wav
 -[output]
--[재료 중간손질?]
+--music1_[project_name]_steps_[steps].wav ※ flac인지 wav인지는 코드좀
+--music2_[project_name]_steps_[steps].wav ※ 보고 처리하자
+--music3_[project_name]_steps_[steps].wav ※ 기타 양식도 마찬가지
 -[models]
+--wavenet_model_steps_[steps].pt
+--embedding_model_steps_[steps].pt
+--hubert_soft.pt
+--nsf_hifigan.pt
+--xiaoma_pe_[steps].pt
 -hparams.py
 -arg2hparams.py
+-infer.py
+-training.py
