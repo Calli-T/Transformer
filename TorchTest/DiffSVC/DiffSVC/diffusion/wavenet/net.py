@@ -3,17 +3,9 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from torch.nn import ReLU, Mish
 from .act_func import Mish
 
 from math import sqrt
-
-# from utils.hparams import hparams
-# from modules.commons.common_layers import Mish
-
-
-# hparams는 class 선언의 매개변수로 주는 것으로 변경
-# from temp_hparams import hparams
 
 Linear = nn.Linear
 ConvTranspose2d = nn.ConvTranspose2d

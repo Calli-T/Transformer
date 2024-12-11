@@ -90,7 +90,7 @@ DiffSVC
 -[diffusion]
 --[wavenet코드만]
 ---net.py
----load.pt ※ temp_load_ckpt.py는 무시, test1.py 의 코드를 개조 -> 걍 torch 기능으로 입력
+---load.pt ※ temp_load_ckpt.py는 무시, test1.py 의 코드를 개조 -> 걍 torch 기능으로 대체한 다음 삭제
 ---act_func.py ※ 나중에 net.py에 통합하거나, torch 기본 기능으로 전환후 삭제
 --[EmbeddingModel코드만]
 ---cond_tensor2embedding.py

@@ -53,13 +53,15 @@ class GuassianDiffusion:
         norm/denorm을 구현해두자 ※ 고정값으로 해두고 opencpop으로 만들어진 값이므로 나중에 대체하자
         '''
 
-        # models
+        # trainable models
         self.embedding_model = ConditionEmbedding(self.hparams)
         self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
         self.embedding_model.to(self.hparams['device'])
         self.wavenet = DiffNet(self.hparams)
         self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
         self.wavenet.to(self.hparams['device'])
+
+        # pretrained models (for conditioning)
 
         # schedule
         self.alphas = None
