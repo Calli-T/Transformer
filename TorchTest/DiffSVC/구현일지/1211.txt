@@ -1,0 +1,37 @@
+infer_tool.py의 self.pe코드를 살펴보면 f0_pred를 가져오며, 이건
+GaussianDiffusion이 끝나고 나서 후처리 하는 모델이다
+nsf-hifigan도 이후에 동작한다
+
+전체 모델 제작은 DiffSVC/DiffSVC에서 제작, 해당 디렉터리는 root
+
+제작된 코드들
+-args2hparams.py
+    args를 받아오는 코드는 추후제작, hparams만 적어둠
+    cond model과 wavenet의 hparams의 코드를 통합시켜놨다
+    ddpm의 hparams를 필요에 따라 하나씩가져오는 중이며, 가져온 것은 다음과 같다
+        "schedule_name": "linear", ※ 원본의 값이다, 그리고 cosine은 제작 방식이 좀 다르다
+        "steps": 1000, ※ 마찬가지
+    ※ max_beta 값은 없으나 linear의 경우 완벽히 동일한 값으로 동작한다
+
+-GuassianDiffusion을 DiffSVC/diffusion에 제작중
+    __init__은 _hparams만 받고, self.hparams로 선언해둔다
+    이후 전부 self.hparams의 정보로 해결
+
+    schedule의 코드를 만들었다
+
+    wavenet의 디렉토리를 만들고 코드를 가져왔으며,
+    load와 forward를 테스트하였다
+
+    embedding의 디렉토리를 만들고 코드를 가져왔으며
+    denorm, norm코드를 crepe에서 가져와서 독립시켜놨고,
+    load는 테스트했으며
+    forward는 test하지 못하였다!!!
+
+-utils/path_utils.py에 절대경로 관련 코드를 작성해뒀다
+-models 디렉토리를 생성
+    wavenet모델이 보관되었다
+
+추후 해야할일
+-Gaussian쪽에는 __init__에 주석으로 할 일을 적어 놨다
+-rel2abs는 '현재실행중인' 파일의 상위 디렉토리를 root로 잡도록 해놨다.
+즉, root를 사용하는 방식으로 수정할 필요가 있음
