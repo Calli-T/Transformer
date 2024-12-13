@@ -25,7 +25,7 @@ class ConditionEmbedding(nn.Module):
         ret['f0_denorm'] = f0_denorm = denorm_f0(f0)
         if pitch_padding is not None:
             f0[pitch_padding] = 0
-        pitch = f0_to_coarse(f0_denorm, self.self.hparams)
+        pitch = f0_to_coarse(f0_denorm, self.hparams)
         pitch_embedding = self.pitch_embed(pitch)
         return pitch_embedding
 

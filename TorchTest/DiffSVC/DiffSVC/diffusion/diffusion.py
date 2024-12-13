@@ -1,5 +1,8 @@
 from .wavenet.net import DiffNet
 from .embedding_model.embedding_model import ConditionEmbedding
+from .conditioning.CREPE.crepe import get_pitch_crepe
+from .conditioning.HuBERT.hubertinfer import Hubertencoder
+from .conditioning import get_align
 
 import math
 import numpy as np
@@ -42,7 +45,7 @@ class GuassianDiffusion:
         self.posterior_mean_coef1 = betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
         self.posterior_mean_coef2 = (1. - self.alpha_bars_prev) * np.sqrt(alphas) / (1. - self.alpha_bars)
 
-    def __init__(self, _hparams):
+    def __init__(self, _hparams, wav2spec=None):
         self.hparams = _hparams
         '''
         schedule의 register_buffer는 나중에 고려
@@ -61,7 +64,15 @@ class GuassianDiffusion:
         self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
         self.wavenet.to(self.hparams['device'])
 
-        # pretrained models (for conditioning)
+        # for conditioning
+        if wav2spec is not None:
+            self.wav2spec = wav2spec
+        else:
+            from .conditioning import wav2spec as w2s
+            self.wav2spec = w2s
+        self.crepe = get_pitch_crepe
+        self.hubert = Hubertencoder(self.hparams)
+        self.get_align = get_align
 
         # schedule
         self.alphas = None
@@ -75,3 +86,84 @@ class GuassianDiffusion:
         self.sqrt_recip_alpha_bars = None
         self.sqrt_recipm1_alpha_bars = None
         self.set_schedule()
+
+    def get_raw_cond(self, raw_wave_path):
+        def norm_interp_f0(_f0):
+            uv = _f0 == 0
+            _f0 = np.log2(_f0)
+            if sum(uv) == len(_f0):
+                _f0[uv] = 0
+            elif sum(uv) > 0:
+                _f0[uv] = np.interp(np.where(uv)[0], np.where(~uv)[0], _f0[~uv])
+            return _f0, uv
+
+        wav, mel = self.wav2spec(raw_wave_path, self.hparams)
+        # print(wav.shape, mel.shape)
+        gt_f0 = self.crepe(wav, mel, self.hparams)
+        f0, _ = norm_interp_f0(gt_f0)
+        # print(f0.shape)
+        hubert_encoded = self.hubert.encode(raw_wave_path)
+        # print(hubert_encoded.shape)
+        mel2ph = self.get_align(mel, hubert_encoded)
+        # print(mel2ph.shape)
+
+        return {"name": raw_wave_path,
+                "wav": wav,
+                "mel": mel,
+                "f0": f0,
+                "hubert": hubert_encoded,
+                "mel2ph": mel2ph}
+
+    def get_tensor_cond(self, item):
+        max_frames = self.hparams['max_frames']
+        max_input_tokens = self.hparams['max_input_tokens']
+        device = self.hparams['device']
+
+        item['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
+        item['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
+        item['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
+        item['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
+
+        return item
+
+    def get_collated_cond(self, item):
+        def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
+
+            """Convert a list of 1d tensors into a padded 2d tensor."""
+            size = max(v.size(0) for v in values) if max_len is None else max_len
+            res = values[0].new(len(values), size).fill_(pad_idx)
+
+            def copy_tensor(src, dst):
+                assert dst.numel() == src.numel()
+                if shift_right:
+                    dst[1:] = src[:-1]
+                    dst[0] = shift_id
+                else:
+                    dst.copy_(src)
+
+            for i, v in enumerate(values):
+                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+            return res
+
+        def collate_2d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None):
+            """Convert a list of 2d tensors into a padded 3d tensor."""
+            size = max(v.size(0) for v in values) if max_len is None else max_len
+            res = values[0].new(len(values), size, values[0].shape[1]).fill_(pad_idx)
+
+            def copy_tensor(src, dst):
+                assert dst.numel() == src.numel()
+                if shift_right:
+                    dst[1:] = src[:-1]
+                else:
+                    dst.copy_(src)
+
+            for i, v in enumerate(values):
+                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+            return res
+
+        item['hubert'] = collate_2d([item['hubert']], 0.0)
+        item['f0'] = collate_1d([item['f0']], 0.0)
+        item['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
+        item['mel'] = collate_2d([item['mel']], 0.0)
+
+        return item

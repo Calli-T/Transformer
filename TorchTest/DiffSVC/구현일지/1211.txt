@@ -42,6 +42,14 @@ nsf-hifigan도 이후에 동작한다
  vocoder의 wav2spec을 떼어다가 diffusion/conditioning에 던져줘버리는 것,
  물론, default값은 원래대로 해놓고 None일 때만 사용하게 되는 눈속임에 가깝게 될것이다.
 
+-diffusion model은 mel을 받아서, mel을 뱉는다
+그게 다라면 mel을 만드는 과정은 diffusion class 바깥에 있어도 상관 없으나
+문제는 mel에서 cond를 뽑아내는 과정에서 mel이 필요하다는것
+즉, wav -> cond로 바로 가는 것은 불가능하고 wav -> mel -> cond라는것
+그리고 wav -> mel의 코드가 하필 vocoder에 종속(굳이 그럴 필요없으나 코드 형태가)되었는점
+해결 방법은 vocoder는 diffusion.py 바깥에 두고(그리고 pipeline에서 따로 처리하고,)
+wav2spec 함수는 diffusion class의 field로(혹은 self로 받아주는 메서드? 여하튼) 둔다
+
 제작된 코드들
 -args2hparams.py
     args를 받아오는 코드는 추후제작, hparams만 적어둠
@@ -68,6 +76,16 @@ nsf-hifigan도 이후에 동작한다
 -utils/path_utils.py에 절대경로 관련 코드를 작성해뒀다
 -models 디렉토리를 생성
     wavenet모델이 보관되었다
+-vocoder/NsfHiFiGAN을 만들고 시험해봤다
+-raw를 만들어놨다
+-wav2spec(load wav, wav2spec모두다 하는 함수)를 class 선언에서 받거나,
+아니면 default를 사용하도록 만들어놨으며 default는 conditioning dir안에 존재한다
+-crepe를 만들어 놨고, wav2spec이후 crepe가 동작하는지 확인해놨다
+※ rel2abs는 class안에 안만들어놔서 절대 경로로 입력을 해줘야 동작한다
+-hubert를 class 안에 넣고, Hubert의 코드를 테스트했다
+-get_align과 wav2spec을 conditionion의 __init__.py에 넣고,
+default어쩌고.py를 지웠다
+-get_align함수를 사용하여 mel2ph를 만들고 4개의 raw_cond를 제작하였다
 
 추후 해야할일
 -Gaussian쪽에는 __init__에 주석으로 할 일을 적어 놨다

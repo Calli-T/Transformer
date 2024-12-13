@@ -25,7 +25,7 @@ hparams = {
 
     # for self_regressive_phonetic, HuBERT
     "hubert_gpu": True,
-    "pt_path": 'HuBERT/hubert/hubert_soft.pt',
+    "pt_path": 'models/hubert_soft.pt',
 
     # for Pitch Extractor, CREPE
     "f0_bin": 256,
