@@ -7,13 +7,13 @@ project_name = "SinChangSeop"
 hparams = {
     "project_name": project_name,
 
-    "raw_wave_path": "../raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
     # "vocoder": "nsf_hifigan.NsfHifiGAN",
     "device": device,
-    "vocoder_ckpt": "NsfHiFiGAN/nsf_hifigan/model",
+    "vocoder_ckpt": "models/nsf_hifigan/model",
     "audio_sample_rate": 44100,
     "audio_num_mel_bins": 128,
     "fft_size": 2048,
