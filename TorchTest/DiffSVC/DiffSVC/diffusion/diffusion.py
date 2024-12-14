@@ -167,3 +167,16 @@ class GuassianDiffusion:
         item['mel'] = collate_2d([item['mel']], 0.0)
 
         return item
+
+    def get_cond(self, raw_wave_path):
+        cond_tensor = self.get_tensor_cond(self.get_raw_cond(raw_wave_path))
+        collated_tensor = self.get_collated_cond(cond_tensor)
+        self.embedding_model.eval()
+        embedding = self.embedding_model(collated_tensor)
+
+        return embedding
+
+    def infer(self, raw_wave_path):
+        ret = self.get_cond(raw_wave_path)
+        cond = ret['decoder_inp'].transpose(1, 2)
+        print(cond.shape)

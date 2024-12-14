@@ -86,6 +86,7 @@ wav2spec 함수는 diffusion class의 field로(혹은 self로 받아주는 메�
 -get_align과 wav2spec을 conditionion의 __init__.py에 넣고,
 default어쩌고.py를 지웠다
 -get_align함수를 사용하여 mel2ph를 만들고 4개의 raw_cond를 제작하였다
+-raw -> tensor -> collated tensor -> embedding의 단계를 다 만들었다
 
 추후 해야할일
 -Gaussian쪽에는 __init__에 주석으로 할 일을 적어 놨다

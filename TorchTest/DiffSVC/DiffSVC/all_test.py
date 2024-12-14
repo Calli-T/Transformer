@@ -17,9 +17,15 @@ print(hparams["wavenet_model_path"], hparams["emb_model_path"])'''
 diff = GuassianDiffusion(hparams, vocoder.wav2spec)
 
 # raw -> tensor -> collated_tensor -> embedding
-cond_tensor = diff.get_tensor_cond(diff.get_raw_cond(rel2abs(hparams['raw_wave_path'])))
+'''cond_tensor = diff.get_tensor_cond(diff.get_raw_cond(rel2abs(hparams['raw_wave_path'])))
 collated_tensor = diff.get_collated_cond(cond_tensor)
 diff.embedding_model.eval()
-embedded = diff.embedding_model(collated_tensor)
-print(embedded['decoder_inp'].shape)
-print(embedded['f0_denorm'].shape)
+embedded = diff.embedding_model(collated_tensor)'''
+
+'''
+embedding = diff.get_cond(rel2abs(hparams['raw_wave_path']))
+print(embedding['decoder_inp'].shape)
+print(embedding['f0_denorm'].shape)
+'''
+
+diff.infer(rel2abs(hparams['raw_wave_path']))
