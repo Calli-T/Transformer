@@ -28,4 +28,5 @@ print(embedding['decoder_inp'].shape)
 print(embedding['f0_denorm'].shape)
 '''
 
-diff.infer(rel2abs(hparams['raw_wave_path']))
+sample = diff.infer(rel2abs(hparams['raw_wave_path']))
+print(sample.shape)

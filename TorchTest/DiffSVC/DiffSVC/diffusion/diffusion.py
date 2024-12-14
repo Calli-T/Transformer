@@ -7,6 +7,7 @@ from .conditioning import get_align
 import math
 import numpy as np
 import torch
+from tqdm import tqdm
 
 
 class GuassianDiffusion:
@@ -176,7 +177,62 @@ class GuassianDiffusion:
 
         return embedding
 
+    def predict_start_from_noise(self, x_t, t, noise):
+        x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
+
+        return x_start
+
+    def q_posterior(self, x_start, x_t, t):
+        posterior_mean = (self.posterior_mean_coef1[t] * x_start
+                          +
+                          self.posterior_mean_coef2[t] * x_t)
+
+        posterior_log_variance_clipped = self.posterior_log_variance_clipped[t]
+
+        return posterior_mean, posterior_log_variance_clipped
+
+    def p_mean_variance(self, x, t, cond, clip_denoised=True):
+        step = torch.Tensor([t]).to(self.hparams['device'])
+        epsilon_theta = self.wavenet(x, step, cond)
+        x_recon = self.predict_start_from_noise(x, t, epsilon_theta)
+
+        if clip_denoised:
+            x_recon.clamp_(-1., 1.)
+
+        model_mean, posterior_log_variance_clipped = self.q_posterior(x_recon, x, t)
+
+        return model_mean, posterior_log_variance_clipped
+
+    def p_sample(self, x, t, cond):
+        model_mean, model_log_variance = self.p_mean_variance(x, t, cond, clip_denoised=True)
+        # print(type(model_mean), type(model_log_variance))
+        # 저 평균과 분산이 register_buffer의 주요 등록 대상이다
+
+        z = torch.randn_like(x)
+        if t > 0:
+            x = model_mean + z * math.exp(0.5 * model_log_variance)
+        else:
+            x = model_mean
+        # print(x.shape, t, cond.shape)
+
+        return x
+
     def infer(self, raw_wave_path):
-        ret = self.get_cond(raw_wave_path)
-        cond = ret['decoder_inp'].transpose(1, 2)
-        print(cond.shape)
+        with torch.no_grad():
+            self.embedding_model.eval()
+            self.wavenet.eval()
+
+            ret = self.get_cond(raw_wave_path)
+            cond = ret['decoder_inp'].transpose(1, 2)
+            M = self.hparams['audio_num_mel_bins']
+            T = cond.shape[2]
+            B = 1
+            device = self.hparams['device']
+
+            x = torch.randn((B, 1, M, T)).to(device)
+            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
+                # print(t)
+                x = self.p_sample(x, t, cond)
+                # print(type(x))
+
+        return x
