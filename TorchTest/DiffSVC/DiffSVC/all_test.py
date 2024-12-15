@@ -29,4 +29,10 @@ print(embedding['f0_denorm'].shape)
 '''
 
 sample = diff.infer(rel2abs(hparams['raw_wave_path']))
-print(sample.shape)
+print(sample['mel_out'].shape)
+'''
+import numpy as np
+np.set_printoptions(precision=20)
+print(diff.spec_max)
+print(type(diff.spec_max))
+'''

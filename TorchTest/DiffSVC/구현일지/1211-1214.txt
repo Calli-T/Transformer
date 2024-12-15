@@ -94,3 +94,8 @@ default어쩌고.py를 지웠다
 즉, root를 사용하는 방식으로 수정할 필요가 있음
 -embedding 모델의 forward, 이건 다른 모델들 다 올리고 나서 할 일
 -nsf hifigan의 재료중 하나인 f0_pred의 제작을 가능케하는 모델
+
+----- -----
+ddpm까지는 완성했으며, (p_sample을 구현한 상태이다)
+register buffer, denorm, nsf과정을 구현하면 infer가 끝이다
+추가로 wavenet에 들어가는 텐서구조가 대체 어떻게 된건인지도 알아봐야한다

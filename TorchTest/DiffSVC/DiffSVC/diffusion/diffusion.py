@@ -88,6 +88,12 @@ class GuassianDiffusion:
         self.sqrt_recipm1_alpha_bars = None
         self.set_schedule()
 
+        # for data scaling ([-1, 1] min-max normalize)
+        spec_min = np.array(self.hparams['spec_min'])
+        spec_max = np.array(self.hparams['spec_max'])
+        self.spec_min = torch.FloatTensor(spec_min)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
+        self.spec_max = torch.FloatTensor(spec_max)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
+
     def get_raw_cond(self, raw_wave_path):
         def norm_interp_f0(_f0):
             uv = _f0 == 0
@@ -170,10 +176,12 @@ class GuassianDiffusion:
         return item
 
     def get_cond(self, raw_wave_path):
-        cond_tensor = self.get_tensor_cond(self.get_raw_cond(raw_wave_path))
+        raw_cond = self.get_raw_cond(raw_wave_path)
+        cond_tensor = self.get_tensor_cond(raw_cond)
         collated_tensor = self.get_collated_cond(cond_tensor)
         self.embedding_model.eval()
         embedding = self.embedding_model(collated_tensor)
+        embedding['raw_mel2ph'] = raw_cond['mel2ph']
 
         return embedding
 
@@ -231,8 +239,15 @@ class GuassianDiffusion:
 
             x = torch.randn((B, 1, M, T)).to(device)
             for t in tqdm(reversed(range(0, self.hparams["steps"]))):
-                # print(t)
                 x = self.p_sample(x, t, cond)
-                # print(type(x))
 
-        return x
+        x = x[:, 0].transpose(1, 2)
+        ret['mel_out'] = self.denorm_spec(x) * ((ret['raw_mel2ph'] > 0).float()[:, :, None])
+
+        return ret
+
+    def norm_spec(self, x):
+        return (x - self.spec_min) / (self.spec_max - self.spec_min) * 2 - 1
+
+    def denorm_spec(self, x):
+        return (x + 1) / 2 * (self.spec_max - self.spec_min) + self.spec_min

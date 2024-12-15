@@ -1,0 +1,17 @@
+denorm은 mel이 만들어지고 난이후에 사용하며
+norm은 use_gt_mel을 사용하거나, training 할 때만 사용한다
+
+이를 위해 spec_min과 spec_max를 hparams에 구현해보자
+
+!!!
+구현된 norm과 denorm은 Min-Max 정규화의 변형으로,
+[-1, 1]구간으로 변환한다
+그러나 최대와 최소의 값은 opencpop에서 나온 값이니 추후 갈아주자
+
+spec_min과 max를 hparams에 두었으며, 사용할 때는 최소한
+numpy 배열에 넣어두자
+그런데 길이 때문에 , dtype=np.float64)를 사용해야하며,
+(float32는 잘린다 값이)
+출력시도 값을 선언할 때
+np.set_printoptions(precision=20)와 같이 자리수 20자리를 박아줘야한다
+-> 다시 32로 바꿨다
