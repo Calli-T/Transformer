@@ -1,6 +1,6 @@
 import torch
 
-epoch = 38100
+epoch = 65800
 ckpt_path = f'model_ckpt_steps_{epoch}.ckpt'
 
 

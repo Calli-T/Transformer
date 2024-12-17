@@ -2,12 +2,12 @@ from torch import device, cuda
 
 # 신창섭 epoch 모델을 둘로 쪼갠 것 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
-pt_epoch = 38100
+pt_epoch = 65800  # 38100
 project_name = "SinChangSeop"
 hparams = {
     "project_name": project_name,
 
-    "raw_wave_path": "raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/dancenote_origin.wav",#"raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
@@ -38,7 +38,7 @@ hparams = {
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
-    "emb_model_path": "models/embedding_model_steps_38100.pt",  # "model_ckpt_steps_30000.ckpt",
+    "emb_model_path": f"models/embedding_model_steps_{pt_epoch}.pt",  # "model_ckpt_steps_30000.ckpt",
     "hidden_size": 256,
 
     # for wavenet
@@ -52,7 +52,7 @@ hparams = {
 
     # for diffusion
     "schedule_name": "linear",
-    "steps": 100,  # 00,
+    "steps": 1000,  # 00,
 
     # for postprocess
     "spec_max": [0.5272776484489441, 0.9114222526550293, 1.1117855310440063, 1.0987094640731812, 1.1520036458969116,
@@ -109,7 +109,9 @@ hparams = {
                  -4.99999475479126, -4.99999475479126, -4.99999475479126, -4.99999475479126, -4.99999475479126,
                  -4.99999475479126, -4.99999475479126, -4.99999475479126, -4.99999475479126, -4.99999475479126,
                  -4.99999475479126, -4.99999475479126, -4.99999475479126],
-    "keep_bins": 128
+    "keep_bins": 128,
+    "mel_vmax": 1.5,
+    "mel_vmin": -6.0,
 }
 
 '''
