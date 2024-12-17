@@ -90,7 +90,8 @@ def after_infer(prediction):
     fix_audio[:len(wav_pred)] = wav_pred[0 if len(wav_pred) < len(fix_audio) else len(wav_pred) - len(fix_audio):]
     audio.extend(list(fix_audio))'''
     import soundfile as sf
-    sf.write('results/output.wav', wav_pred, 44100)
+    extension_str = 'flac'
+    sf.write(f'results/output.{extension_str}', wav_pred, 44100)
 
 
 after_infer(outputs)

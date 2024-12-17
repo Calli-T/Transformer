@@ -2,12 +2,12 @@ from torch import device, cuda
 
 # 신창섭 epoch 모델을 둘로 쪼갠 것 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
-pt_epoch = 65800  # 38100
+pt_epoch = 73900
 project_name = "SinChangSeop"
 hparams = {
     "project_name": project_name,
 
-    "raw_wave_path": "raw/dancenote_origin.wav",#"raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/apart [vocals]-24_48sec.wav",#"raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
