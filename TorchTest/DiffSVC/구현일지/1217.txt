@@ -47,3 +47,24 @@ wavenet은 음소를 어떤 음압으로 바꿀 건지 결정할 수 있다.
 4. diffusion에서의, condition embedding(cfg와 별개로 학습할 것)
 5. diffusion 샘플링 (가속) 기법 이론 배우기, PNDM부터 시작
 6. crepe의 원리
+
+----- 1220 -----
+
+학습기를 제작 중인데 다음과 같은 코드에서 학습 기능이 파편적으로 나눠져 있다
+run.py/train_pipeline.py/base_task.py/SVC_task.py
+그리고 최종적으로 학습기는 pl_utils.py에 있으며,
+이건 답이없다, DDP를 비롯하여 무수한 옵션, 무수한 기능이 있으며, 나에게는 그 모든것이
+'지금 당장은' 필요치 않다
+
+training 기능을 제작하기위해 필요한 것들을
+함수, hparams, class 상관없이 모조리 꼽아보자면
+1. optimizer
+2. loss type
+3. dataloader
+4. wav slicer
+5. training steps
+6. zerograd / backward / 등등
+
+원본의 코드에서 training용으로 음성을 자를 때는 sep_wav.py,
+이를 이진화하는 preprocessing/binarize.py
+대체 왜 이진화?

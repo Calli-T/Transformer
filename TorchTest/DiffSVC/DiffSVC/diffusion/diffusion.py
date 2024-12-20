@@ -243,6 +243,10 @@ class GuassianDiffusion:
 
         x = x[:, 0].transpose(1, 2)
         ret['mel_out'] = self.denorm_spec(x) * ((ret['raw_mel2ph'] > 0).float()[:, :, None])
+        try:
+            ret['filename'] = raw_wave_path.split('/')[-1].split('.')[0]
+        except:
+            print("file name error")
 
         return ret
 

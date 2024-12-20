@@ -2,12 +2,13 @@ from torch import device, cuda
 
 # 신창섭 epoch 모델을 둘로 쪼갠 것 기준
 device = device('cuda' if cuda.is_available() else 'cpu')
-pt_epoch = 73900
+pt_epoch = 84200
 project_name = "SinChangSeop"
 hparams = {
     "project_name": project_name,
+    "model_pt_epoch": pt_epoch,  # 학습'된' epoch
 
-    "raw_wave_path": "raw/apart [vocals]-24_48sec.wav",#"raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/apart [vocals]-24_48sec.wav",  # "raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
@@ -38,7 +39,7 @@ hparams = {
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
-    "emb_model_path": f"models/embedding_model_steps_{pt_epoch}.pt",  # "model_ckpt_steps_30000.ckpt",
+    "emb_model_path": f"models/singer/{project_name}/embedding_model_steps_{pt_epoch}.pt",  # "model_ckpt_steps_30000.ckpt",
     "hidden_size": 256,
 
     # for wavenet
@@ -48,7 +49,7 @@ hparams = {
     "dilation_cycle_length": 4,
     # "audio_num_mel_bins": 128,
     # "device": device,
-    "wavenet_model_path": f"models/wavenet_model_steps_{pt_epoch}.pt",
+    "wavenet_model_path": f"models/singer/{project_name}/wavenet_model_steps_{pt_epoch}.pt",
 
     # for diffusion
     "schedule_name": "linear",

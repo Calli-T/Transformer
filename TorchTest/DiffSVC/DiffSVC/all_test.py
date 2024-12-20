@@ -89,9 +89,16 @@ def after_infer(prediction):
     fix_audio[:] = np.mean(wav_pred)
     fix_audio[:len(wav_pred)] = wav_pred[0 if len(wav_pred) < len(fix_audio) else len(wav_pred) - len(fix_audio):]
     audio.extend(list(fix_audio))'''
+
+    # wav array ? tensor ? to flac
     import soundfile as sf
     extension_str = 'flac'
-    sf.write(f'results/output.{extension_str}', wav_pred, 44100)
+    if prediction["filename"] is not None:
+        result_filename = (f'results/{prediction["filename"]}' +
+                           f'_{hparams["project_name"]}_{hparams["model_pt_epoch"]}_steps.{extension_str}')
+    else:
+        result_filename = f'results/{hparams["project_name"]}_{hparams["model_pt_epoch"]}_steps.{extension_str}'
+    sf.write(result_filename, wav_pred, 44100)
 
 
 after_infer(outputs)
