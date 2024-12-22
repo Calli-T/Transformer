@@ -127,7 +127,8 @@ class GuassianDiffusion:
         print(f'{time.time() - start_time:.4f}초')
         # start_time = time.time()
 
-        np.savez(f'./results/volume_test1.npz', f0=f0) #, wav=wav, mel=mel, f0=f0, hubert=hubert_encoded, mel2ph=mel2ph)
+        np.savez(f'./results/volume_test1.npz',
+                 f0=f0)  # , wav=wav, mel=mel, f0=f0, hubert=hubert_encoded, mel2ph=mel2ph)
 
         return {"name": raw_wave_path,
                 "wav": wav,
@@ -270,3 +271,8 @@ class GuassianDiffusion:
 
     def denorm_spec(self, x):
         return (x + 1) / 2 * (self.spec_max - self.spec_min) + self.spec_min
+
+    # ----- for train (or trainer class) -----
+
+    def train(self):
+        pass

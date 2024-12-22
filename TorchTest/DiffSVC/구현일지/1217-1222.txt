@@ -101,4 +101,28 @@ infer의 경우를 예외로 둘 것인지를 생각해보아야한다
 f0'만'을 저장했을 경우 같은 파일에 70.5 KiB가 저장된다
 ... f0만 저장해야겠다
 
+
+----- 1222 -----
+
 sep_wav는 '목소리 추출이 완료된 wav' 또는 '완전 무보정 상태의 mp4'만 받을 수 있다
+
+exist_separated는 각각 10~15초 정도로 분할된 wav파일이 있는지,
+exist_f0_npy는 그 파일들로 만든 f0 npy 파일이 있는지 알아보는 것이다
+
+로직은
+1. path(아마도 /train_dataset)/separated/final을 확인해서 없으면 만들어준다.
+2. 음원의 리스트를 만들어 (diff class의 train 함수내로) 가져온다
+3. path(아마도 /train_dataset)/f0를 확인해서 없으면 만들어준다. (이 때, 모델의 전용 함수 사용)
+    get_raw_cond의 내용을 개조하여
+    3-1) wav, mel, f0를 얻고
+    3-2) 이를 path(아마도 /train_dataset)/f0에 npy로 하나씩 다 저장해준다
+        이 때, 파일 이름은 원본이름(확장자제외)_f0.npy이다
+4. 음원 리스트를 활용하여 cond를 만든다
+    get_raw_cond -> tensor -> collated -> embedding의 순서를 따르되,
+    training은 f0부터 만드므로 해당 과정이 필요없다
+    헷갈리게 get_raw_cond에 if를 걸지말고,
+    get_raw_cond_train을 따로 만든다
+    해당 함수는 원본과 대체로 같지만 f0만큼은 npy로 가져온다
+5. cond와 음원을 활용하여 mel을 만든다
+6. 지상 진실의 mel을 만든다
+7. 이를 mel_out과 비교하여 학습한다.
