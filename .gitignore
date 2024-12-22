@@ -17,6 +17,8 @@ Toys/Failed/SacredConverter/models/
 *.jpeg
 *.wav
 *.mp3
+*.npy
+*.npz
 
 model
 
