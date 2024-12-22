@@ -19,7 +19,8 @@ def exist_separated(_hparams):
         print('학습용 음성 wav 파일 발견, 해당 파일을 사용해 학습 시작')
         return True
 
-
+# 얘는 모델 내부의 기능을 활용해서 만드는 것이니, 모델 안으로 집어넣자
+'''
 def exist_f0_npy(_hparams):
     # f0 파일이 있는지 확인
     f0_npy_dir = _hparams['train_dataset_path_f0']
@@ -32,13 +33,15 @@ def exist_f0_npy(_hparams):
             return False
     else:
         return False
+'''
 
 
 exist_separated(hparams)
-exist_f0_npy(hparams)
+# exist_f0_npy(hparams)
 
 from diffusion.diffusion import GuassianDiffusion
 from vocoder.NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)  # , vocoder.wav2spec)
 # diff.train()
+diff.train()

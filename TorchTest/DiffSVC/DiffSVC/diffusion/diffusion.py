@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import time
+import os
 
 
 class GuassianDiffusion:
@@ -95,16 +96,17 @@ class GuassianDiffusion:
         self.spec_min = torch.FloatTensor(spec_min)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
         self.spec_max = torch.FloatTensor(spec_max)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
 
-    def get_raw_cond(self, raw_wave_path):
-        def norm_interp_f0(_f0):
-            uv = _f0 == 0
-            _f0 = np.log2(_f0)
-            if sum(uv) == len(_f0):
-                _f0[uv] = 0
-            elif sum(uv) > 0:
-                _f0[uv] = np.interp(np.where(uv)[0], np.where(~uv)[0], _f0[~uv])
-            return _f0, uv
+    def norm_interp_f0(self, _f0):
+        # f0를 보간하고 정규화
+        uv = _f0 == 0
+        _f0 = np.log2(_f0)
+        if sum(uv) == len(_f0):
+            _f0[uv] = 0
+        elif sum(uv) > 0:
+            _f0[uv] = np.interp(np.where(uv)[0], np.where(~uv)[0], _f0[~uv])
+        return _f0, uv
 
+    def get_raw_cond(self, raw_wave_path):
         start_time = time.time()
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
         print(f'{time.time() - start_time:.4f}초')
@@ -112,7 +114,7 @@ class GuassianDiffusion:
         # print(wav.shape, mel.shape)
 
         gt_f0 = self.crepe(wav, mel, self.hparams)
-        f0, _ = norm_interp_f0(gt_f0)
+        f0, _ = self.norm_interp_f0(gt_f0)
         print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(f0.shape)
@@ -274,5 +276,31 @@ class GuassianDiffusion:
 
     # ----- for train (or trainer class) -----
 
+    def exist_f0_npy(self):
+        # f0 파일이 있는지 확인
+        f0_npy_dir = self.hparams['train_dataset_path_f0']
+        sep_outputs_dir = os.path.join(self.hparams['train_dataset_path_output'], 'final')
+        if os.path.isdir(sep_outputs_dir) and os.path.isdir(f0_npy_dir):
+            if len(os.listdir(f0_npy_dir)) == len(os.listdir(sep_outputs_dir)):
+                print('학습용 f0 파일 확인, 해당 파일을 사용해 학습 시작')
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def train(self):
-        pass
+        wav_path = os.path.join(self.hparams['train_dataset_path_output'], 'final')
+        wav_list = os.listdir(wav_path)
+
+        if not self.exist_f0_npy():
+            for fname in wav_list:
+                temp_path = os.path.join(wav_path, fname)
+
+                print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
+                wav, mel = self.wav2spec(temp_path, self.hparams)
+                gt_f0 = self.crepe(wav, mel, self.hparams)
+                f0, _ = self.norm_interp_f0(gt_f0)
+
+                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+                np.save(save_path, f0)
