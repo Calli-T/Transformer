@@ -16,6 +16,7 @@ Toys/Failed/SacredConverter/models/
 *.ckpt
 *.jpeg
 *.wav
+*.mp3
 
 model
 

@@ -16,7 +16,8 @@ from torchaudio.transforms import Fade
 
 temp_log_path = "temp_ffmpeg_log.txt"  # ffmpeg의 무음 감지 로그의 임시 저장 위치
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # demucs (목소리 추출)을 위한 device 세팅
+
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # demucs (목소리 추출)을 위한 device 세팅
 
 def extract_voice(
         model,
@@ -37,10 +38,10 @@ def extract_voice(
             be on `device`, while the entire tracks will be stored on `mix.device`.
     """
 
-    if device is None:
+    '''if device is None:
         device = mix.device
     else:
-        device = torch.device(device)
+        device = torch.device(device)'''
 
     if sample_rate is None:
         raise "Demucs model loading error"
@@ -72,8 +73,7 @@ def extract_voice(
     return final
 
 
-
-def mp4_to_wav(input_dir:str, input_file: str):
+def mp4_to_wav(input_dir: str, input_file: str):
     """mp4파일을 wav형식으로 변환합니다.
 
     Args:
@@ -84,10 +84,10 @@ def mp4_to_wav(input_dir:str, input_file: str):
     ext = os.path.splitext(input_file)[1][1:]
 
     if ext != "mp4":
-        return 
-    else :
-        track = AudioSegment.from_file(os.path.join(input_dir,input_file),  format= 'mp4')
-        track.export(os.path.join(input_dir,os.path.splitext(input_file)[0]+".wav"), format='wav')
+        return
+    else:
+        track = AudioSegment.from_file(os.path.join(input_dir, input_file), format='mp4')
+        track.export(os.path.join(input_dir, os.path.splitext(input_file)[0] + ".wav"), format='wav')
 
 
 def audio_norm(input_filepath: str, output_filepath: str, use_preprocessing: bool):
@@ -143,7 +143,8 @@ def get_audiofiles(path: str) -> List[str]:
     return filepaths
 
 
-def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_preprocessing: bool=True, use_norm: bool = True, use_extract: bool = True) -> None:
+def separate(device, input_dir: str, output_dir: str, split_sil: bool = False, use_preprocessing: bool = True,
+             use_norm: bool = True, use_extract: bool = True) -> None:
     """메인 로직
 
     Args:
@@ -155,7 +156,7 @@ def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_prepr
     """
 
     for filename in tqdm(os.listdir(input_dir), desc="mp4 to wav 변환 작업 중..."):
-        mp4_to_wav(input_dir,filename)
+        mp4_to_wav(input_dir, filename)
 
     filepaths = get_audiofiles(input_dir)
 
@@ -188,14 +189,15 @@ def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_prepr
 
         filename = os.path.splitext(os.path.basename(filepath))[0]
         out_filepath = os.path.join(output_final_dir, f"{filename}-%03d.wav")
-        subprocess.run(f'ffmpeg -i "{filepath}" -f segment -segment_time {sep_duration_final} "{out_filepath}" -y', capture_output=True, shell=True)
+        subprocess.run(f'ffmpeg -i "{filepath}" -f segment -segment_time {sep_duration_final} "{out_filepath}" -y',
+                       capture_output=True, shell=True)
 
     filepaths = get_audiofiles(output_final_dir)
 
     if use_extract:
         output_voice_dir = os.path.join(output_dir, "voice")
         os.makedirs(output_voice_dir, exist_ok=True)
-        
+
         bundle = HDEMUCS_HIGH_MUSDB_PLUS
         model = bundle.get_model()
         model.to(device)
@@ -206,7 +208,8 @@ def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_prepr
             if os.path.exists(temp_log_path):
                 os.remove(temp_log_path)
 
-            waveform, sample_rate = torchaudio.load(filepath)  # replace SAMPLE_SONG with desired path for different song
+            waveform, sample_rate = torchaudio.load(
+                filepath)  # replace SAMPLE_SONG with desired path for different song
             waveform.to(device)
 
             # parameters
@@ -230,7 +233,8 @@ def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_prepr
             filename = os.path.splitext(os.path.basename(filepath))[0]
             out_filepath = os.path.join(output_voice_dir, f"{filename}.wav")
 
-            torchaudio.save(out_filepath, audios["vocals"].cpu(), sample_rate) # audios has drums, bass, vocals, others, but we need only vocals
+            torchaudio.save(out_filepath, audios["vocals"].cpu(),
+                            sample_rate)  # audios has drums, bass, vocals, others, but we need only vocals
 
             if use_preprocessing:
                 rawsound = AudioSegment.from_file(out_filepath, format='wav')
@@ -267,22 +271,24 @@ def separate(input_dir: str, output_dir: str, split_sil: bool = False, use_prepr
                     end = int(end)
 
                 y, sr = librosa.load(filepath, sr=None)
-                y = np.concatenate((y[: round(sr * start)], y[round(sr * end) :]), axis=None)
+                y = np.concatenate((y[: round(sr * start)], y[round(sr * end):]), axis=None)
                 soundfile.write(filepath, y, samplerate=sr)
 
     if os.path.exists(temp_log_path):
         os.remove(temp_log_path)
 
 
-def separate_run():
-    input_dir = "preprocess"
-    output_dir = "preprocess_out"
+def separate_run(_hparams):
+    device = _hparams['device']
+    input_dir = _hparams['train_dataset_path_input']
+    output_dir = _hparams['train_dataset_path_output']
     split_sil = False
-    use_preprocessing = True # for set samplerate to 44100, channel to mono
+    use_preprocessing = True  # for set samplerate to 44100, channel to mono
     use_norm = True
-    use_extract = True
+    use_extract = _hparams['use_extract']
 
     separate(
+        device=device,
         input_dir=input_dir,
         output_dir=output_dir,
         split_sil=split_sil,

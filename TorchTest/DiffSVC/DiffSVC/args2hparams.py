@@ -8,7 +8,7 @@ hparams = {
     "project_name": project_name,
     "model_pt_epoch": pt_epoch,  # 학습'된' epoch
 
-    "raw_wave_path": "raw/apart [vocals]-24_48sec.wav",  # "raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/yoon1.wav",  # "raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
@@ -39,7 +39,8 @@ hparams = {
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
-    "emb_model_path": f"models/singer/{project_name}/embedding_model_steps_{pt_epoch}.pt",  # "model_ckpt_steps_30000.ckpt",
+    "emb_model_path": f"models/singer/{project_name}/embedding_model_steps_{pt_epoch}.pt",
+    # "model_ckpt_steps_30000.ckpt",
     "hidden_size": 256,
 
     # for wavenet
@@ -113,6 +114,13 @@ hparams = {
     "keep_bins": 128,
     "mel_vmax": 1.5,
     "mel_vmin": -6.0,
+
+    # for train & dataset
+    "train_dataset_path_input": "train_dataset/raw",
+    "train_dataset_path_output": "train_dataset/separated",
+    "use_extract": True,  # 음원 추출기인데 일단 버그 있더라???
+
+    "train_dataset_path_f0": "train_dataset/f0",
 }
 
 '''
