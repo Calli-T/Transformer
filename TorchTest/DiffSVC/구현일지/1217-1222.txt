@@ -153,3 +153,13 @@ f0를 제외한 임베딩 과정 까지는 VRAM을 그렇게 안잡아먹는다
 VRAM은 9% (12 GiB임), GPU는 72%까지 사용하더라
 
 근데 이거 나중에 여러 파일 학습하도록 개조해야한다 !!!!!!
+
+아니 음원에 norm안박았다 세상에
+그전에, denorm의 코드를 좀 수정했다
+spec_min, max의 텐서 모양을 x에 맞춰 expand하도록(반복하여 채워넣도록)한다
+다음은 denorm의 코드와 출력이다
+print(x.shape, self.spec_min.shape, self.spec_max.shape)
+print(type(x), type(self.spec_min), type(self.spec_max))
+torch.Size([1, 2325, 128]) torch.Size([1, 1, 128]) torch.Size([1, 1, 128])
+<class 'torch.Tensor'> <class 'torch.Tensor'> <class 'torch.Tensor'>
+norm B1MT 맞추기랑, noise넣기랑 해야함

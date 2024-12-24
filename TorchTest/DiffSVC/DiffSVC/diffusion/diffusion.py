@@ -203,7 +203,7 @@ class GuassianDiffusion:
         embedding = self.embedding_model(collated_tensor)
 
         # for mel2wav
-        embedding['raw_mel2ph'] = raw_cond['mel2ph']
+        embedding['raw_mel2ph'] = collated_tensor['mel2ph']  # raw_cond['mel2ph']
 
         # for train
         embedding['raw_gt_mel'] = raw_cond['mel']
@@ -278,10 +278,19 @@ class GuassianDiffusion:
         return ret
 
     def norm_spec(self, x):
-        return (x - self.spec_min) / (self.spec_max - self.spec_min) * 2 - 1
+        T = x.shape[1]
+        spec_min_expand = self.spec_min.expand(1, T, self.hparams['audio_num_mel_bins'])
+        spec_max_expand = self.spec_max.expand(1, T, self.hparams['audio_num_mel_bins'])
+        return (x - spec_min_expand) / (spec_max_expand - spec_min_expand) * 2 - 1
+        # return (x - self.spec_min) / (self.spec_max - self.spec_min) * 2 - 1
 
     def denorm_spec(self, x):
-        return (x + 1) / 2 * (self.spec_max - self.spec_min) + self.spec_min
+        '''print(x.shape, self.spec_min.shape, self.spec_max.shape)
+        print(type(x), type(self.spec_min), type(self.spec_max))'''
+        T = x.shape[1]
+        spec_min_expand = self.spec_min.expand(1, T, self.hparams['audio_num_mel_bins'])
+        spec_max_expand = self.spec_max.expand(1, T, self.hparams['audio_num_mel_bins'])
+        return (x + 1) / 2 * (spec_max_expand - spec_min_expand) + spec_min_expand
 
     # ----- for train (or trainer class) -----
 
@@ -325,11 +334,22 @@ class GuassianDiffusion:
             ret = self.get_cond(temp_path, f0)
             cond = ret['decoder_inp'].transpose(1, 2)
             gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
-            B1MT_input_mel = gt_mel.unsqueeze(0).unsqueeze(1)
-            print(B1MT_input_mel.shape)
+            B1MT_input_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
+            B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
+            # print(cond.shape)
+            # print(B1MT_input_mel.shape)
+            # 잡음 먹이기
+            diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
+                                                size=self.hparams['batch_size_train'])
+            signal_rates = torch.Tensor(np.sqrt(self.alpha_bars[diffusion_times])).to(self.hparams['device'])
+            noise_rates = torch.Tensor(np.sqrt(1. - self.alpha_bars[diffusion_times])).to(self.hparams['device'])
+            # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
+            t = diffusion_times[0]
+            # print(signal_rates, noise_rates)
 
             # for comparison (origin)
-            gt_mel = gt_mel.unsqueeze(0)
+            gt_mel = gt_mel.detach().expand(self.hparams['batch_size_train'], -1, -1)  # .transpose(1, 2)
+            # print(gt_mel.shape)
 
             # print(cond.shape)
             '''
