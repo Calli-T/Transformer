@@ -117,15 +117,39 @@ exist_f0_npy는 그 파일들로 만든 f0 npy 파일이 있는지 알아보는 
     3-1) wav, mel, f0를 얻고
     3-2) 이를 path(아마도 /train_dataset)/f0에 npy로 하나씩 다 저장해준다
         이 때, 파일 이름은 원본이름(확장자제외)_f0.npy이다
-
-- 현재 여기까지 작업 -
-
 4. 음원 리스트를 활용하여 cond를 만든다
     get_raw_cond -> tensor -> collated -> embedding의 순서를 따르되,
     training은 f0부터 만드므로 해당 과정이 필요없다
     헷갈리게 get_raw_cond에 if를 걸지말고,
     get_raw_cond_train을 따로 만든다
     해당 함수는 원본과 대체로 같지만 f0만큼은 npy로 가져온다
+    -> if 걸고 걍 만들었으며, f0 load하는거 만들었다
+
+- 현재 여기까지 작업 -
+
 5. cond와 음원을 활용하여 mel을 만든다
+딴건 다 코딩 그럴듯하게 할만한데 input용 B1MT 텐서에 노이즈 먹이기가 쉽지는 않다
 6. 지상 진실의 mel을 만든다
 7. 이를 mel_out과 비교하여 학습한다.
+
+
+----- 1224 -----
+mel.shape: (2325, 128)
+mel_out.shape: torch.Size([1, 2325, 128])
+collated mel:
+
+그냥 collated_tensor의 mel을 gt_mel로 만들면 되겠는데?
+차원 1인 차원축이 앞에 추가된거랑, 텐서화 된거까지 완벽함
+근데 입력 차원이 (B, 1, M, T)라 걍 get_raw_cond에서 새로 만들자
+loss는 gt_mel과 mel_out을 비교하자
+
+일단 원본은 학습 때 배치가 10개던데, 10개 다 안들어갈듯? 아마 하나씩 넣는 모양
+음원 개수가 173개고, 93116 steps을 기준으로 * batch_size / epoch하면
+170.xxx가 나온다, 즉 epoch와 steps는 다른 개념으로 적용하며
+batch_size * steps = epoch * 음원수, (아마 배치 크기가 안되는건 버리는듯)
+
+f0가 역시나 문제였으며
+f0를 제외한 임베딩 과정 까지는 VRAM을 그렇게 안잡아먹는다
+VRAM은 9% (12 GiB임), GPU는 72%까지 사용하더라
+
+근데 이거 나중에 여러 파일 학습하도록 개조해야한다 !!!!!!

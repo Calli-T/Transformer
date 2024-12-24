@@ -112,6 +112,7 @@ class GuassianDiffusion:
         print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(wav.shape, mel.shape)
+        # print(f"mel.shape: {mel.shape}")
 
         if saved_f0 is not None:
             f0 = saved_f0
@@ -143,12 +144,13 @@ class GuassianDiffusion:
         max_input_tokens = self.hparams['max_input_tokens']
         device = self.hparams['device']
 
-        item['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
-        item['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
-        item['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
-        item['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
+        tensor_cond = dict()
+        tensor_cond['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
+        tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
+        tensor_cond['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
+        tensor_cond['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
 
-        return item
+        return tensor_cond
 
     def get_collated_cond(self, item):
         def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
@@ -185,12 +187,13 @@ class GuassianDiffusion:
                 copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
             return res
 
-        item['hubert'] = collate_2d([item['hubert']], 0.0)
-        item['f0'] = collate_1d([item['f0']], 0.0)
-        item['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
-        item['mel'] = collate_2d([item['mel']], 0.0)
+        collated_cond = dict()
+        collated_cond['hubert'] = collate_2d([item['hubert']], 0.0)
+        collated_cond['f0'] = collate_1d([item['f0']], 0.0)
+        collated_cond['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
+        collated_cond['mel'] = collate_2d([item['mel']], 0.0)
 
-        return item
+        return collated_cond
 
     def get_cond(self, raw_wave_path, saved_f0=None):
         raw_cond = self.get_raw_cond(raw_wave_path, saved_f0)
@@ -198,7 +201,12 @@ class GuassianDiffusion:
         collated_tensor = self.get_collated_cond(cond_tensor)
         self.embedding_model.eval()
         embedding = self.embedding_model(collated_tensor)
+
+        # for mel2wav
         embedding['raw_mel2ph'] = raw_cond['mel2ph']
+
+        # for train
+        embedding['raw_gt_mel'] = raw_cond['mel']
 
         return embedding
 
@@ -265,6 +273,8 @@ class GuassianDiffusion:
         except:
             print("file name error")
 
+        # print(f"mel_out.shape: {ret['mel_out'].shape}")
+
         return ret
 
     def norm_spec(self, x):
@@ -304,14 +314,32 @@ class GuassianDiffusion:
                 save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
                 np.save(save_path, f0)
 
+        # '일단은' 한 파일씩 학습함
         for fname in wav_list:
             print(f"'{fname}'파일 작업중")
             temp_path = os.path.join(wav_path, fname)
             save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
             f0 = np.load(save_path)
 
+            # for model input
             ret = self.get_cond(temp_path, f0)
             cond = ret['decoder_inp'].transpose(1, 2)
+            gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
+            B1MT_input_mel = gt_mel.unsqueeze(0).unsqueeze(1)
+            print(B1MT_input_mel.shape)
+
+            # for comparison (origin)
+            gt_mel = gt_mel.unsqueeze(0)
 
             # print(cond.shape)
+            '''
+            M = self.hparams['audio_num_mel_bins']
+            T = cond.shape[2]
+            B = 1
+            device = self.hparams['device']
+
+            x = torch.randn((B, 1, M, T)).to(device)
+            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
+                x = self.p_sample(x, t, cond)
+            '''
             print()
