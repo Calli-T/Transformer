@@ -117,6 +117,9 @@ exist_f0_npy는 그 파일들로 만든 f0 npy 파일이 있는지 알아보는 
     3-1) wav, mel, f0를 얻고
     3-2) 이를 path(아마도 /train_dataset)/f0에 npy로 하나씩 다 저장해준다
         이 때, 파일 이름은 원본이름(확장자제외)_f0.npy이다
+
+- 현재 여기까지 작업 -
+
 4. 음원 리스트를 활용하여 cond를 만든다
     get_raw_cond -> tensor -> collated -> embedding의 순서를 따르되,
     training은 f0부터 만드므로 해당 과정이 필요없다

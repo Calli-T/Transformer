@@ -106,15 +106,18 @@ class GuassianDiffusion:
             _f0[uv] = np.interp(np.where(uv)[0], np.where(~uv)[0], _f0[~uv])
         return _f0, uv
 
-    def get_raw_cond(self, raw_wave_path):
+    def get_raw_cond(self, raw_wave_path, saved_f0=None):
         start_time = time.time()
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
         print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(wav.shape, mel.shape)
 
-        gt_f0 = self.crepe(wav, mel, self.hparams)
-        f0, _ = self.norm_interp_f0(gt_f0)
+        if saved_f0 is not None:
+            f0 = saved_f0
+        else:
+            gt_f0 = self.crepe(wav, mel, self.hparams)
+            f0, _ = self.norm_interp_f0(gt_f0)
         print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(f0.shape)
@@ -127,10 +130,6 @@ class GuassianDiffusion:
         mel2ph = self.get_align(mel, hubert_encoded)
         # print(mel2ph.shape)
         print(f'{time.time() - start_time:.4f}초')
-        # start_time = time.time()
-
-        np.savez(f'./results/volume_test1.npz',
-                 f0=f0)  # , wav=wav, mel=mel, f0=f0, hubert=hubert_encoded, mel2ph=mel2ph)
 
         return {"name": raw_wave_path,
                 "wav": wav,
@@ -193,8 +192,8 @@ class GuassianDiffusion:
 
         return item
 
-    def get_cond(self, raw_wave_path):
-        raw_cond = self.get_raw_cond(raw_wave_path)
+    def get_cond(self, raw_wave_path, saved_f0=None):
+        raw_cond = self.get_raw_cond(raw_wave_path, saved_f0)
         cond_tensor = self.get_tensor_cond(raw_cond)
         collated_tensor = self.get_collated_cond(cond_tensor)
         self.embedding_model.eval()
@@ -304,3 +303,15 @@ class GuassianDiffusion:
 
                 save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
                 np.save(save_path, f0)
+
+        for fname in wav_list:
+            print(f"'{fname}'파일 작업중")
+            temp_path = os.path.join(wav_path, fname)
+            save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+            f0 = np.load(save_path)
+
+            ret = self.get_cond(temp_path, f0)
+            cond = ret['decoder_inp'].transpose(1, 2)
+
+            # print(cond.shape)
+            print()
