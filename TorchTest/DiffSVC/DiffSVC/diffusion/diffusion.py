@@ -279,12 +279,16 @@ class GuassianDiffusion:
 
     def norm_spec(self, x):
         T = x.shape[1]
-        spec_min_expand = self.spec_min.expand(1, T, self.hparams['audio_num_mel_bins'])
-        spec_max_expand = self.spec_max.expand(1, T, self.hparams['audio_num_mel_bins'])
+        spec_min_expand = self.spec_min.expand(1, T, self.hparams['audio_num_mel_bins']).transpose(1, 2)
+        spec_max_expand = self.spec_max.expand(1, T, self.hparams['audio_num_mel_bins']).transpose(1, 2)
+        spec_min_expand = spec_min_expand.expand(self.hparams['batch_size_train'], -1, -1, -1)
+        spec_max_expand = spec_max_expand.expand(self.hparams['batch_size_train'], -1, -1, -1)
+
         return (x - spec_min_expand) / (spec_max_expand - spec_min_expand) * 2 - 1
         # return (x - self.spec_min) / (self.spec_max - self.spec_min) * 2 - 1
 
     def denorm_spec(self, x):
+        print(self.spec_max.shape)
         '''print(x.shape, self.spec_min.shape, self.spec_max.shape)
         print(type(x), type(self.spec_min), type(self.spec_max))'''
         T = x.shape[1]
@@ -330,21 +334,27 @@ class GuassianDiffusion:
             save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
             f0 = np.load(save_path)
 
-            # for model input
+            # - for model input -
             ret = self.get_cond(temp_path, f0)
             cond = ret['decoder_inp'].transpose(1, 2)
             gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
             B1MT_input_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
             B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
+            B1MT_input_mel = self.norm_spec(B1MT_input_mel) # 정상화
             # print(cond.shape)
-            # print(B1MT_input_mel.shape)
+            print(B1MT_input_mel.shape)
+
             # 잡음 먹이기
+            noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
             diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
                                                 size=self.hparams['batch_size_train'])
             signal_rates = torch.Tensor(np.sqrt(self.alpha_bars[diffusion_times])).to(self.hparams['device'])
             noise_rates = torch.Tensor(np.sqrt(1. - self.alpha_bars[diffusion_times])).to(self.hparams['device'])
+            noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
+                noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
+
             # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
-            t = diffusion_times[0]
+            # t = diffusion_times[0]
             # print(signal_rates, noise_rates)
 
             # for comparison (origin)

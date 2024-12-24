@@ -163,3 +163,20 @@ print(type(x), type(self.spec_min), type(self.spec_max))
 torch.Size([1, 2325, 128]) torch.Size([1, 1, 128]) torch.Size([1, 1, 128])
 <class 'torch.Tensor'> <class 'torch.Tensor'> <class 'torch.Tensor'>
 norm B1MT 맞추기랑, noise넣기랑 해야함
+
+batch를 여러 개 만드려면, get_raw_cond에서 !!!
+raw_wave_path가 배열일 때의 코드가 필요하다
+tensor/collate/embedding은 만들 때 batch로 그대로 만들 수 있으나
+wav, mel은 '하나씩' 읽어오도록 되어있기 때문에
+tensor단계보다 numpy array일 때 그대로 쌓아야 tensor단계에서 수월할것으로 예상
+infer는 f0를 미리 만들어 둔게 없음 -> 모델이 너무 큰 VRAM을 잡아먹음 -> 배치로 따로 만들 필요가 없음
+이 3단계를 거쳐서 따로 배치를 만들어두지는 않았는데, B1MT의 형식을 보면 형식 자체는 배치가 있을 때를 가정하고 있다
+결론: get_raw_cond함수에서 raw_wave_path가
+여럿일 때의 반환 값을 따로 만들어줘야한다 !!!
+그리고 train 함수를 따로 개조하여 이에 상응하도록 조치해줘야 한다!!!
+
+norm은 입력에 대해 동작하고,
+입력은 B1MT, 출력은 BTM인 모델이라 안맞다 서로...
+norm_spec은 denorm_spec과 살짝 다른 형태로 가야한다
+
+mel norm했고, noise는 사이즈 맞춰서 만들고, 잡음먹이고... 작업을 해야한다
