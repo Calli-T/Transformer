@@ -340,9 +340,9 @@ class GuassianDiffusion:
             gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
             B1MT_input_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
             B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
-            B1MT_input_mel = self.norm_spec(B1MT_input_mel) # 정상화
+            B1MT_input_mel = self.norm_spec(B1MT_input_mel)  # 정상화
             # print(cond.shape)
-            print(B1MT_input_mel.shape)
+            # print(B1MT_input_mel.shape)
 
             # 잡음 먹이기
             noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
@@ -354,10 +354,12 @@ class GuassianDiffusion:
                 noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
 
             # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
-            # t = diffusion_times[0]
+            t = diffusion_times[0]
             # print(signal_rates, noise_rates)
+            pred_noises = self.p_sample(B1MT_input_mel, t, cond)
+            # print(pred_noises.shape)
 
-            # for comparison (origin)
+            # for loss, comparison (origin)
             gt_mel = gt_mel.detach().expand(self.hparams['batch_size_train'], -1, -1)  # .transpose(1, 2)
             # print(gt_mel.shape)
 
