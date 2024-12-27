@@ -11,3 +11,59 @@
 6. 학습 interval
 7. spec_min/max 값 변경 혹은 제작기 구현
 8. 긴 음악도 infer 가능하도록 변경
+9. train/infer.py pipeline 제작
+
+추가
+패딩...?
+자른 음원들이 frame이 다른데 무지성으로 np 통합시켜서 tensor화 시켜도 되는건가?
+(GPT) wavenet같은 시계열 모델 구조 자체가 가변 길이 입력이 자연스러워서 상관 없다고한다
+다만 배치문제나 최적화 문제는 좀 다른 이야기인 모양
+-> 나중에 시계열 데이터를 일정한 블록(여기서 vram의 성능에 따라 바뀌도록)으로 자르는 코드를
+제작해보자!!!!!!!!
+일단은 패딩 없이 간x
+
+원본의 코드는 텐서의 크기가 동일하다
+batch size 10일 때 [10, 128, 1297] 뭐 이런식으로 싹 다 패딩이 되어있다.
+
+pack_padded_sequence / 직접 마스크 제작 및 적용 2가지 방식이 유효하다
+
+----- 패딩 방법 예시 -----
+import torch
+import torch.nn as nn
+
+# 예시 데이터
+noises = torch.randn(2, 1, 128, 1300)  # (batch_size, 1, feature, time)
+pred_noises = torch.randn(2, 1, 128, 1300)
+
+# 마스크 생성
+mask = torch.ones_like(noises)
+mask[:, :, :, 1287:] = 0  # 패딩된 부분을 0으로 설정
+
+# 손실 함수 정의
+criterion = nn.MSELoss(reduction='none')  # 각 요소별 MSE 계산
+
+# 손실 계산
+loss = criterion(noises, pred_noises)
+loss = loss * mask  # 마스크를 곱하여 패딩 부분의 손실을 0으로 만듦
+
+# 전체 손실의 평균 계산
+loss = loss.mean()
+
+----- pack_padded_sequence 사용법 예제 -----
+import torch
+import torch.nn.utils.rnn as rnn
+
+# 가변 길이의 시퀀스 데이터 생성 (예시)
+sequences = [torch.randn(5, 10), torch.randn(3, 10), torch.randn(7, 10)]
+lengths = [len(seq) for seq in sequences]
+
+# 패딩
+padded_sequence = rnn.pad_sequence(sequences, batch_first=True)
+
+# 패킹
+packed_sequence = rnn.pack_padded_sequence(padded_sequence, lengths, batch_first=True)
+
+# RNN 모델에 입력
+output, hidden = rnn.LSTM(input_size=10, hidden_size=20, batch_first=True)(packed_sequence)
+이거 텐서화는 어째 다 따로 해줘야하는 모양이다?
+-> 이거로 낙점, 코딩은 나중에

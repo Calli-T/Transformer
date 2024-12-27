@@ -8,7 +8,7 @@ hparams = {
     "project_name": project_name,
     "model_pt_epoch": pt_epoch,  # 학습'된' epoch
 
-    "raw_wave_path": "raw/L-O-V-E.wav",  # "raw/L-O-V-E_[cut_6sec].wav",
+    "raw_wave_path": "raw/L-O-V-E_[cut_6sec].wav",  # "raw/L-O-V-E_[cut_6sec].wav",
     # "raw_dir_path": "raw",
 
     # for vocoder, NsfHiFiGAN
@@ -56,7 +56,7 @@ hparams = {
     "schedule_name": "linear",
     "steps": 1000,  # 00,
 
-    # for postprocess
+    # for postprocess, pitch normalization
     "spec_max": [0.5272776484489441, 0.9114222526550293, 1.1117855310440063, 1.0987094640731812, 1.1520036458969116,
                  1.205979347229004, 1.1478168964385986, 1.0361219644546509, 0.9603051543235779, 1.1451283693313599,
                  1.0149853229522705, 1.0380277633666992, 1.1308894157409668, 1.1211094856262207, 1.000557541847229,
@@ -120,7 +120,8 @@ hparams = {
     "train_dataset_path_output": f"train_dataset/{project_name}/separated",
     "train_dataset_path_f0": f"train_dataset/{project_name}/f0",  # f0만 따로 저장해두는 장소
     "use_extract": False,  # True,  # MR제거인데 일단 적용안되는 문제가 있음
-    "batch_size_train": 1,
+    "batch_size_train": 1,  # dummy
+    "BATCH_SIZE_TRAIN": 10,
 
     "LEARNING_RATE": 0.0001,
     "WEIGHT_DECAY": 0.00001,

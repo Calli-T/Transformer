@@ -105,7 +105,14 @@ class GuassianDiffusion:
         return _f0, uv
 
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
-        wav, mel = self.wav2spec(raw_wave_path, self.hparams)
+        if isinstance(raw_wave_path, list):
+            for fname in raw_wave_path:
+                wav, mel = self.wav2spec(fname, self.hparams)
+                print(wav.shape, mel.shape)
+            # wav, mel = self.wav2spec(raw_wave_path, self.hparams)
+            return
+        else:
+            wav, mel = self.wav2spec(raw_wave_path, self.hparams)
 
         if saved_f0 is not None:
             f0 = saved_f0
@@ -360,6 +367,7 @@ class GuassianDiffusion:
                 gt_mel = self.norm_spec(gt_mel)  # 정상화'''
                 # print(gt_mel.shape)
                 # print(gt_mel.shape, pred_noises.shape)
+                print(pred_noises.shape)
                 loss = self.criterion(noises, pred_noises)
 
                 self.optimizer.zero_grad()
@@ -369,4 +377,4 @@ class GuassianDiffusion:
 
                 # print()
 
-            print(f"Epoch: {epoch + 1}, Loss:{cost/len(wav_list):.4f}")
+            print(f"Epoch: {epoch + 1}, Loss:{cost / len(wav_list):.4f}")
