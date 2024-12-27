@@ -51,14 +51,6 @@ class GuassianDiffusion:
 
     def __init__(self, _hparams, wav2spec=None):
         self.hparams = _hparams
-        '''
-        schedule의 register_buffer는 나중에 고려
-        criterion, optimizer를 만들자
-        q_sample과 샘플링 과정을 만들자, t의 변환은 당장은 필요없다
-        p_sample과 학습 과정을 만들자
-        embedding_model과 wavenet model을 장착하자
-        norm/denorm을 구현해두자 ※ 고정값으로 해두고 opencpop으로 만들어진 값이므로 나중에 대체하자
-        '''
 
         # for conditioning
         if wav2spec is not None:
@@ -113,30 +105,17 @@ class GuassianDiffusion:
         return _f0, uv
 
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
-        start_time = time.time()
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
-        # print(f'{time.time() - start_time:.4f}초')
-        start_time = time.time()
-        # print(wav.shape, mel.shape)
-        # print(f"mel.shape: {mel.shape}")
 
         if saved_f0 is not None:
             f0 = saved_f0
         else:
             gt_f0 = self.crepe(wav, mel, self.hparams)
             f0, _ = self.norm_interp_f0(gt_f0)
-        # print(f'{time.time() - start_time:.4f}초')
-        start_time = time.time()
-        # print(f0.shape)
 
         hubert_encoded = self.hubert.encode(raw_wave_path)
-        # print(hubert_encoded.shape)
-        # print(f'{time.time() - start_time:.4f}초')
-        start_time = time.time()
 
         mel2ph = self.get_align(mel, hubert_encoded)
-        # print(mel2ph.shape)
-        # print(f'{time.time() - start_time:.4f}초')
 
         return {"name": raw_wave_path,
                 "wav": wav,

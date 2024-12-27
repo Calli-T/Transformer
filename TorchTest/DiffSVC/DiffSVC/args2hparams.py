@@ -116,10 +116,10 @@ hparams = {
     "mel_vmin": -6.0,
 
     # for train & dataset
-    "train_dataset_path_input": "train_dataset/raw",
-    "train_dataset_path_output": "train_dataset/separated",
-    "train_dataset_path_f0": "train_dataset/f0",  # f0만 따로 저장해두는 장소
-    "use_extract": False,  # True,  # MR제거인데 일단 적용안되는거 확인함???
+    "train_dataset_path_input": f"train_dataset/{project_name}/raw",
+    "train_dataset_path_output": f"train_dataset/{project_name}/separated",
+    "train_dataset_path_f0": f"train_dataset/{project_name}/f0",  # f0만 따로 저장해두는 장소
+    "use_extract": False,  # True,  # MR제거인데 일단 적용안되는 문제가 있음
     "batch_size_train": 1,
 
     "LEARNING_RATE": 0.0001,
