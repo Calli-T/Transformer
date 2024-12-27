@@ -10,6 +10,7 @@ import torch
 from tqdm import tqdm
 import time
 import os
+from torch import nn, optim
 
 
 class GuassianDiffusion:
@@ -96,6 +97,11 @@ class GuassianDiffusion:
         self.spec_min = torch.FloatTensor(spec_min)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
         self.spec_max = torch.FloatTensor(spec_max)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
 
+        # for loss & back propagation
+        self.criterion = nn.MSELoss().to(self.hparams['device'])
+        self.optimizer = optim.AdamW(list(self.embedding_model.parameters()) + list(self.wavenet.parameters()),
+                                     lr=self.hparams["LEARNING_RATE"], weight_decay=self.hparams["WEIGHT_DECAY"])
+
     def norm_interp_f0(self, _f0):
         # f0를 보간하고 정규화
         uv = _f0 == 0
@@ -109,7 +115,7 @@ class GuassianDiffusion:
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
         start_time = time.time()
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
-        print(f'{time.time() - start_time:.4f}초')
+        # print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(wav.shape, mel.shape)
         # print(f"mel.shape: {mel.shape}")
@@ -119,18 +125,18 @@ class GuassianDiffusion:
         else:
             gt_f0 = self.crepe(wav, mel, self.hparams)
             f0, _ = self.norm_interp_f0(gt_f0)
-        print(f'{time.time() - start_time:.4f}초')
+        # print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
         # print(f0.shape)
 
         hubert_encoded = self.hubert.encode(raw_wave_path)
         # print(hubert_encoded.shape)
-        print(f'{time.time() - start_time:.4f}초')
+        # print(f'{time.time() - start_time:.4f}초')
         start_time = time.time()
 
         mel2ph = self.get_align(mel, hubert_encoded)
         # print(mel2ph.shape)
-        print(f'{time.time() - start_time:.4f}초')
+        # print(f'{time.time() - start_time:.4f}초')
 
         return {"name": raw_wave_path,
                 "wav": wav,
@@ -312,6 +318,9 @@ class GuassianDiffusion:
             return False
 
     def train(self):
+        self.embedding_model.train()
+        self.wavenet.train()
+
         wav_path = os.path.join(self.hparams['train_dataset_path_output'], 'final')
         wav_list = os.listdir(wav_path)
 
@@ -326,52 +335,59 @@ class GuassianDiffusion:
 
                 save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
                 np.save(save_path, f0)
+        for epoch in tqdm(range(self.hparams['train_target_epochs'])):
+            # '일단은' 한 파일씩 학습함
+            cost = 0.0
 
-        # '일단은' 한 파일씩 학습함
-        for fname in wav_list:
-            print(f"'{fname}'파일 작업중")
-            temp_path = os.path.join(wav_path, fname)
-            save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
-            f0 = np.load(save_path)
+            for fname in wav_list:
+                # print(f"'{fname}'파일 작업중")
+                temp_path = os.path.join(wav_path, fname)
+                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+                f0 = np.load(save_path)
 
-            # - for model input -
-            ret = self.get_cond(temp_path, f0)
-            cond = ret['decoder_inp'].transpose(1, 2)
-            gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
-            B1MT_input_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
-            B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
-            B1MT_input_mel = self.norm_spec(B1MT_input_mel)  # 정상화
-            # print(cond.shape)
-            # print(B1MT_input_mel.shape)
+                # - for model input -
+                ret = self.get_cond(temp_path, f0)
+                cond = ret['decoder_inp'].transpose(1, 2)
+                gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
+                B1MT_input_mel = gt_mel.unsqueeze(0).unsqueeze(1).transpose(2, 3)
+                B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
+                B1MT_input_mel = self.norm_spec(B1MT_input_mel)  # 정상화
+                # print(cond.shape)
+                # print(B1MT_input_mel.shape)
 
-            # 잡음 먹이기
-            noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
-            diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
-                                                size=self.hparams['batch_size_train'])
-            signal_rates = torch.Tensor(np.sqrt(self.alpha_bars[diffusion_times])).to(self.hparams['device'])
-            noise_rates = torch.Tensor(np.sqrt(1. - self.alpha_bars[diffusion_times])).to(self.hparams['device'])
-            noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
-                noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
+                # 잡음 먹이기
+                noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
+                diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
+                                                    size=self.hparams['batch_size_train'])
+                t = int(diffusion_times[0])
+                '''print(t)
+                print(type(t))
+                print(self.alpha_bars[t])'''
+                signal_rates = torch.Tensor(np.array(np.sqrt(self.alpha_bars[t]))).to(self.hparams['device'])
+                noise_rates = torch.Tensor(np.array(np.sqrt(1. - self.alpha_bars[t]))).to(self.hparams['device'])
+                noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
+                    noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
 
-            # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
-            t = diffusion_times[0]
-            # print(signal_rates, noise_rates)
-            pred_noises = self.p_sample(B1MT_input_mel, t, cond)
-            # print(pred_noises.shape)
+                # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
 
-            # for loss, comparison (origin)
-            gt_mel = gt_mel.detach().expand(self.hparams['batch_size_train'], -1, -1)  # .transpose(1, 2)
-            # print(gt_mel.shape)
+                # print(signal_rates, noise_rates)
+                step = torch.Tensor([t]).to(self.hparams['device'])
+                pred_noises = self.wavenet(noisy_images, step, cond)
+                # print(pred_noises.shape)
 
-            # print(cond.shape)
-            '''
-            M = self.hparams['audio_num_mel_bins']
-            T = cond.shape[2]
-            B = 1
-            device = self.hparams['device']
+                # for loss, comparison (origin)
+                '''gt_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
+                gt_mel = gt_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
+                gt_mel = self.norm_spec(gt_mel)  # 정상화'''
+                # print(gt_mel.shape)
+                # print(gt_mel.shape, pred_noises.shape)
+                loss = self.criterion(noises, pred_noises)
 
-            x = torch.randn((B, 1, M, T)).to(device)
-            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
-                x = self.p_sample(x, t, cond)
-            '''
-            print()
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                cost += loss
+
+                # print()
+
+            print(f"Epoch: {epoch + 1}, Loss:{cost/len(wav_list):.4f}")

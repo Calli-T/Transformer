@@ -121,6 +121,10 @@ hparams = {
     "train_dataset_path_f0": "train_dataset/f0",  # f0만 따로 저장해두는 장소
     "use_extract": False,  # True,  # MR제거인데 일단 적용안되는거 확인함???
     "batch_size_train": 1,
+
+    "LEARNING_RATE": 0.0001,
+    "WEIGHT_DECAY": 0.00001,
+    "train_target_epochs": 100000
 }
 
 '''

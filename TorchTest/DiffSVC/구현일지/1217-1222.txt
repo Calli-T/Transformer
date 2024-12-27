@@ -180,3 +180,7 @@ norm은 입력에 대해 동작하고,
 norm_spec은 denorm_spec과 살짝 다른 형태로 가야한다
 
 mel norm했고, noise는 사이즈 맞춰서 만들고, 잡음먹이고... 작업을 해야한다
+
+train 함수가 뭔가 이상한것같은데 잘모르겠으니 일단 돌려보고 loss가 줄어드나 보자
+__init__에서 load_state_dict한거랑 안한거랑 별 차이가 없는 것이 특히나 이상한 일이다
+load_state_dict빼놓고 학습을 시작한다
