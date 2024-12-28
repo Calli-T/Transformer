@@ -15,4 +15,4 @@ wav_fname_list = split_to_batches(wav_fname_list, hparams['BATCH_SIZE_TRAIN'])
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 
-diff.get_raw_cond(wav_fname_list[0])
+print(diff.get_raw_cond(wav_fname_list[0]).keys())

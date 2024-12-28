@@ -67,3 +67,34 @@ packed_sequence = rnn.pack_padded_sequence(padded_sequence, lengths, batch_first
 output, hidden = rnn.LSTM(input_size=10, hidden_size=20, batch_first=True)(packed_sequence)
 이거 텐서화는 어째 다 따로 해줘야하는 모양이다?
 -> 이거로 낙점, 코딩은 나중에
+
+
+----- 1228 -----
+
+get_tensor_cond의 1개 처리시,
+print(tensor_cond['mel'].shape, tensor_cond['mel2ph'].shape, tensor_cond['hubert'].shape,
+                  tensor_cond['f0'].shape) 함수의 출력은
+torch.Size([518, 128])
+torch.Size([518])
+torch.Size([301, 256])
+torch.Size([518])
+
+같은 조건으로 get_collated_cond에서 함수
+print(collated_cond['mel'].shape, collated_cond['mel2ph'].shape,
+              collated_cond['hubert'].shape, collated_cond['f0'].shape)
+              의 출력은
+torch.Size([1, 518, 128]) torch.Size([1, 518])
+torch.Size([1, 301, 256]) torch.Size([1, 518])
+
+6초 짜리가 저렇고, 92초짜리는
+torch.Size([1, 7967, 128]) torch.Size([1, 7967])
+torch.Size([1, 4625, 256]) torch.Size([1, 7967])
+이거 서로 호환은 되는 것인가?
+mel1를 늘려 mel2의 길이에 맞추었다면, hubert1의 길이도 hubert2의 길이에
+맞추어야 할텐데, get_align 할 때 서로 호환될 것인가???
+
+GPT 피셜) 늘어나는 비율이 같다면(패딩하는 비율), 호환된다
+get_align에서 발생하는 소수점 오차는 무시할만하다고 주장함
+
+일단 할일은
+np배열화, 길이 측정 -> 패딩 -> 텐서화 -> pack_padded_sequence

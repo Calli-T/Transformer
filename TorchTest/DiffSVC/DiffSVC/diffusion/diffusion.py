@@ -106,43 +106,92 @@ class GuassianDiffusion:
 
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
         if isinstance(raw_wave_path, list):
+            wav_list = []
+            mel_list = []
+            mel_len_list = []
             for fname in raw_wave_path:
                 wav, mel = self.wav2spec(fname, self.hparams)
-                print(wav.shape, mel.shape)
-            # wav, mel = self.wav2spec(raw_wave_path, self.hparams)
-            return
+                wav_list.append(wav)
+                mel_len_list.append(mel.shape[0])
+                mel_list.append(mel)
+
+            maximum_mel_len = max(mel_len_list)
+            for idx, mel in enumerate(mel_list):
+                m_len = mel_len_list[idx]
+                mel_list[idx] = np.pad(mel, ((0, maximum_mel_len - m_len), (0, 0)))
+            mel_list = np.array(mel_list)
+
+            if saved_f0 is not None:
+                f0_list = saved_f0
+            else:
+                f0_list = []
+                for wav, mel in zip(wav_list, mel_list):
+                    gt_f0 = self.crepe(wav, mel, self.hparams)
+                    f0, _ = self.norm_interp_f0(gt_f0)
+                    f0_list.append(f0)
+                f0_list = np.array(f0_list)
+
+            hubert_encoded_list = []
+            hubert_encoded_len_list = []
+            for fname in raw_wave_path:
+                hubert_encoded = self.hubert.encode(fname)
+                hubert_encoded_list.append(hubert_encoded)
+                hubert_encoded_len_list.append(len(hubert_encoded))
+
+            maximum_hubert_len = max(hubert_encoded_len_list)
+            for idx, hubert_encoded in enumerate(hubert_encoded_list):
+                m_len = hubert_encoded_len_list[idx]
+                hubert_encoded_list[idx] = np.pad(hubert_encoded, ((0, maximum_hubert_len - m_len), (0, 0)))
+            hubert_encoded_list = np.array(hubert_encoded_list)
+
+            mel2ph_list = []
+            for mel, hubert_encoded in zip(mel_list, hubert_encoded_list):
+                mel2ph_list.append(self.get_align(mel, hubert_encoded))
+            mel2ph_list = np.array(mel2ph_list)
+
+            return {"name": raw_wave_path,
+                    "wav": wav_list,
+                    "mel": mel_list,
+                    "mel_len": mel_len_list,
+                    "f0": f0_list,
+                    "hubert": hubert_encoded_list,
+                    "hubert_len": hubert_encoded_len_list,
+                    "mel2ph": mel2ph_list}
         else:
             wav, mel = self.wav2spec(raw_wave_path, self.hparams)
 
-        if saved_f0 is not None:
-            f0 = saved_f0
-        else:
-            gt_f0 = self.crepe(wav, mel, self.hparams)
-            f0, _ = self.norm_interp_f0(gt_f0)
+            if saved_f0 is not None:
+                f0 = saved_f0
+            else:
+                gt_f0 = self.crepe(wav, mel, self.hparams)
+                f0, _ = self.norm_interp_f0(gt_f0)
 
-        hubert_encoded = self.hubert.encode(raw_wave_path)
+            hubert_encoded = self.hubert.encode(raw_wave_path)
 
-        mel2ph = self.get_align(mel, hubert_encoded)
+            mel2ph = self.get_align(mel, hubert_encoded)
 
-        return {"name": raw_wave_path,
-                "wav": wav,
-                "mel": mel,
-                "f0": f0,
-                "hubert": hubert_encoded,
-                "mel2ph": mel2ph}
+            return {"name": raw_wave_path,
+                    "wav": wav,
+                    "mel": mel,
+                    "f0": f0,
+                    "hubert": hubert_encoded,
+                    "mel2ph": mel2ph}
 
     def get_tensor_cond(self, item):
-        max_frames = self.hparams['max_frames']
-        max_input_tokens = self.hparams['max_input_tokens']
-        device = self.hparams['device']
+        if isinstance(item['name'], list):
+            pass
+        else:
+            max_frames = self.hparams['max_frames']
+            max_input_tokens = self.hparams['max_input_tokens']
+            device = self.hparams['device']
 
-        tensor_cond = dict()
-        tensor_cond['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
-        tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
-        tensor_cond['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
-        tensor_cond['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
+            tensor_cond = dict()
+            tensor_cond['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
+            tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
+            tensor_cond['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
+            tensor_cond['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
 
-        return tensor_cond
+            return tensor_cond
 
     def get_collated_cond(self, item):
         def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
@@ -184,6 +233,9 @@ class GuassianDiffusion:
         collated_cond['f0'] = collate_1d([item['f0']], 0.0)
         collated_cond['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
         collated_cond['mel'] = collate_2d([item['mel']], 0.0)
+
+        print(collated_cond['mel'].shape, collated_cond['mel2ph'].shape,
+              collated_cond['hubert'].shape, collated_cond['f0'].shape)
 
         return collated_cond
 
