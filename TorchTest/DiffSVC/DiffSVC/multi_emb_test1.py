@@ -15,4 +15,5 @@ wav_fname_list = split_to_batches(wav_fname_list, hparams['BATCH_SIZE_TRAIN'])
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 
-print(diff.get_raw_cond(wav_fname_list[0]).keys())
+raw_padded = diff.get_padded_np_conds(wav_fname_list[0])
+pack_padded = diff.get_pack_padded_tensor_conds(raw_padded)

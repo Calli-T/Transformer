@@ -98,3 +98,39 @@ get_align에서 발생하는 소수점 오차는 무시할만하다고 주장함
 
 일단 할일은
 np배열화, 길이 측정 -> 패딩 -> 텐서화 -> pack_padded_sequence
+
+놀랍게도, 코드를 찬찬히 들여다보니 collate함수가 padding함수 그 자체였다
+더욱 놀라운 사실은, embedding_model은 mel_out layer를 전혀 사용하지 않는...다????
+embedding 모델은 사실 단 하나의 emb 테이블이었을 뿐이다.
+
+embedding에 입력으로 들어가는 hubert 텐서는 사실 BTM텐서이다
+
+pack_padded_sequence는 input/len/batch_first/enforce_sorted이며
+각각입력/길이텐서/배치우선/강제 정렬이며
+batch_first True, enforce_sorted False기준으로 (B, T, *)텐서에서 'T'를 기준으로 패딩을 인식한다
+그리고 len tensor는 to(device)하면안된다 (cpu로 넣으라는 소리다)
+
+일단 B T M 텐서로 만드는 것 까지는 성공했고, pack도 성공했으나, 치명적인 문제가 있다
+pack_padd_sequence는 [B, T, M] 텐서를 [B*T, M] 텐서로 만들어 버리며
+이는 시계열 데이터를 처리할 때 순서대로 넣어야하므로, 병렬처리를 불가능하게 만들며,
+성능이 딱히 늘어나지도 않는다
+병렬 처리할 때의 문제점은 다음과 같다
+B T M 텐서는 15초정도에 1200frame이 나올거고,
+코드를 보니 dilation이 최대 8정도인데
+이건 유의미할 정도로 영향을 주긴 할거다, 마스크는 0인 부분을 오차역전파에서 배제하여
+문제가 없기는 하겠으나, dilation이 빈 패딩을 집는 것 까지는
+model에 새로 코드를 짜서 막는 수 밖에 없다
+
+따라서 할일은
+1. pack 관련 코드를 없애버리고
+2. 병렬 처리 [B, M, T] code로 다시 작성하되,
+3. loss에서 마스크를 씌워 패딩부분의 오차역전파를 방지하고
+4. train에서 f0는 패딩을 '포함한' 값을 저장하도록 한다.
+추가적으로
+5. 성능을 위해 Wavenet에서 패딩을 집는 것을 mel_len을 통해 방지한다.
+6. Hubert에서도 같은 식으로 반복한다.
+아마... 원본에서는 이를 딱히 신경 쓰는 것 같지 않다
+내 생각에 Wavenet을 그대로 개수해서 쓰느니,
+차라리 attention/transformer 계열의 모델로 바꾸는 것이 나을 성 싶다.
+
+일단 1-4를 수행한다
