@@ -159,17 +159,8 @@ class GuassianDiffusion:
                     "hubert_len": hubert_encoded_len_list,
                     "mel2ph": mel2ph_list}
 
-    def get_pack_padded_tensor_conds(self, item):
-        # max_frames = self.hparams['max_frames']
-        # max_input_tokens = self.hparams['max_input_tokens']
-        # [:max_frames] [:max_input_tokens]
-
+    def get_tensor_conds(self, item):
         device = self.hparams['device']
-
-        # print(type(item['mel']), item['mel'].shape)
-        # print(type(item['mel2ph']), item['mel2ph'].shape)
-        # print(type(item['hubert']), item['hubert'].shape)
-        # print(type(item['f0']), item['f0'].shape)
 
         tensor_cond = dict()
         tensor_cond['mel'] = torch.Tensor(item['mel']).to(device)
@@ -177,28 +168,28 @@ class GuassianDiffusion:
         tensor_cond['hubert'] = torch.Tensor(item['hubert']).to(device)
         tensor_cond['f0'] = torch.Tensor(item['f0']).to(device)
 
-        # print(tensor_cond['mel'].shape, tensor_cond['mel2ph'].shape,
-        #       tensor_cond['hubert'].shape, tensor_cond['f0'].shape)
-
-        mel_len = torch.Tensor(item['mel_len'])
-        hubert_len = torch.Tensor(item['hubert_len'])
-        '''
-        tensor_cond['mel'] = torch.Tensor(item['mel']).to(device)
-        tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph']).to(device)
-        tensor_cond['hubert'] = torch.Tensor(item['hubert']).to(device)
-        tensor_cond['f0'] = torch.Tensor(item['f0']).to(device)
-        '''
-        tensor_cond['mel'] = pack_padded_sequence(tensor_cond['mel'], mel_len, batch_first=True, enforce_sorted=False)
-        tensor_cond['mel2ph'] = pack_padded_sequence(tensor_cond['mel2ph'], mel_len, batch_first=True,
-                                                     enforce_sorted=False)
-        tensor_cond['hubert'] = pack_padded_sequence(tensor_cond['hubert'], hubert_len, batch_first=True,
-                                                     enforce_sorted=False)
-        tensor_cond['f0'] = pack_padded_sequence(tensor_cond['f0'], mel_len, batch_first=True, enforce_sorted=False)
-
-        print(tensor_cond['mel'].data.shape, tensor_cond['mel2ph'].data.shape,
-              tensor_cond['hubert'].data.shape, tensor_cond['f0'].data.shape)
+        tensor_cond['mel_len'] = item['mel_len']
+        tensor_cond['hubert_len'] = item['hubert_len']
 
         return tensor_cond
+
+    def get_conds(self, raw_wave_dir_path, saved_f0=None):
+        raw_conds = self.get_padded_np_conds(raw_wave_dir_path, saved_f0)
+        conds_tensor = self.get_tensor_conds(raw_conds)
+        embedding = self.embedding_model(conds_tensor)
+
+        return embedding
+        # collated_tensor = self.get_collated_cond(cond_tensor)
+        # self.embedding_model.eval()
+        # embedding = self.embedding_model(collated_tensor)
+        #
+        # # for mel2wav
+        # embedding['raw_mel2ph'] = collated_tensor['mel2ph']  # raw_cond['mel2ph']
+        #
+        # # for train
+        # embedding['raw_gt_mel'] = raw_cond['mel']
+        #
+        # return embedding
 
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
