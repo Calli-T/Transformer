@@ -178,18 +178,13 @@ class GuassianDiffusion:
         conds_tensor = self.get_tensor_conds(raw_conds)
         embedding = self.embedding_model(conds_tensor)
 
+        # for mel2wav
+        embedding['raw_mel2ph'] = conds_tensor['mel2ph']  # raw_cond['mel2ph']
+
+        # for train
+        embedding['raw_gt_mel'] = conds_tensor['mel']
+
         return embedding
-        # collated_tensor = self.get_collated_cond(cond_tensor)
-        # self.embedding_model.eval()
-        # embedding = self.embedding_model(collated_tensor)
-        #
-        # # for mel2wav
-        # embedding['raw_mel2ph'] = collated_tensor['mel2ph']  # raw_cond['mel2ph']
-        #
-        # # for train
-        # embedding['raw_gt_mel'] = raw_cond['mel']
-        #
-        # return embedding
 
     def get_raw_cond(self, raw_wave_path, saved_f0=None):
         wav, mel = self.wav2spec(raw_wave_path, self.hparams)
@@ -345,7 +340,34 @@ class GuassianDiffusion:
         except:
             print("file name error")
 
-        # print(f"mel_out.shape: {ret['mel_out'].shape}")
+        return ret
+
+    def infer_batch(self, raw_wave_dir_path):
+        with torch.no_grad():
+            self.embedding_model.eval()
+            self.wavenet.eval()
+
+            ret = self.get_conds(raw_wave_dir_path)
+            cond = ret['decoder_inp'].transpose(1, 2)
+            M = self.hparams['audio_num_mel_bins']
+            T = cond.shape[2]
+            B = cond.shape[0]
+            device = self.hparams['device']
+
+            x = torch.randn((B, 1, M, T)).to(device)
+            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
+                x = self.p_sample(x, t, cond)
+
+        x = x[:, 0].transpose(1, 2)
+        ret['mel_out'] = self.denorm_spec(x) * ((ret['raw_mel2ph'] > 0).float()[:, :, None])
+
+        fnames = []
+        for raw_wave_path in raw_wave_dir_path:
+            try:
+                fnames.append(raw_wave_path.split('/')[-1].split('.')[0])
+            except:
+                print("file name error")
+        ret['filename'] = fnames
 
         return ret
 
@@ -360,7 +382,6 @@ class GuassianDiffusion:
         # return (x - self.spec_min) / (self.spec_max - self.spec_min) * 2 - 1
 
     def denorm_spec(self, x):
-        print(self.spec_max.shape)
         '''print(x.shape, self.spec_min.shape, self.spec_max.shape)
         print(type(x), type(self.spec_min), type(self.spec_max))'''
         T = x.shape[1]
@@ -458,3 +479,105 @@ class GuassianDiffusion:
                 # print()
 
             print(f"Epoch: {epoch + 1}, Loss:{cost / len(wav_list):.4f}")
+
+    def train_batch(self):
+        self.embedding_model.train()
+        self.wavenet.train()
+
+        # for train_data_path (need refactoring)
+        wav_path = os.path.join(self.hparams['train_dataset_path_output'], 'final')
+        wav_fname_list = sorted(os.listdir(wav_path))
+        split_to_batches = lambda original_list, BATCH_SIZE_TRAIN: [
+            original_list[i:i + BATCH_SIZE_TRAIN] for i in range(0, len(original_list), BATCH_SIZE_TRAIN)
+        ]
+        wav_fname_list = split_to_batches(wav_fname_list, self.hparams['BATCH_SIZE_TRAIN'])
+
+        # gen f0 files
+        if not self.exist_f0_npy():
+            for wav_fname_sublist in wav_fname_list:
+                wav_list = []
+                mel_list = []
+                mel_len_list = []
+
+                for fname in wav_fname_sublist:
+                    temp_path = os.path.join(wav_path, fname)
+                    wav, mel = self.wav2spec(temp_path, self.hparams)
+                    wav_list.append(wav)
+                    mel_len_list.append(mel.shape[0])
+                    mel_list.append(mel)
+
+                maximum_mel_len = max(mel_len_list)
+                for idx, mel in enumerate(mel_list):
+                    m_len = mel_len_list[idx]
+                    mel_list[idx] = np.pad(mel, ((0, maximum_mel_len - m_len), (0, 0)))
+                mel_list = np.array(mel_list)
+
+                f0_list = []
+                for wav, mel in zip(wav_list, mel_list):
+                    gt_f0 = self.crepe(wav, mel, self.hparams)
+                    f0, _ = self.norm_interp_f0(gt_f0)
+                    f0_list.append(f0)
+                    # print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
+
+                for f0, fname in zip(f0_list, wav_fname_sublist):
+                    save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+                    print(save_path)
+                    np.save(save_path, f0)
+
+        for epoch in tqdm(range(self.hparams['train_target_epochs'])):
+            # '일단은' 한 파일씩 학습함
+            cost = 0.0
+
+            for wav_fname_sublist in wav_fname_list:
+                f0 = []
+                temp_path = []
+
+                for wav_fname in wav_fname_sublist:
+                    # for saved_f0
+                    save_path = os.path.join(self.hparams['train_dataset_path_f0'], wav_fname + "_f0.npy")
+                    f0.append(np.load(save_path))
+
+                    # paths
+                    temp_path.append(os.path.join(wav_path, wav_fname))
+
+                f0 = np.array(f0)
+                f0 = torch.from_numpy(f0).to(self.hparams['device'])
+
+                # - for model input -
+                ret = self.get_conds(temp_path, f0)
+                cond = ret['decoder_inp'].transpose(1, 2)
+                gt_mel = ret['raw_gt_mel']
+                B1MT_input_mel = gt_mel.unsqueeze(1).transpose(2, 3)
+                B1MT_input_mel = self.norm_spec(B1MT_input_mel)
+                B = cond.shape[0]
+
+                # print(cond.shape, B1MT_input_mel.shape, gt_mel.shape)
+
+                noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
+                diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
+                                                    size=B)
+                # print(noises.shape, diffusion_times.shape)
+
+                signal_rates = torch.Tensor(np.array(np.sqrt(self.alpha_bars[diffusion_times]))).to(
+                    self.hparams['device'])
+                noise_rates = torch.Tensor(np.array(np.sqrt(1. - self.alpha_bars[diffusion_times]))).to(
+                    self.hparams['device'])
+                # print(signal_rates.shape, noise_rates.shape)
+
+                noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
+                    noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
+                # print(noisy_images.shape)
+
+                diffusion_times = torch.from_numpy(diffusion_times).to(self.hparams['device'])
+                pred_noises = self.wavenet(noisy_images, diffusion_times, cond)
+
+                print(pred_noises.shape)
+                loss = self.criterion(noises, pred_noises)
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                cost += (loss / B)
+
+            print(f"Epoch: {epoch + 1}, Loss:{cost:.4f}")
+            # break

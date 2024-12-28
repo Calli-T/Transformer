@@ -136,3 +136,19 @@ model에 새로 코드를 짜서 막는 수 밖에 없다
 차라리 attention/transformer 계열의 모델로 바꾸는 것이 나을 성 싶다.
 
 일단 1-4를 수행한다
+
+multi_emb_infer_test2에서 여러 음성 파일을 동시에 embedding하고,
+infer_batch하여 동시에 추론하며
+utils/gen_sound_file.py로 동시에 파일을 만들어 내는 작업 까지 수행하였으나
+
+train의 코드를 변형한
+train_batch를 제작하는 와중에 문제가 생겼다
+f0는 기본적으로 mel에 종속되며, mel끼리 배치에서 가장 큰 것을 따라 패딩했으나,
+f0에는 이가 반영되지 않은것
+train_test2.py와
+diffusion.py의 train_batch()함수를 사용하여 이를 정상화 해보자
+
+
+----- 1229 -----
+train_batch 코드는 일단 만들었으니
+mask관련 코드를 만들어 보자

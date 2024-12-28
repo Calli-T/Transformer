@@ -54,7 +54,7 @@ hparams = {
 
     # for diffusion
     "schedule_name": "linear",
-    "steps": 1000,  # 00,
+    "steps": 100,  # 1000,
 
     # for postprocess, pitch normalization
     "spec_max": [0.5272776484489441, 0.9114222526550293, 1.1117855310440063, 1.0987094640731812, 1.1520036458969116,
