@@ -5,7 +5,7 @@ from utils.gen_sound_file import after_infer
 
 vocoder = NsfHifiGAN(hparams)
 
-wav_fname_list = ["raw/L-O-V-E-[cut_12sec].wav", "raw/L-O-V-E_[cut_6sec].wav"]
+wav_fname_list = ["raw/L-O-V-E.wav", "raw/snowman_33sec_A_minor.wav"]
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 

@@ -152,3 +152,10 @@ diffusion.py의 train_batch()함수를 사용하여 이를 정상화 해보자
 ----- 1229 -----
 train_batch 코드는 일단 만들었으니
 mask관련 코드를 만들어 보자
+
+!!!!!!!!
+taffy118k 모델은 config에서 spec_max가 다르다,
+즉, '확실히' spec값이 다르단게 증명되었다
+근데 신창섭 모델은 training의 config의 값과 같고
+opencpop과 taffy114는 서로 같은 값을 쓴다
+대체 뭐지?
