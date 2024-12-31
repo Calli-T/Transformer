@@ -10,7 +10,7 @@ hparams = {
     "model_pt_epoch": pt_epoch,  # 학습'된' epoch
 
     "raw_wave_path": "raw/L-O-V-E-[cut_12sec].wav",  # "raw/L-O-V-E_[cut_6sec].wav",
-    # "raw_wave_dir_path": "raw",
+    "raw_wave_dir_path": "raw/source",
 
     # for vocoder, NsfHiFiGAN
     # "vocoder": "nsf_hifigan.NsfHifiGAN",
