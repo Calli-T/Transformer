@@ -65,10 +65,10 @@ class GuassianDiffusion:
 
         # trainable models
         self.embedding_model = ConditionEmbedding(self.hparams)
-        self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
+        # self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
         self.embedding_model.to(self.hparams['device'])
         self.wavenet = DiffNet(self.hparams)
-        self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
+        # self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
         self.wavenet.to(self.hparams['device'])
 
         # schedule
@@ -91,7 +91,7 @@ class GuassianDiffusion:
         self.spec_max = torch.FloatTensor(spec_max)[None, None, :self.hparams['keep_bins']].to(self.hparams['device'])
 
         # for loss & back propagation
-        self.criterion = nn.MSELoss().to(self.hparams['device'])
+        self.criterion = nn.MSELoss(reduction='none').to(self.hparams['device'])
         self.optimizer = optim.AdamW(list(self.embedding_model.parameters()) + list(self.wavenet.parameters()),
                                      lr=self.hparams["LEARNING_RATE"], weight_decay=self.hparams["WEIGHT_DECAY"])
 
@@ -183,6 +183,9 @@ class GuassianDiffusion:
 
         # for train
         embedding['raw_gt_mel'] = conds_tensor['mel']
+
+        # for padd_masking
+        embedding['mel_len'] = raw_conds['mel_len']
 
         return embedding
 
@@ -470,6 +473,8 @@ class GuassianDiffusion:
                 # print(gt_mel.shape, pred_noises.shape)
                 print(pred_noises.shape)
                 loss = self.criterion(noises, pred_noises)
+                print(type(loss))
+                print(loss)
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -571,13 +576,20 @@ class GuassianDiffusion:
                 diffusion_times = torch.from_numpy(diffusion_times).to(self.hparams['device'])
                 pred_noises = self.wavenet(noisy_images, diffusion_times, cond)
 
-                print(pred_noises.shape)
                 loss = self.criterion(noises, pred_noises)
-
+                # masking
+                original_frame = ret['mel_len']
+                max_seq = max(original_frame)
+                mask = torch.zeros(B, 1, 1, max_seq, dtype=torch.bool).to(self.hparams['device'])
+                for i, len_seg in enumerate(original_frame):
+                    mask[i, :, :, :len_seg] = True
+                masked_loss = loss * mask
+                masked_loss = masked_loss.mean()
+                # back propagation
                 self.optimizer.zero_grad()
-                loss.backward()
+                masked_loss.backward()  # loss.backward()
                 self.optimizer.step()
-                cost += (loss / B)
+                cost += (masked_loss / B)
 
             print(f"Epoch: {epoch + 1}, Loss:{cost:.4f}")
             # break

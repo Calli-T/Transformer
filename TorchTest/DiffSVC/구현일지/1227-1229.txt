@@ -1,0 +1,161 @@
+1.0 버전이 완성되었다.
+만세!
+
+이제 해결할 문제나 할 일은 다음과 같다
+
+1. 멀티 train 코드, batch 관련 코드
+2. 원리 파트별로 다 써놓기
+3. 코드의 전반적인 정리, 주석 지우기 등등
+4. hubert 변경등으로 확장
+5. 모델 project_name 에 따라 자동으로 load하는 기능 제작
+6. 학습 interval
+7. spec_min/max 값 변경 혹은 제작기 구현
+8. 긴 음악도 infer 가능하도록 변경
+9. train/infer.py pipeline 제작
+
+추가
+패딩...?
+자른 음원들이 frame이 다른데 무지성으로 np 통합시켜서 tensor화 시켜도 되는건가?
+(GPT) wavenet같은 시계열 모델 구조 자체가 가변 길이 입력이 자연스러워서 상관 없다고한다
+다만 배치문제나 최적화 문제는 좀 다른 이야기인 모양
+-> 나중에 시계열 데이터를 일정한 블록(여기서 vram의 성능에 따라 바뀌도록)으로 자르는 코드를
+제작해보자!!!!!!!!
+일단은 패딩 없이 간x
+
+원본의 코드는 텐서의 크기가 동일하다
+batch size 10일 때 [10, 128, 1297] 뭐 이런식으로 싹 다 패딩이 되어있다.
+
+pack_padded_sequence / 직접 마스크 제작 및 적용 2가지 방식이 유효하다
+
+----- 패딩 방법 예시 -----
+import torch
+import torch.nn as nn
+
+# 예시 데이터
+noises = torch.randn(2, 1, 128, 1300)  # (batch_size, 1, feature, time)
+pred_noises = torch.randn(2, 1, 128, 1300)
+
+# 마스크 생성
+mask = torch.ones_like(noises)
+mask[:, :, :, 1287:] = 0  # 패딩된 부분을 0으로 설정
+
+# 손실 함수 정의
+criterion = nn.MSELoss(reduction='none')  # 각 요소별 MSE 계산
+
+# 손실 계산
+loss = criterion(noises, pred_noises)
+loss = loss * mask  # 마스크를 곱하여 패딩 부분의 손실을 0으로 만듦
+
+# 전체 손실의 평균 계산
+loss = loss.mean()
+
+----- pack_padded_sequence 사용법 예제 -----
+import torch
+import torch.nn.utils.rnn as rnn
+
+# 가변 길이의 시퀀스 데이터 생성 (예시)
+sequences = [torch.randn(5, 10), torch.randn(3, 10), torch.randn(7, 10)]
+lengths = [len(seq) for seq in sequences]
+
+# 패딩
+padded_sequence = rnn.pad_sequence(sequences, batch_first=True)
+
+# 패킹
+packed_sequence = rnn.pack_padded_sequence(padded_sequence, lengths, batch_first=True)
+
+# RNN 모델에 입력
+output, hidden = rnn.LSTM(input_size=10, hidden_size=20, batch_first=True)(packed_sequence)
+이거 텐서화는 어째 다 따로 해줘야하는 모양이다?
+-> 이거로 낙점, 코딩은 나중에
+
+
+----- 1228 -----
+
+get_tensor_cond의 1개 처리시,
+print(tensor_cond['mel'].shape, tensor_cond['mel2ph'].shape, tensor_cond['hubert'].shape,
+                  tensor_cond['f0'].shape) 함수의 출력은
+torch.Size([518, 128])
+torch.Size([518])
+torch.Size([301, 256])
+torch.Size([518])
+
+같은 조건으로 get_collated_cond에서 함수
+print(collated_cond['mel'].shape, collated_cond['mel2ph'].shape,
+              collated_cond['hubert'].shape, collated_cond['f0'].shape)
+              의 출력은
+torch.Size([1, 518, 128]) torch.Size([1, 518])
+torch.Size([1, 301, 256]) torch.Size([1, 518])
+
+6초 짜리가 저렇고, 92초짜리는
+torch.Size([1, 7967, 128]) torch.Size([1, 7967])
+torch.Size([1, 4625, 256]) torch.Size([1, 7967])
+이거 서로 호환은 되는 것인가?
+mel1를 늘려 mel2의 길이에 맞추었다면, hubert1의 길이도 hubert2의 길이에
+맞추어야 할텐데, get_align 할 때 서로 호환될 것인가???
+
+GPT 피셜) 늘어나는 비율이 같다면(패딩하는 비율), 호환된다
+get_align에서 발생하는 소수점 오차는 무시할만하다고 주장함
+
+일단 할일은
+np배열화, 길이 측정 -> 패딩 -> 텐서화 -> pack_padded_sequence
+
+놀랍게도, 코드를 찬찬히 들여다보니 collate함수가 padding함수 그 자체였다
+더욱 놀라운 사실은, embedding_model은 mel_out layer를 전혀 사용하지 않는...다????
+embedding 모델은 사실 단 하나의 emb 테이블이었을 뿐이다.
+
+embedding에 입력으로 들어가는 hubert 텐서는 사실 BTM텐서이다
+
+pack_padded_sequence는 input/len/batch_first/enforce_sorted이며
+각각입력/길이텐서/배치우선/강제 정렬이며
+batch_first True, enforce_sorted False기준으로 (B, T, *)텐서에서 'T'를 기준으로 패딩을 인식한다
+그리고 len tensor는 to(device)하면안된다 (cpu로 넣으라는 소리다)
+
+일단 B T M 텐서로 만드는 것 까지는 성공했고, pack도 성공했으나, 치명적인 문제가 있다
+pack_padd_sequence는 [B, T, M] 텐서를 [B*T, M] 텐서로 만들어 버리며
+이는 시계열 데이터를 처리할 때 순서대로 넣어야하므로, 병렬처리를 불가능하게 만들며,
+성능이 딱히 늘어나지도 않는다
+병렬 처리할 때의 문제점은 다음과 같다
+B T M 텐서는 15초정도에 1200frame이 나올거고,
+코드를 보니 dilation이 최대 8정도인데
+이건 유의미할 정도로 영향을 주긴 할거다, 마스크는 0인 부분을 오차역전파에서 배제하여
+문제가 없기는 하겠으나, dilation이 빈 패딩을 집는 것 까지는
+model에 새로 코드를 짜서 막는 수 밖에 없다
+
+따라서 할일은
+1. pack 관련 코드를 없애버리고
+2. 병렬 처리 [B, M, T] code로 다시 작성하되,
+3. loss에서 마스크를 씌워 패딩부분의 오차역전파를 방지하고
+4. train에서 f0는 패딩을 '포함한' 값을 저장하도록 한다.
+추가적으로
+5. 성능을 위해 Wavenet에서 패딩을 집는 것을 mel_len을 통해 방지한다.
+6. Hubert에서도 같은 식으로 반복한다.
+7. Emb 모델의 쓰잘데기없는 레이어를 정리한다
+
+아마... 원본에서는 이를 딱히 신경 쓰는 것 같지 않다
+내 생각에 Wavenet을 그대로 개수해서 쓰느니,
+차라리 attention/transformer 계열의 모델로 바꾸는 것이 나을 성 싶다.
+
+일단 1-4를 수행한다
+
+multi_emb_infer_test2에서 여러 음성 파일을 동시에 embedding하고,
+infer_batch하여 동시에 추론하며
+utils/gen_sound_file.py로 동시에 파일을 만들어 내는 작업 까지 수행하였으나
+
+train의 코드를 변형한
+train_batch를 제작하는 와중에 문제가 생겼다
+f0는 기본적으로 mel에 종속되며, mel끼리 배치에서 가장 큰 것을 따라 패딩했으나,
+f0에는 이가 반영되지 않은것
+train_test2.py와
+diffusion.py의 train_batch()함수를 사용하여 이를 정상화 해보자
+
+
+----- 1229 -----
+train_batch 코드는 일단 만들었으니
+mask관련 코드를 만들어 보자
+
+!!!!!!!!
+taffy118k 모델은 config에서 spec_max가 다르다,
+즉, '확실히' spec값이 다르단게 증명되었다
+근데 신창섭 모델은 training의 config의 값과 같고
+opencpop과 taffy114는 서로 같은 값을 쓴다
+대체 뭐지?
