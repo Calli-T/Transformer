@@ -5,8 +5,8 @@ from utils.gen_sound_file import after_infer
 
 vocoder = NsfHifiGAN(hparams)
 
-wav_fname_list = ['raw/scs_origin-026.wav',
-                  'raw/scs_origin-023.wav']  # ["raw/dancenote_origin.wav", "raw/L-O-V-E.wav", "raw/yoon3.wav"]
+wav_fname_list = ['raw/source/L-O-V-E-[cut_12sec].wav',
+                  'raw/source/L-O-V-E_[cut_6sec].wav']  # ["raw/dancenote_origin.wav", "raw/L-O-V-E.wav", "raw/yoon3.wav"]
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 

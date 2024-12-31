@@ -65,10 +65,10 @@ class GuassianDiffusion:
 
         # trainable models
         self.embedding_model = ConditionEmbedding(self.hparams)
-        # self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
+        self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
         self.embedding_model.to(self.hparams['device'])
         self.wavenet = DiffNet(self.hparams)
-        # self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
+        self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
         self.wavenet.to(self.hparams['device'])
 
         # schedule

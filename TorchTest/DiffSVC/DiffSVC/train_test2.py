@@ -1,11 +1,15 @@
 from utils.sep_wav import separate_run
+from utils.get_spec_min_max import get_spec_min_max
 from args2hparams import hparams
-from utils.path_utils import rel2abs
+from diffusion.diffusion import GuassianDiffusion
+from vocoder.NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
 
 import os
 
 
 # ----- dataset preprocessing -----
+
+# - separating raw waves
 def exist_separated(_hparams):
     # 채널, 샘플링 레이트, 확장자 변경하고 음원 10~15초 사이로 자르는 전처리 함수
     # 위 4개의 전처리 해둔 작업물이 있으면 True 없으면 False를 반환
@@ -21,11 +25,14 @@ def exist_separated(_hparams):
 
 
 exist_separated(hparams)
-# exist_f0_npy(hparams)
 
-from diffusion.diffusion import GuassianDiffusion
-from vocoder.NsfHiFiGAN.nsf_hifigan import NsfHifiGAN
+# - get min&max of mel-spectrogram
 
-diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)  # , vocoder.wav2spec)
-# diff.train()
+spec_min, spec_max = get_spec_min_max(hparams, NsfHifiGAN.wav2spec)
+hparams['spec_min'] = spec_min
+hparams['spec_max'] = spec_max
+
+# ----- train -----
+
+diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 diff.train_batch()
