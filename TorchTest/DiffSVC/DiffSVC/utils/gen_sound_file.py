@@ -6,18 +6,18 @@ def after_infer(prediction, _vocoder, _hparams):
     mel_preds = prediction["mel_out"].to('cpu').numpy()
     filenames = prediction["filename"]
     f0_preds = prediction["f0_denorm"].to('cpu').numpy()
+    mels_len = prediction["mel_len"]
 
-    for mel_pred, filename, f0_pred in zip(mel_preds, filenames, f0_preds):
+    for mel_pred, filename, f0_pred, mel_len in zip(mel_preds, filenames, f0_preds, mels_len):
         mel_pred_mask = np.abs(mel_pred).sum(-1) > 0
         mel_pred = mel_pred[mel_pred_mask]
+        mel_pred = mel_pred[:mel_len, :]
         mel_pred = np.clip(mel_pred, _hparams['mel_vmin'], _hparams['mel_vmax'])
-
-        print(f0_pred.shape)
-        print(mel_pred_mask.shape)
 
         if len(f0_pred) > len(mel_pred_mask):
             f0_pred = f0_pred[:len(mel_pred_mask)]
         f0_pred = f0_pred[mel_pred_mask]
+        f0_pred = f0_pred[:mel_len]
 
         torch.cuda.is_available() and torch.cuda.empty_cache()
 
