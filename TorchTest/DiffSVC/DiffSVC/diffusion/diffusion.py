@@ -49,6 +49,29 @@ class GuassianDiffusion:
         self.posterior_mean_coef1 = betas * np.sqrt(self.alpha_bars_prev) / (1. - self.alpha_bars)
         self.posterior_mean_coef2 = (1. - self.alpha_bars_prev) * np.sqrt(alphas) / (1. - self.alpha_bars)
 
+    def load_most_epochs_model(self):
+        model_path = self.hparams["model_path"]
+
+        # set maximum epoch, 형식은 wavenet_model_epochs_96400.pt
+        pt_list = os.listdir(model_path)
+        if len(pt_list) != 0:
+            epoch_maximum = max([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
+
+            print(epoch_maximum)
+            self.hparams['model_pt_epoch'] = epoch_maximum
+
+            # load maximum epoch model
+            embedding_model_path = os.path.join(model_path, f"embedding_model_epochs_{epoch_maximum}.pt")
+            wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{epoch_maximum}.pt")
+            embedding_model_pt = torch.load(embedding_model_path, map_location='cpu')
+            wavenet_model_pt = torch.load(wavenet_model_path, map_location='cpu')
+            self.embedding_model.load_state_dict(embedding_model_pt)
+            self.wavenet.load_state_dict(wavenet_model_pt)
+
+        # set device
+        self.embedding_model.to(self.hparams['device'])
+        self.wavenet.to(self.hparams['device'])
+
     def __init__(self, _hparams, wav2spec=None):
         self.hparams = _hparams
 
@@ -64,11 +87,12 @@ class GuassianDiffusion:
 
         # trainable models
         self.embedding_model = ConditionEmbedding(self.hparams)
-        self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
-        self.embedding_model.to(self.hparams['device'])
+        # self.embedding_model.load_state_dict((torch.load(self.hparams['emb_model_path'], map_location='cpu')))
+        # self.embedding_model.to(self.hparams['device'])
         self.wavenet = DiffNet(self.hparams)
-        self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
-        self.wavenet.to(self.hparams['device'])
+        # self.wavenet.load_state_dict(torch.load(self.hparams['wavenet_model_path'], map_location='cpu'))
+        # self.wavenet.to(self.hparams['device'])
+        self.load_most_epochs_model()
 
         # schedule
         self.alphas = None
@@ -290,6 +314,26 @@ class GuassianDiffusion:
         else:
             return False
 
+    def save_and_remove(self):
+        model_path = self.hparams["model_path"]
+        self.hparams['model_pt_epoch'] += self.hparams['save_interval']
+
+        # save models
+        embedding_model_path = os.path.join(model_path, f"embedding_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+        wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+        torch.save(self.embedding_model.state_dict(), embedding_model_path)
+        torch.save(self.wavenet.state_dict(), wavenet_model_path)
+
+        # remove models
+        pt_list = os.listdir(model_path)
+        if len(pt_list) > self.hparams['number_of_savepoint'] * 2:
+            epoch_minimum = min([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
+            print(epoch_minimum)
+            embedding_model_path = os.path.join(model_path, f"embedding_model_epochs_{epoch_minimum}.pt")
+            wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{epoch_minimum}.pt")
+            os.remove(embedding_model_path)
+            os.remove(wavenet_model_path)
+
     def train_batch(self):
         self.embedding_model.train()
         self.wavenet.train()
@@ -335,9 +379,9 @@ class GuassianDiffusion:
                     np.save(save_path, f0)
 
         for epoch in tqdm(range(self.hparams['train_target_epochs'])):
-            # '일단은' 한 파일씩 학습함
             cost = 0.0
 
+            # train
             for wav_fname_sublist in wav_fname_list:
                 f0 = []
                 temp_path = []
@@ -361,18 +405,14 @@ class GuassianDiffusion:
                 B1MT_input_mel = self.norm_spec(B1MT_input_mel)
                 B = cond.shape[0]
 
-                # print(cond.shape, B1MT_input_mel.shape, gt_mel.shape)
-
                 noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
                 diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
                                                     size=B)
-                # print(noises.shape, diffusion_times.shape)
 
                 signal_rates = torch.Tensor(np.array(np.sqrt(self.alpha_bars[diffusion_times]))).to(
                     self.hparams['device'])
                 noise_rates = torch.Tensor(np.array(np.sqrt(1. - self.alpha_bars[diffusion_times]))).to(
                     self.hparams['device'])
-                # print(signal_rates.shape, noise_rates.shape)
 
                 noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
                     noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
@@ -397,6 +437,8 @@ class GuassianDiffusion:
                 cost += (masked_loss / B)
 
             print(f"Epoch: {epoch + 1}, Loss:{cost:.4f}")
+            if (epoch + 1) % self.hparams['save_interval'] == 0:
+                self.save_and_remove()
             # break
 
 

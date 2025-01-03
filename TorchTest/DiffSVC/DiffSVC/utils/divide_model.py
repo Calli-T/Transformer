@@ -1,7 +1,7 @@
 import torch
 
 epoch = 240000
-ckpt_path = f'model_ckpt_steps_{epoch}.ckpt'
+ckpt_path = f'model_ckpt_epochs_{epoch}.ckpt'
 
 
 def load_cond_embedding_state(model_path):
@@ -27,6 +27,6 @@ def load_cond_embedding_state(model_path):
 
 embedding_model_state_dict, wavenet_model_state_dict = load_cond_embedding_state(ckpt_path)
 # print(embedding_model_state_dict.keys())
-torch.save(embedding_model_state_dict, f'embedding_model_steps_{epoch}.pt')
+torch.save(embedding_model_state_dict, f'embedding_model_epochs_{epoch}.pt')
 # print(wavenet_model_state_dict.keys())
-torch.save(wavenet_model_state_dict, f'wavenet_model_steps_{epoch}.pt')
+torch.save(wavenet_model_state_dict, f'wavenet_model_epochs_{epoch}.pt')

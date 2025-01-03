@@ -36,12 +36,15 @@ hparams = {
     # "audio_sample_rate": 44100,
     # "hop_size": 512,
 
+    # for embedding & denoise model
+    "model_path": f"models/singer/{project_name}",
+
     # for condition integrate & preprocess
     "max_frames": 42000,
     "max_input_tokens": 60000,
     "pitch_norm": "log",
-    "emb_model_path": f"models/singer/{project_name}/embedding_model_steps_{pt_epoch}.pt",
-    # "model_ckpt_steps_30000.ckpt",
+    "emb_model_path": f"models/singer/{project_name}/embedding_model_epochs_{pt_epoch}.pt",
+
     "hidden_size": 256,
 
     # for wavenet
@@ -51,7 +54,7 @@ hparams = {
     "dilation_cycle_length": 4,
     # "audio_num_mel_bins": 128,
     # "device": device,
-    "wavenet_model_path": f"models/singer/{project_name}/wavenet_model_steps_{pt_epoch}.pt",
+    "wavenet_model_path": f"models/singer/{project_name}/wavenet_model_epochs_{pt_epoch}.pt",
 
     # for diffusion
     "schedule_name": "linear",
@@ -140,6 +143,7 @@ hparams = {
     "WEIGHT_DECAY": 0.00001,
     "train_target_epochs": 100000,
     "save_interval": 5,
+    "number_of_savepoint": 3,
 }
 
 '''
