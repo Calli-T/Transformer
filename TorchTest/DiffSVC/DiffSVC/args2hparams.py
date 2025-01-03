@@ -136,10 +136,10 @@ hparams = {
 
     "batch_size_train": 1,  # dummy
     "BATCH_SIZE_TRAIN": 10,
-
     "LEARNING_RATE": 0.0001,
     "WEIGHT_DECAY": 0.00001,
-    "train_target_epochs": 100000
+    "train_target_epochs": 100000,
+    "save_interval": 5,
 }
 
 '''

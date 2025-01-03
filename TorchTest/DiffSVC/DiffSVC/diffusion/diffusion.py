@@ -11,7 +11,6 @@ from tqdm import tqdm
 import time
 import os
 from torch import nn, optim
-from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class GuassianDiffusion:
@@ -189,97 +188,6 @@ class GuassianDiffusion:
 
         return embedding
 
-    def get_raw_cond(self, raw_wave_path, saved_f0=None):
-        wav, mel = self.wav2spec(raw_wave_path, self.hparams)
-
-        if saved_f0 is not None:
-            f0 = saved_f0
-        else:
-            gt_f0 = self.crepe(wav, mel, self.hparams)
-            f0, _ = self.norm_interp_f0(gt_f0)
-
-        hubert_encoded = self.hubert.encode(raw_wave_path)
-
-        mel2ph = self.get_align(mel, hubert_encoded)
-
-        return {"name": raw_wave_path,
-                "wav": wav,
-                "mel": mel,
-                "f0": f0,
-                "hubert": hubert_encoded,
-                "mel2ph": mel2ph}
-
-    def get_tensor_cond(self, item):
-        max_frames = self.hparams['max_frames']
-        max_input_tokens = self.hparams['max_input_tokens']
-        device = self.hparams['device']
-
-        tensor_cond = dict()
-        tensor_cond['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
-        tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
-        tensor_cond['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
-        tensor_cond['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
-
-        return tensor_cond
-
-    def get_collated_cond(self, item):
-        def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
-
-            """Convert a list of 1d tensors into a padded 2d tensor."""
-            size = max(v.size(0) for v in values) if max_len is None else max_len
-            res = values[0].new(len(values), size).fill_(pad_idx)
-
-            def copy_tensor(src, dst):
-                assert dst.numel() == src.numel()
-                if shift_right:
-                    dst[1:] = src[:-1]
-                    dst[0] = shift_id
-                else:
-                    dst.copy_(src)
-
-            for i, v in enumerate(values):
-                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
-            return res
-
-        def collate_2d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None):
-            """Convert a list of 2d tensors into a padded 3d tensor."""
-            size = max(v.size(0) for v in values) if max_len is None else max_len
-            res = values[0].new(len(values), size, values[0].shape[1]).fill_(pad_idx)
-
-            def copy_tensor(src, dst):
-                assert dst.numel() == src.numel()
-                if shift_right:
-                    dst[1:] = src[:-1]
-                else:
-                    dst.copy_(src)
-
-            for i, v in enumerate(values):
-                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
-            return res
-
-        collated_cond = dict()
-        collated_cond['hubert'] = collate_2d([item['hubert']], 0.0)
-        collated_cond['f0'] = collate_1d([item['f0']], 0.0)
-        collated_cond['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
-        collated_cond['mel'] = collate_2d([item['mel']], 0.0)
-
-        return collated_cond
-
-    def get_cond(self, raw_wave_path, saved_f0=None):
-        raw_cond = self.get_raw_cond(raw_wave_path, saved_f0)
-        cond_tensor = self.get_tensor_cond(raw_cond)
-        collated_tensor = self.get_collated_cond(cond_tensor)
-        self.embedding_model.eval()
-        embedding = self.embedding_model(collated_tensor)
-
-        # for mel2wav
-        embedding['raw_mel2ph'] = collated_tensor['mel2ph']  # raw_cond['mel2ph']
-
-        # for train
-        embedding['raw_gt_mel'] = raw_cond['mel']
-
-        return embedding
-
     def predict_start_from_noise(self, x_t, t, noise):
         x_start = self.sqrt_recip_alpha_bars[t] * x_t - self.sqrt_recipm1_alpha_bars[t] * noise
 
@@ -319,31 +227,6 @@ class GuassianDiffusion:
         # print(x.shape, t, cond.shape)
 
         return x
-
-    def infer(self, raw_wave_path):
-        with torch.no_grad():
-            self.embedding_model.eval()
-            self.wavenet.eval()
-
-            ret = self.get_cond(raw_wave_path)
-            cond = ret['decoder_inp'].transpose(1, 2)
-            M = self.hparams['audio_num_mel_bins']
-            T = cond.shape[2]
-            B = 1
-            device = self.hparams['device']
-
-            x = torch.randn((B, 1, M, T)).to(device)
-            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
-                x = self.p_sample(x, t, cond)
-
-        x = x[:, 0].transpose(1, 2)
-        ret['mel_out'] = self.denorm_spec(x) * ((ret['raw_mel2ph'] > 0).float()[:, :, None])
-        try:
-            ret['filename'] = raw_wave_path.split('/')[-1].split('.')[0]
-        except:
-            print("file name error")
-
-        return ret
 
     def infer_batch(self, raw_wave_dir_path):
         with torch.no_grad():
@@ -406,84 +289,6 @@ class GuassianDiffusion:
                 return False
         else:
             return False
-
-    def train(self):
-        self.embedding_model.train()
-        self.wavenet.train()
-
-        wav_path = os.path.join(self.hparams['train_dataset_path_output'], 'final')
-        wav_list = os.listdir(wav_path)
-
-        if not self.exist_f0_npy():
-            for fname in wav_list:
-                temp_path = os.path.join(wav_path, fname)
-
-                print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
-                wav, mel = self.wav2spec(temp_path, self.hparams)
-                gt_f0 = self.crepe(wav, mel, self.hparams)
-                f0, _ = self.norm_interp_f0(gt_f0)
-
-                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
-                np.save(save_path, f0)
-        for epoch in tqdm(range(self.hparams['train_target_epochs'])):
-            # '일단은' 한 파일씩 학습함
-            cost = 0.0
-
-            for fname in wav_list:
-                # print(f"'{fname}'파일 작업중")
-                temp_path = os.path.join(wav_path, fname)
-                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
-                f0 = np.load(save_path)
-
-                # - for model input -
-                ret = self.get_cond(temp_path, f0)
-                cond = ret['decoder_inp'].transpose(1, 2)
-                gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
-                B1MT_input_mel = gt_mel.unsqueeze(0).unsqueeze(1).transpose(2, 3)
-                B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
-                B1MT_input_mel = self.norm_spec(B1MT_input_mel)  # 정상화
-                # print(cond.shape)
-                # print(B1MT_input_mel.shape)
-
-                # 잡음 먹이기
-                noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
-                diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
-                                                    size=self.hparams['batch_size_train'])
-                t = int(diffusion_times[0])
-                '''print(t)
-                print(type(t))
-                print(self.alpha_bars[t])'''
-                signal_rates = torch.Tensor(np.array(np.sqrt(self.alpha_bars[t]))).to(self.hparams['device'])
-                noise_rates = torch.Tensor(np.array(np.sqrt(1. - self.alpha_bars[t]))).to(self.hparams['device'])
-                noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
-                    noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
-
-                # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
-
-                # print(signal_rates, noise_rates)
-                step = torch.Tensor([t]).to(self.hparams['device'])
-                pred_noises = self.wavenet(noisy_images, step, cond)
-                # print(pred_noises.shape)
-
-                # for loss, comparison (origin)
-                '''gt_mel = gt_mel.detach().unsqueeze(0).unsqueeze(1).transpose(2, 3)
-                gt_mel = gt_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
-                gt_mel = self.norm_spec(gt_mel)  # 정상화'''
-                # print(gt_mel.shape)
-                # print(gt_mel.shape, pred_noises.shape)
-                print(pred_noises.shape)
-                loss = self.criterion(noises, pred_noises)
-                print(type(loss))
-                print(loss)
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-                cost += loss
-
-                # print()
-
-            print(f"Epoch: {epoch + 1}, Loss:{cost / len(wav_list):.4f}")
 
     def train_batch(self):
         self.embedding_model.train()
@@ -593,3 +398,199 @@ class GuassianDiffusion:
 
             print(f"Epoch: {epoch + 1}, Loss:{cost:.4f}")
             # break
+
+
+'''
+    def train(self):
+        self.embedding_model.train()
+        self.wavenet.train()
+
+        wav_path = os.path.join(self.hparams['train_dataset_path_output'], 'final')
+        wav_list = os.listdir(wav_path)
+
+        if not self.exist_f0_npy():
+            for fname in wav_list:
+                temp_path = os.path.join(wav_path, fname)
+
+                print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
+                wav, mel = self.wav2spec(temp_path, self.hparams)
+                gt_f0 = self.crepe(wav, mel, self.hparams)
+                f0, _ = self.norm_interp_f0(gt_f0)
+
+                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+                np.save(save_path, f0)
+        for epoch in tqdm(range(self.hparams['train_target_epochs'])):
+            # '일단은' 한 파일씩 학습함
+            cost = 0.0
+
+            for fname in wav_list:
+                # print(f"'{fname}'파일 작업중")
+                temp_path = os.path.join(wav_path, fname)
+                save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
+                f0 = np.load(save_path)
+
+                # - for model input -
+                ret = self.get_cond(temp_path, f0)
+                cond = ret['decoder_inp'].transpose(1, 2)
+                gt_mel = torch.from_numpy(ret['raw_gt_mel']).to(self.hparams['device'])
+                B1MT_input_mel = gt_mel.unsqueeze(0).unsqueeze(1).transpose(2, 3)
+                B1MT_input_mel = B1MT_input_mel.expand(self.hparams['batch_size_train'], -1, -1, -1)
+                B1MT_input_mel = self.norm_spec(B1MT_input_mel)  # 정상화
+                # print(cond.shape)
+                # print(B1MT_input_mel.shape)
+
+                # 잡음 먹이기
+                noises = torch.randn(B1MT_input_mel.shape).to(self.hparams['device'])
+                diffusion_times = np.random.randint(low=0, high=self.hparams["steps"],
+                                                    size=self.hparams['batch_size_train'])
+                t = int(diffusion_times[0])
+                signal_rates = torch.Tensor(np.array(np.sqrt(self.alpha_bars[t]))).to(self.hparams['device'])
+                noise_rates = torch.Tensor(np.array(np.sqrt(1. - self.alpha_bars[t]))).to(self.hparams['device'])
+                noisy_images = torch.mul(signal_rates.view([-1, 1, 1, 1]), B1MT_input_mel) + torch.mul(
+                    noise_rates.view([-1, 1, 1, 1]), noises).to(self.hparams['device'])
+
+                # 일단 임시로 diffusion_times는 배열이 아니라 원시 int 하나만 보낸다, 개조전임
+
+                # print(signal_rates, noise_rates)
+                step = torch.Tensor([t]).to(self.hparams['device'])
+                pred_noises = self.wavenet(noisy_images, step, cond)
+                # print(pred_noises.shape)
+
+                # for loss, comparison (origin)
+                # print(gt_mel.shape)
+                # print(gt_mel.shape, pred_noises.shape)
+                print(pred_noises.shape)
+                loss = self.criterion(noises, pred_noises)
+                print(type(loss))
+                print(loss)
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                cost += loss
+
+                # print()
+
+            print(f"Epoch: {epoch + 1}, Loss:{cost / len(wav_list):.4f}")
+'''
+
+'''
+    def infer(self, raw_wave_path):
+        with torch.no_grad():
+            self.embedding_model.eval()
+            self.wavenet.eval()
+
+            ret = self.get_cond(raw_wave_path)
+            cond = ret['decoder_inp'].transpose(1, 2)
+            M = self.hparams['audio_num_mel_bins']
+            T = cond.shape[2]
+            B = 1
+            device = self.hparams['device']
+
+            x = torch.randn((B, 1, M, T)).to(device)
+            for t in tqdm(reversed(range(0, self.hparams["steps"]))):
+                x = self.p_sample(x, t, cond)
+
+        x = x[:, 0].transpose(1, 2)
+        ret['mel_out'] = self.denorm_spec(x) * ((ret['raw_mel2ph'] > 0).float()[:, :, None])
+        try:
+            ret['filename'] = raw_wave_path.split('/')[-1].split('.')[0]
+        except:
+            print("file name error")
+
+        return ret
+'''
+
+'''
+    def get_cond(self, raw_wave_path, saved_f0=None):
+        raw_cond = self.get_raw_cond(raw_wave_path, saved_f0)
+        cond_tensor = self.get_tensor_cond(raw_cond)
+        collated_tensor = self.get_collated_cond(cond_tensor)
+        self.embedding_model.eval()
+        embedding = self.embedding_model(collated_tensor)
+
+        # for mel2wav
+        embedding['raw_mel2ph'] = collated_tensor['mel2ph']  # raw_cond['mel2ph']
+
+        # for train
+        embedding['raw_gt_mel'] = raw_cond['mel']
+
+        return embedding
+'''
+'''
+    def get_raw_cond(self, raw_wave_path, saved_f0=None):
+        wav, mel = self.wav2spec(raw_wave_path, self.hparams)
+
+        if saved_f0 is not None:
+            f0 = saved_f0
+        else:
+            gt_f0 = self.crepe(wav, mel, self.hparams)
+            f0, _ = self.norm_interp_f0(gt_f0)
+
+        hubert_encoded = self.hubert.encode(raw_wave_path)
+
+        mel2ph = self.get_align(mel, hubert_encoded)
+
+        return {"name": raw_wave_path,
+                "wav": wav,
+                "mel": mel,
+                "f0": f0,
+                "hubert": hubert_encoded,
+                "mel2ph": mel2ph}
+
+    def get_tensor_cond(self, item):
+        max_frames = self.hparams['max_frames']
+        max_input_tokens = self.hparams['max_input_tokens']
+        device = self.hparams['device']
+
+        tensor_cond = dict()
+        tensor_cond['mel'] = torch.Tensor(item['mel'][:max_frames]).to(device)
+        tensor_cond['mel2ph'] = torch.LongTensor(item['mel2ph'][:max_frames]).to(device)
+        tensor_cond['hubert'] = torch.Tensor(item['hubert'][:max_input_tokens]).to(device)
+        tensor_cond['f0'] = torch.Tensor(item['f0'][:max_frames]).to(device)
+
+        return tensor_cond
+
+    def get_collated_cond(self, item):
+        def collate_1d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None, shift_id=1):
+
+            """Convert a list of 1d tensors into a padded 2d tensor."""
+            size = max(v.size(0) for v in values) if max_len is None else max_len
+            res = values[0].new(len(values), size).fill_(pad_idx)
+
+            def copy_tensor(src, dst):
+                assert dst.numel() == src.numel()
+                if shift_right:
+                    dst[1:] = src[:-1]
+                    dst[0] = shift_id
+                else:
+                    dst.copy_(src)
+
+            for i, v in enumerate(values):
+                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+            return res
+
+        def collate_2d(values, pad_idx=0, left_pad=False, shift_right=False, max_len=None):
+            """Convert a list of 2d tensors into a padded 3d tensor."""
+            size = max(v.size(0) for v in values) if max_len is None else max_len
+            res = values[0].new(len(values), size, values[0].shape[1]).fill_(pad_idx)
+
+            def copy_tensor(src, dst):
+                assert dst.numel() == src.numel()
+                if shift_right:
+                    dst[1:] = src[:-1]
+                else:
+                    dst.copy_(src)
+
+            for i, v in enumerate(values):
+                copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
+            return res
+
+        collated_cond = dict()
+        collated_cond['hubert'] = collate_2d([item['hubert']], 0.0)
+        collated_cond['f0'] = collate_1d([item['f0']], 0.0)
+        collated_cond['mel2ph'] = collate_1d([item['mel2ph']], 0.0)  # 이거 없는 것도 if로 처리하더라
+        collated_cond['mel'] = collate_2d([item['mel']], 0.0)
+
+        return collated_cond
+'''
