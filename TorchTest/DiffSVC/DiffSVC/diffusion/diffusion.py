@@ -67,6 +67,8 @@ class GuassianDiffusion:
             wavenet_model_pt = torch.load(wavenet_model_path, map_location='cpu')
             self.embedding_model.load_state_dict(embedding_model_pt)
             self.wavenet.load_state_dict(wavenet_model_pt)
+        else:
+            self.hparams['model_pt_epoch'] = 0
 
         # set device
         self.embedding_model.to(self.hparams['device'])
