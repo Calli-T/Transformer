@@ -144,6 +144,7 @@ def get_hparams(project_name='SinChangSeop'):
         "train_target_epochs": 100000,
         "save_interval": 1,
         "number_of_savepoint": 3,
+        "validation_dataset_ratio": 0.2,
     }
 
     return hparams
