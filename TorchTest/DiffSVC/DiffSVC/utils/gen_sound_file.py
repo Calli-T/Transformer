@@ -28,7 +28,7 @@ def after_infer(prediction, _vocoder, _hparams):
         extension_str = 'flac'
         if filename is not None:
             result_filename = (f'results/{filename}' +
-                               f'_{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_steps.{extension_str}')
+                               f'_{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_epochs.{extension_str}')
         else:
-            result_filename = f'results/{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_steps.{extension_str}'
+            result_filename = f'results/{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_epochs.{extension_str}'
         sf.write(result_filename, wav_pred, 44100)

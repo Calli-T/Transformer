@@ -57,7 +57,7 @@ class GuassianDiffusion:
         if len(pt_list) != 0:
             epoch_maximum = max([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
 
-            print(epoch_maximum)
+            print(f"epoch: {epoch_maximum}만큼 학습된 모델 load")
             self.hparams['model_pt_epoch'] = epoch_maximum
 
             # load maximum epoch model
@@ -330,7 +330,7 @@ class GuassianDiffusion:
         pt_list = os.listdir(model_path)
         if len(pt_list) > self.hparams['number_of_savepoint'] * 2:
             epoch_minimum = min([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
-            print(epoch_minimum)
+            # print(epoch_minimum)
             embedding_model_path = os.path.join(model_path, f"embedding_model_epochs_{epoch_minimum}.pt")
             wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{epoch_minimum}.pt")
             os.remove(embedding_model_path)
@@ -395,7 +395,6 @@ class GuassianDiffusion:
 
                     # paths
                     temp_path.append(os.path.join(wav_path, wav_fname))
-
                 f0 = np.array(f0)
                 f0 = torch.from_numpy(f0).to(self.hparams['device'])
 

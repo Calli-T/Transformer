@@ -2,7 +2,7 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--project_name', default='SinChangSeop', type=str, help='')
+parser.add_argument('--project_name', default='male_announcers', type=str, help='')
 arg_parsed = parser.parse_args()
 
 project_root = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])

@@ -142,13 +142,14 @@ def get_hparams(project_name='SinChangSeop'):
         "LEARNING_RATE": 0.0001,
         "WEIGHT_DECAY": 0.00001,
         "train_target_epochs": 100000,
-        "save_interval": 5,
+        "save_interval": 1,
         "number_of_savepoint": 3,
     }
 
     return hparams
-hparams = get_hparams()
 
+
+hparams = get_hparams('male_announcers')
 
 '''
 "spec_max": [0.37696552, 0.76111096, 0.9614745, 0.94839865, 1.0016924, 1.0556685, 0.99750626, 0.88581115, 0.8099942,
