@@ -350,41 +350,48 @@ class GuassianDiffusion:
 
         # gen f0 files
         if not self.exist_f0_npy():
-            for wav_fname_sublist in wav_fname_list:
-                wav_list = []
-                mel_list = []
-                mel_len_list = []
+            for wav_fname_sublist in tqdm(wav_fname_list):
+                # wav_list = []
+                # mel_list = []
+                # mel_len_list = []
 
+                f0_list = []
                 for fname in wav_fname_sublist:
                     temp_path = os.path.join(wav_path, fname)
                     wav, mel = self.wav2spec(temp_path, self.hparams)
-                    wav_list.append(wav)
-                    mel_len_list.append(mel.shape[0])
-                    mel_list.append(mel)
 
-                maximum_mel_len = max(mel_len_list)
-                for idx, mel in enumerate(mel_list):
-                    m_len = mel_len_list[idx]
-                    mel_list[idx] = np.pad(mel, ((0, maximum_mel_len - m_len), (0, 0)))
-                mel_list = np.array(mel_list)
-
-                f0_list = []
-                for wav, mel in zip(wav_list, mel_list):
+                    # print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
                     gt_f0 = self.crepe(wav, mel, self.hparams)
                     f0, _ = self.norm_interp_f0(gt_f0)
                     f0_list.append(f0)
-                    # print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
+
+                    # wav_list.append(wav)
+                    # mel_len_list.append(mel.shape[0])
+                    # mel_list.append(mel)
+
+                # maximum_mel_len = max(mel_len_list)
+                # for idx, mel in enumerate(mel_list):
+                #     m_len = mel_len_list[idx]
+                #     mel_list[idx] = np.pad(mel, ((0, maximum_mel_len - m_len), (0, 0)))
+                # mel_list = np.array(mel_list)
+
+
+                # for wav, mel in zip(wav_list, mel_list):
+                #     gt_f0 = self.crepe(wav, mel, self.hparams)
+                #     f0, _ = self.norm_interp_f0(gt_f0)
+                #     f0_list.append(f0)
+                #     # print(f"음원 '{fname}' 기본 주파수 추출 작업 중")
 
                 for f0, fname in zip(f0_list, wav_fname_sublist):
                     save_path = os.path.join(self.hparams['train_dataset_path_f0'], fname + "_f0.npy")
-                    print(save_path)
+                    # print(f'음원 {fname}의 기본 주파수 {save_path}에 저장')
                     np.save(save_path, f0)
 
         for epoch in tqdm(range(self.hparams['train_target_epochs'])):
             cost = 0.0
 
             # train
-            for wav_fname_sublist in wav_fname_list:
+            for wav_fname_sublist in tqdm(wav_fname_list):
                 f0 = []
                 temp_path = []
 
@@ -395,6 +402,11 @@ class GuassianDiffusion:
 
                     # paths
                     temp_path.append(os.path.join(wav_path, wav_fname))
+
+                # pad f0
+                max_f0_length = max([len(f_temp) for f_temp in f0])
+                for idx, f_temp in enumerate(f0):
+                    f0[idx] = np.pad(f_temp, (0, max_f0_length - len(f_temp)))
                 f0 = np.array(f0)
                 f0 = torch.from_numpy(f0).to(self.hparams['device'])
 
