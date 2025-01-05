@@ -14,7 +14,22 @@ https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=
 고치려면?
 이거 f0를 npz로 저장해서 각각을 패딩 없이 전부 저장하던지 해야한다
 
+이거 일단 생각해볼점
+f0파일은 44.1 kHz SR, mono channel, 16 bit PCM, wav파일을
+약 5시간어치, 1.6 GiB의 정보를 꺼내도 17 MiB밖에 안한다
+결론1: 그냥 한 파일에 다 때려박는게 가능하면 그렇게 하자
+f0를 만드는건 좋은데 무수한 파일들이 감당이 안되니 2개만 꺼내서 테스트해보자
+저장할 때의 f0와, 이를 처리하는 코드를 모두 생각해둬야한다
+
 2. Validation도 만들어 두긴해야한다
+이거 일단 생각해볼점
+val도 f0의 npy(혹은 npz)파일화, 음원 커팅을 따로 하느니,
+결론1: dataset전체의 일부를 val로 쓰는 방식을하자
+그리고 고정 val을 쓸것인가? K fold/holdout 등의 교차검증을 쓸것인가?
+결론2: 일단 holdout을 무작위로 계속 섞는 방식을 쓰자
+그리고 eval모드 train모드 키고 끄는거랑, with torch어쩌고 잘구현해두자
+
++) minmax spec은 denoise모델 학습이랑은 딱히 상관없으니 통합해서 두자
 
 3. embedding 모델에 안쓰는 레이어 들어간거 회수해야하지않나
 -> 코드에 주석만 씌우면됨, 애초에 쓰는 곳이 없음
