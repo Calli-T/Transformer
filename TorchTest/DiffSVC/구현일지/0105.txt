@@ -17,8 +17,13 @@ https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=
 2. Validation도 만들어 두긴해야한다
 
 3. embedding 모델에 안쓰는 레이어 들어간거 회수해야하지않나
+-> 코드에 주석만 씌우면됨, 애초에 쓰는 곳이 없음
+->-> 신창섭 모델은 사용불가능해짐 이러면, 나중에 devide_model 코드로 다시 뽑아야함
+->->-> devide_model 코드의 state_dict 거르는 코드에서 mel_out 계층은 한 줄 빼야함
 
 4. 음원자르는거 대체 뭘 기준으로 하는건지 알아야함
 
 5. epoch단위로 저장하는거 step단위로 저장할지 고민한 번 해보긴 해야함
 -> 일단 epoch단위로 하자, steps가 나을것같긴한데, 얼마나 학습한지 모르는건 매한가지다
+
+6. adamw도 저장을 해야한다

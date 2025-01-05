@@ -16,9 +16,10 @@ class ConditionEmbedding(nn.Module):
         nn.init.normal_(self.pitch_embed.weight, mean=0, std=self.hidden_size ** -0.5)
         nn.init.constant_(self.pitch_embed.weight[self.padding_idx], 0)
 
-        self.mel_out = nn.Linear(self.hidden_size, self.out_dims, bias=True)
-        nn.init.xavier_uniform_(self.mel_out.weight)
-        nn.init.constant_(self.mel_out.bias, 0)
+        # 안쓰는 코드다
+        # self.mel_out = nn.Linear(self.hidden_size, self.out_dims, bias=True)
+        # nn.init.xavier_uniform_(self.mel_out.weight)
+        # nn.init.constant_(self.mel_out.bias, 0)
 
     def add_pitch(self, f0, mel2ph, ret):
         pitch_padding = (mel2ph == 0)
