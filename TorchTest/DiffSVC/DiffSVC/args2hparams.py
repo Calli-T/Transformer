@@ -34,7 +34,7 @@ def get_hparams(project_name='SinChangSeop'):
         # "audio_sample_rate": 44100,
         # "hop_size": 512,
 
-        # for embedding & denoise model
+        # for embedding & denoise model & optimizer
         "model_path": f"models/singer/{project_name}",
 
         # for condition integrate & preprocess
@@ -138,13 +138,13 @@ def get_hparams(project_name='SinChangSeop'):
         "use_extract": False,  # True,  # MR제거인데 일단 적용안되는 문제가 있음
 
         "batch_size_train": 1,  # dummy
-        "BATCH_SIZE_TRAIN": 10,
-        "LEARNING_RATE": 0.0001,
+        "BATCH_SIZE_TRAIN": 16,
+        "LEARNING_RATE": 0.0004,
         "WEIGHT_DECAY": 0.00001,
         "train_target_epochs": 100000,
-        "save_interval": 1,
         "number_of_savepoint": 3,
-        "validation_dataset_ratio": 0.2,
+        "save_interval": 1,
+        "val_ratio": 0.1,
     }
 
     return hparams
