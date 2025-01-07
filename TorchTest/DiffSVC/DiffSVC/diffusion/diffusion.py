@@ -481,7 +481,7 @@ class GuassianDiffusion:
                 val_data_len = 0
                 for wav_fname_sublist in val_list:
                     val_data_len += len(wav_fname_sublist)
-                print(f"Epoch: {self.hparams['model_pt_epoch']}, Loss:{cost / val_data_len:.4f}")
+                print(f"Epoch: {self.hparams['model_pt_epoch'] + 1}, Loss:{cost / val_data_len:.4f}")
 
                 self.save_and_remove()
             # break
