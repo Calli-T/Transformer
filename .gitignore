@@ -19,6 +19,7 @@ Toys/Failed/SacredConverter/models/
 *.mp3
 *.npy
 *.npz
+*.flac
 
 model
 
