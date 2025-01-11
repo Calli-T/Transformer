@@ -11,6 +11,6 @@ dir_path = hparams['raw_wave_dir_path']
 wav_fname_list = [os.path.join(dir_path, fname) for fname in os.listdir(hparams['raw_wave_dir_path'])]
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
 
-outputs = diff.infer_batch(wav_fname_list)
+outputs = diff.infer(wav_fname_list)
 
 after_infer(outputs, vocoder, hparams)

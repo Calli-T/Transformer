@@ -13,7 +13,7 @@ def get_hparams(project_name='SinChangSeop'):
         # for vocoder, NsfHiFiGAN
         # "vocoder": "nsf_hifigan.NsfHifiGAN",
         "device": device,
-        "vocoder_ckpt": "models/nsf_hifigan_20221211/model",  # "models/nsf_hifigan/model"
+        "vocoder_ckpt": "models/nsf_hifigan/model", #"models/nsf_hifigan_20221211/model",  # "models/nsf_hifigan/model"
         "audio_sample_rate": 44100,
         "audio_num_mel_bins": 128,
         "fft_size": 2048,
@@ -129,6 +129,8 @@ def get_hparams(project_name='SinChangSeop'):
         "mel_vmax": 1.5,
         "mel_vmin": -6.0,
 
+        # for train & infer
+        "use_norm": True, # True일경우, infer도 norm 해주는거 잊지말 것
         # for train & dataset
         "train_dataset_path_input": f"train_dataset/{project_name}/raw",
         "train_dataset_path_output": f"train_dataset/{project_name}/separated",
@@ -139,7 +141,7 @@ def get_hparams(project_name='SinChangSeop'):
 
         "batch_size_train": 1,  # dummy
         "BATCH_SIZE_TRAIN": 16,
-        "LEARNING_RATE": 0.0004,
+        "LEARNING_RATE": 0.0005,  # 04,
         "WEIGHT_DECAY": 0.00001,
         "train_target_epochs": 100000,
         "number_of_savepoint": 3,
@@ -150,7 +152,7 @@ def get_hparams(project_name='SinChangSeop'):
     return hparams
 
 
-hparams = get_hparams('male_announcers')
+hparams = get_hparams('Adele_augmented')
 
 '''
 "spec_max": [0.37696552, 0.76111096, 0.9614745, 0.94839865, 1.0016924, 1.0556685, 0.99750626, 0.88581115, 0.8099942,

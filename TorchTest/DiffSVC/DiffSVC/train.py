@@ -35,4 +35,4 @@ hparams['spec_max'] = spec_max
 # ----- train -----
 
 diff = GuassianDiffusion(hparams, NsfHifiGAN.wav2spec)
-diff.train_batch()
+diff.train()

@@ -284,7 +284,7 @@ def separate_run(_hparams):
     output_dir = _hparams['train_dataset_path_output']
     split_sil = False
     use_preprocessing = True  # for set samplerate to 44100, channel to mono
-    use_norm = True
+    use_norm = _hparams['use_norm']
     use_extract = _hparams['use_extract']
 
     separate(

@@ -54,7 +54,7 @@ class GuassianDiffusion:
         model_path = self.hparams["model_path"]
 
         # set maximum epoch, 형식은 wavenet_model_epochs_96400.pt
-        pt_list = os.listdir(model_path)
+        pt_list = [item for item in os.listdir(model_path) if item.split('.')[1] == "pt"]
         if len(pt_list) != 0:
             epoch_maximum = max([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
 
@@ -254,7 +254,7 @@ class GuassianDiffusion:
 
         return x
 
-    def infer_batch(self, raw_wave_dir_path):
+    def infer(self, raw_wave_dir_path):
         with torch.no_grad():
             self.embedding_model.eval()
             self.wavenet.eval()
@@ -316,20 +316,45 @@ class GuassianDiffusion:
         else:
             return False
 
-    def save_and_remove(self):
+    def save_and_remove(self, val_loss=0.0):
         model_path = self.hparams["model_path"]
+
+        # epoch 갱신 -> 모델명에 반영
         self.hparams['model_pt_epoch'] += self.hparams['save_interval']
 
-        # save models
-        embedding_model_path = os.path.join(model_path, f"embedding_model_epochs_{self.hparams['model_pt_epoch']}.pt")
-        wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{self.hparams['model_pt_epoch']}.pt")
-        optimizer_path = os.path.join(model_path, f"optimizer_epochs_{self.hparams['model_pt_epoch']}.pt")
-        torch.save(self.embedding_model.state_dict(), embedding_model_path)
-        torch.save(self.wavenet.state_dict(), wavenet_model_path)
-        torch.save(self.optimizer.state_dict(), optimizer_path)
+        # 첫 학습에는 저장, 이후에는 best_loss 최저값 갱신시에만 저장
+        best_loss_path = os.path.join(self.hparams['model_path'], 'best_loss.npy')
+        if not os.path.exists(best_loss_path):
+            np.save(os.path.join(self.hparams['model_path'], 'best_loss.npy'), np.array([val_loss]))
+
+            # save models
+            embedding_model_path = os.path.join(model_path,
+                                                f"embedding_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+            wavenet_model_path = os.path.join(model_path, f"wavenet_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+            optimizer_path = os.path.join(model_path, f"optimizer_epochs_{self.hparams['model_pt_epoch']}.pt")
+            torch.save(self.embedding_model.state_dict(), embedding_model_path)
+            torch.save(self.wavenet.state_dict(), wavenet_model_path)
+            torch.save(self.optimizer.state_dict(), optimizer_path)
+        else:
+            best_loss = np.load(best_loss_path)[0]
+
+            if val_loss < best_loss:
+                print(
+                    f'이전 loss 최저 값: {best_loss}, 현재 loss 값: {val_loss}, epoch: {self.hparams["model_pt_epoch"]}에서 모델 갱신')
+                np.save(os.path.join(self.hparams['model_path'], 'best_loss.npy'), np.array([val_loss]))
+
+                # save models
+                embedding_model_path = os.path.join(model_path,
+                                                    f"embedding_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+                wavenet_model_path = os.path.join(model_path,
+                                                  f"wavenet_model_epochs_{self.hparams['model_pt_epoch']}.pt")
+                optimizer_path = os.path.join(model_path, f"optimizer_epochs_{self.hparams['model_pt_epoch']}.pt")
+                torch.save(self.embedding_model.state_dict(), embedding_model_path)
+                torch.save(self.wavenet.state_dict(), wavenet_model_path)
+                torch.save(self.optimizer.state_dict(), optimizer_path)
 
         # remove models
-        pt_list = os.listdir(model_path)
+        pt_list = [item for item in os.listdir(model_path) if item.split('.')[1] == "pt"]
         if len(pt_list) > self.hparams['number_of_savepoint'] * 3:
             epoch_minimum = min([int(fname.split('.')[0].split('_')[-1]) for fname in pt_list])
             # print(epoch_minimum)
@@ -410,7 +435,7 @@ class GuassianDiffusion:
 
         return train_list, val_list
 
-    def train_batch(self):
+    def train(self):
         self.embedding_model.train()
         self.wavenet.train()
 
@@ -481,9 +506,10 @@ class GuassianDiffusion:
                 val_data_len = 0
                 for wav_fname_sublist in val_list:
                     val_data_len += len(wav_fname_sublist)
-                print(f"Epoch: {self.hparams['model_pt_epoch'] + 1}, Loss:{cost / val_data_len:.4f}")
+                val_loss = cost / val_data_len
+                print(f"Epoch: {self.hparams['model_pt_epoch'] + 1}, Loss:{val_loss:.4f}")
 
-                self.save_and_remove()
+                self.save_and_remove(val_loss.cpu().numpy())
             # break
 
 

@@ -1,0 +1,12 @@
+새로운 문제 발견됨
+일단 Learning rate 0.1로 올려봄 -> local minimum 탈출해보자
+
+것보다 중요한건,
+음원dB정규화를 한 데이터를 학습했다면, dB정규화를 해야 같은 기능을 낼 수가 있다
+-> 근데 rms는 평균음량이고, 이걸 저장안해두면 원래대로 복구 할 수가 없음
+
+해결책:
+일단 sep_wav코드를 개조해다가 쓰기 힘드므로,
+get_hparams에 새로운 모델명 아무거나 넣고 전처리 norm만 따라서 쓰는걸로하고
+나중에 args2hparams에 적어둔 use_norm값이 True이면
+train이나 infer나 use_norm하게 하면된다. train은 처리해놨으니 infer만 쓰면됨
