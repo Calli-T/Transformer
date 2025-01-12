@@ -1,0 +1,5 @@
+opencpop으로 하니 그냥 자아아알 된다
+아마도, hubert 문제인듯하다
+기존 hubert가 어떤 코드를 쓰는지 잘 확인해보고 개조해보자
+
+그리고 dB정규화할 때, train 말고 infer쪽에도 norm 했다가 denorm하는 코드 만들어야한다

@@ -152,7 +152,7 @@ def get_hparams(project_name='SinChangSeop'):
     return hparams
 
 
-hparams = get_hparams('Adele_augmented')
+hparams = get_hparams('opencpop')
 
 '''
 "spec_max": [0.37696552, 0.76111096, 0.9614745, 0.94839865, 1.0016924, 1.0556685, 0.99750626, 0.88581115, 0.8099942,
