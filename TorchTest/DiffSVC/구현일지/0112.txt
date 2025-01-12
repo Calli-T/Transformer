@@ -4,7 +4,14 @@ opencpop으로 하니 그냥 자아아알 된다
 참고로 중국어 hubert로 학습한건 infer는 일본어를 해도 잘 되더라
 
 할일
-1. HuBERT 한국어, 영어, 일본어 등 모델로 교체,
+1. 기존 HuBERT 모델 규격 파악,
+HuBERT 한국어, 영어, 일본어 등 모델로 교체,
 교체한 언어를 사용하는 화자의 목소리로 학습 후 테스트
 2. dB정규화할 때, train 말고 infer쪽에도 norm 했다가 denorm하는 코드 제작
-3.
+3. 그 crepe 다른 방법없나? 그거 너무 오래걸리는데 다른 방안을 찾아보자
+4. 이론 요약
+
+영어 HuBERT는 LibriSpeech dataset으로 학습한 facebook의 버전이 있다
+후속작은 다중 언어로 학습했으니 잘 구분하고 가져갈것
+일단 주소 여기
+https://huggingface.co/facebook/hubert-large-ll60k
