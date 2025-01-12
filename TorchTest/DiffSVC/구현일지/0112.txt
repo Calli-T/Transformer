@@ -1,5 +1,10 @@
 opencpop으로 하니 그냥 자아아알 된다
 아마도, hubert 문제인듯하다
 기존 hubert가 어떤 코드를 쓰는지 잘 확인해보고 개조해보자
+참고로 중국어 hubert로 학습한건 infer는 일본어를 해도 잘 되더라
 
-그리고 dB정규화할 때, train 말고 infer쪽에도 norm 했다가 denorm하는 코드 만들어야한다
+할일
+1. HuBERT 한국어, 영어, 일본어 등 모델로 교체,
+교체한 언어를 사용하는 화자의 목소리로 학습 후 테스트
+2. dB정규화할 때, train 말고 infer쪽에도 norm 했다가 denorm하는 코드 제작
+3.
