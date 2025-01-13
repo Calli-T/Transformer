@@ -243,6 +243,22 @@ def get_units(hbt_soft, raw_wav_path, dev):  # =torch.device('cuda')):
         return units
 
 
+def get_units_from_wav(hbt_soft, dev, wav, sr):  # =torch.device('cuda')):
+    assert (sr >= 16000)
+    if len(wav.shape) > 1:
+        wav = librosa.to_mono(wav)
+    if sr != 16000:
+        # wav16 = librosa.resample(wav, sr, 16000)
+        wav16 = librosa.resample(wav, orig_sr=sr, target_sr=16000)
+    else:
+        wav16 = wav
+    # dev = torch.device("cuda" if (dev == torch.device('cuda') and torch.cuda.is_available()) else "cpu")
+    torch.cuda.is_available() and torch.cuda.empty_cache()
+    with torch.inference_mode():
+        units = hbt_soft.units(torch.FloatTensor(wav16.astype(float)).unsqueeze(0).unsqueeze(0).to(dev))
+        return units
+
+
 '''def get_end_file(dir_path, end):
     file_list = []
     for root, dirs, files in os.walk(dir_path):

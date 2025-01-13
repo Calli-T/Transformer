@@ -159,8 +159,12 @@ class GuassianDiffusion:
 
             hubert_encoded_list = []
             hubert_encoded_len_list = []
-            for fname in raw_wave_dir_path:
+            '''for fname in raw_wave_dir_path:
                 hubert_encoded = self.hubert.encode(fname)
+                hubert_encoded_list.append(hubert_encoded)
+                hubert_encoded_len_list.append(len(hubert_encoded))'''
+            for wav in wav_list:
+                hubert_encoded = self.hubert.encode(wav=wav, sr=self.hparams['audio_sample_rate'])
                 hubert_encoded_list.append(hubert_encoded)
                 hubert_encoded_len_list.append(len(hubert_encoded))
 

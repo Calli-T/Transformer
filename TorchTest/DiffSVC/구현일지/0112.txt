@@ -17,3 +17,24 @@ HuBERT 한국어, 영어, 일본어 등 모델로 교체,
 https://huggingface.co/facebook/hubert-large-ll60k
 
 일단 HuBERT soft는 HuBERT base 기반 모델이며, 뭔가 연속적으로 만들었다고 하는데 그 구조를 파악해보자
+
+일단 음원 읽기 일원화를 위해서는, 함수의 기능을 여럿으로 쪼개서 load를 따로 둘 필요가
+있으나... 그러나 wav2spec에서 읽어오고, stft설정에 맞춰 'torch tensor'로
+읽었다가 stft작업 끝나고 numpy로 넘기므로, 완전한 분리는 무리다
+따라서 조건 중 어디서 읽어오는지 파악한다음, wav2spec에서 넘겨주는 방식을 취한다
+먼저 f0는 wav, mel 모두 받으며, wav2spec에서 나온걸 받으니 문제 x
+mel2ph는 mel, hubert를 받으며, 다른데서 받으니 문제 x
+mel, wav는 뭐 말그대로 wav2spec에서 나온다
+hubert만이 문제인듯하다
+
+일단 hubert를 처리하는 코드는
+hubert_model.py의 229 line부터,
+diffusion.py의 160 line부터,
+
+근데 다른데서는 sr을 원본 그대로 가져오고,
+hubert는 16000으로 취급한다
+원본 sr를 줘야 hubert에서 16k로 바꿀 텐데, 그냥 두 번 읽게 두는게
+코드 안박살날 일이다
+-> 아니면 librosa.road만 따로 어디 분리해야하는데, 그건
+hparams의 값이다
+-> 어? hparams['audio_sample_rate']를 가져와볼까

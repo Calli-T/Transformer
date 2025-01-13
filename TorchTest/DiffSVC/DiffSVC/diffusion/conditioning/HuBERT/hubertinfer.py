@@ -3,7 +3,8 @@ from io import BytesIO
 from pathlib import Path
 
 import numpy as np
-from .hubert_model import hubert_soft, get_units
+from .hubert_model import hubert_soft, get_units, get_units_from_wav
+
 
 class Hubertencoder():
     def __init__(self, hparams):
@@ -22,16 +23,19 @@ class Hubertencoder():
         self.dev = hparams['device']  # torch.device("cuda" if self.use_gpu and torch.cuda.is_available() else "cpu")
         self.hbt_model = hubert_soft(str(pt_path)).to(self.dev)
 
-    def encode(self, wav_path):
-        if isinstance(wav_path, BytesIO):
-            npy_path = ""
-            wav_path.seek(0)
+    def encode(self, wav_path=None, wav=None, sr=None):
+        if wav_path is not None:
+            if isinstance(wav_path, BytesIO):
+                npy_path = ""
+                wav_path.seek(0)
+            else:
+                npy_path = Path(wav_path).with_suffix('.npy')
+            if os.path.exists(npy_path):
+                units = np.load(str(npy_path))
+            else:
+                units = get_units(self.hbt_model, wav_path, self.dev).cpu().numpy()[0]
         else:
-            npy_path = Path(wav_path).with_suffix('.npy')
-        if os.path.exists(npy_path):
-            units = np.load(str(npy_path))
-        else:
-            units = get_units(self.hbt_model, wav_path, self.dev).cpu().numpy()[0]
+            units = get_units_from_wav(self.hbt_model, self.dev, wav, sr).cpu().numpy()[0]
         return units  # [T,256]
 
 
