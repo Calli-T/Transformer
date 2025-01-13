@@ -8,9 +8,6 @@ import torch.nn.functional as t_func
 from torch.nn.modules.utils import consume_prefix_in_state_dict_if_present
 
 
-# from utils import hparams
-
-
 class Hubert(nn.Module):
     def __init__(self, num_label_embeddings: int = 100, mask: bool = True):
         super().__init__()

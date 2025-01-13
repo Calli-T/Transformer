@@ -15,3 +15,5 @@ HuBERT 한국어, 영어, 일본어 등 모델로 교체,
 후속작은 다중 언어로 학습했으니 잘 구분하고 가져갈것
 일단 주소 여기
 https://huggingface.co/facebook/hubert-large-ll60k
+
+일단 HuBERT soft는 HuBERT base 기반 모델이며, 뭔가 연속적으로 만들었다고 하는데 그 구조를 파악해보자
