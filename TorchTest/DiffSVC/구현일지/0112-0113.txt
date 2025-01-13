@@ -27,6 +27,8 @@ mel2ph는 mel, hubert를 받으며, 다른데서 받으니 문제 x
 mel, wav는 뭐 말그대로 wav2spec에서 나온다
 hubert만이 문제인듯하다
 
+----- 0113 -----
+
 일단 hubert를 처리하는 코드는
 hubert_model.py의 229 line부터,
 diffusion.py의 160 line부터,
@@ -38,3 +40,20 @@ hubert는 16000으로 취급한다
 -> 아니면 librosa.road만 따로 어디 분리해야하는데, 그건
 hparams의 값이다
 -> 어? hparams['audio_sample_rate']를 가져와볼까
+일단 fname대신 wav를 보내는 것으로 해결보았으나,
+batch단위로 하는건 아니다
+이건 wav_list를 통째로 torch로 보내고, 그걸 [B, C, T]텐서로 바꿔줘야한다
+원본은 T 텐서를 그저 [1, 1, T]로 unsqueeze할 뿐이라서 단일 B에만 적용시켜준다 -> 이건 hubert코드 바꾸고 나서 처리할것
+할일 1줄요약: hubert batch처리 가능하도록 변경하기
+
+일단 embedding 모델의 구조를 알아야 hubert를 다차원으로 사용하던가 할 수 있겠더라
+일단 hubert모델을 갈아끼우더라도, 256차원의 출력을 유지하긴 해야겠다
+hubert base는 원래 768 차원의 출력을 하는데, 이를 fc layer로 256차원으로 줄여버린다(아마 모델 설정이 그러할 것이다)
+
+할일:
+hubert soft(base)를 hubert soft(on large/xlarge)로 바꾸기
+일단 할일은 hubert large/xlarge 코드 가져오기
+코드에 맞는 모델(언어도 맞아야함) 가져오기
+코드에 맞는 모델 soft화/256차원으로 맞추기
+맞춘 hubert에다 diffusion/hubertinfer/hubertencoder 파일 모두 변형하기
+변형 끝나면 학습하기
