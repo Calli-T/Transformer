@@ -1,0 +1,42 @@
+HuBERT soft는 HuBERT base와 무엇이 다른가?
+일단 상속한 것으로 보아 HuBERT base에 뭘 추가한 것은 맞다
+일단 HuBERT base의 768차원을 256차원으로 줄이는 FC layer와, 이를
+soft하게 만드는 (원핫벡터에서, softmax 값으로 바꾸는) soft층이 있음에 틀림이 없다
+
+                여기서 해결해야할 점 하나
+                1. 사전 학습된 HuBERT를 사용한다 하더라도,
+                FC layer와 soft layer가 없기 때문에, (그리고 dropout과 같은 것도 있더라???)
+                이를 학습시켜야 한다
+                학습대상의 레이어는 어느 모델에 속할 것인가?
+                embedding layer에 if문을 걸고 use_hubert_soft False 일 때만
+                embedding layer에 저 2개를 구현하는 것이 적절해 보인다.
+
+                일단 HuBERT의 코드를 모두 뜯어보는 것은 상당한 시간이 들어가는 일이다 왜냐면
+
+
+                일단 뜯어보는건 나중에 하고, huggingface library로 대체 -> HuBERT의 원리 이해 -> 뜯어보기 순서로 가자
+
+
+                + 256차원의 음소벡터로 만드는 것까지는 알겠는데, 대체 256차원을 어디에서 사용한다는 말인가?
+                이는 embedding model과 mel2ph를 상세하게 뜯어보아야한다
+
+HuBERT관련 해야할거
+1. HuBERT korean/english/japanese 모델 사용해보기
+-> 허깅페이스의 pre_train코드를 활용하는 것이 좋겟음, 원본과는 if로 분기
+2. projection과 soft 위치와 하는일 파악, (원본 코드에서)
+-> 이를 구현하고
+-> 붙이고 모델별 언어의 화자에 데이터를 학습시키기 (english 모델에 아델 사용등등)
+3. projection 256차원보다 크게 만들 수 있는지 파악하기
+-> embedding model와 mel2ph코드를 보고 hubert가 '어떻게' 사용되는지 파악
+4. 학습한 데이터로 노래뽑기
+좀 나중에 해야할 것
+5. Hubert 원리 알아내기
+https://arxiv.org/abs/2106.07447 <- 논문이며, 페이스북 제품이
+6. HuBERT 코드 뜯어보기
+HuggingFace 버전(transformers 라이브러리 내장)의 코드는
+https://github.com/huggingface/transformers/blob/main/src/transformers/models/hubert/modeling_hubert.py
+에,
+원본 코드는
+https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/hubert/hubert.py#L248
+에 있다
+이런 맙소사...
