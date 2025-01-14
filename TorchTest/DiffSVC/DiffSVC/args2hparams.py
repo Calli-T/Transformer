@@ -1,3 +1,5 @@
+# 여기 /들 전부 나중에 os.sep으로 바꿔야한다, gen_sound_file.py의 코드도 마찬가지
+
 def get_hparams(project_name='SinChangSeop'):
     from torch import device, cuda
     # 신창섭 epoch 모델을 둘로 쪼갠 것 기준
@@ -9,6 +11,8 @@ def get_hparams(project_name='SinChangSeop'):
 
         # "raw_wave_path": "raw/L-O-V-E-[cut_12sec].wav",  # "raw/L-O-V-E_[cut_6sec].wav",
         "raw_wave_dir_path": "raw/source",
+        "denorm_dir_path": "results/for_denorm",
+        "result_dir_path": "results/output",
 
         # for vocoder, NsfHiFiGAN
         # "vocoder": "nsf_hifigan.NsfHifiGAN",

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def after_infer(prediction, _vocoder, _hparams):
+def gen_wav_from_output(prediction, _vocoder, _hparams):
     mel_preds = prediction["mel_out"].to('cpu').numpy()
     filenames = prediction["filename"]
     f0_preds = prediction["f0_denorm"].to('cpu').numpy()
@@ -22,13 +22,13 @@ def after_infer(prediction, _vocoder, _hparams):
         torch.cuda.is_available() and torch.cuda.empty_cache()
 
         wav_pred = _vocoder.spec2wav(mel_pred, f0=f0_pred)
-        print(wav_pred.shape)
+        # print(wav_pred.shape)
 
         import soundfile as sf
         extension_str = 'flac'
         if filename is not None:
-            result_filename = (f'results/{filename}' +
+            result_filename = (f'{_hparams["result_dir_path"]}/{filename}' +
                                f'_{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_epochs.{extension_str}')
         else:
-            result_filename = f'results/{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_epochs.{extension_str}'
+            result_filename = f'{_hparams["result_dir_path"]}/{_hparams["project_name"]}_{_hparams["model_pt_epoch"]}_epochs.{extension_str}'
         sf.write(result_filename, wav_pred, 44100)

@@ -280,7 +280,7 @@ class GuassianDiffusion:
         fnames = []
         for raw_wave_path in raw_wave_dir_path:
             try:
-                fnames.append(raw_wave_path.split('/')[-1].split('.')[0])
+                fnames.append(raw_wave_path.split(os.sep)[-1].split('.')[0])
             except:
                 print("file name error")
         ret['filename'] = fnames
