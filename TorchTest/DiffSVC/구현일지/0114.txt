@@ -40,3 +40,69 @@ https://github.com/huggingface/transformers/blob/main/src/transformers/models/hu
 https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/hubert/hubert.py#L248
 에 있다
 이런 맙소사...
+
+
+----- 0115 -----
+
+(GPT와의 대화, Hubert soft의 정체에 관하여)
+Q: hubert soft를 diffsvc에서 사용한다면 hubert soft의 출력은 asr이 아니라 unit이며,
+embedding model에서 이를 asr로 변환하는 것인가?
+그리고 unit은 hubert의 출력물인 특징 벡터를 fc layer에 넣은것이고?
+
+A:
+Hubert Soft의 출력과 역할
+Hubert Soft의 출력은 unit:
+Hubert Soft는 음성 데이터를 처리하여 고차원적인 hidden vector를 생성합니다.
+이 hidden vector는 FC Layer를 통과해 logits로 변환되고, 소프트맥스를 적용하면 각 시간 프레임에 대해 특정 **unit (음소 또는 코드북의 클러스터)**를 나타내는 분포가 됩니다.
+결국, Hubert Soft는 음성을 일련의 unit으로 변환합니다. 이 unit은 음성의 고차원적 정보를 요약한 저차원 표현입니다.
+
+Diff-SVC에서의 사용
+Unit 변환 (Hubert Soft)
+
+음성 신호를 Hubert Soft에 입력 → unit 시퀀스 생성 (음소나 클러스터 단위로).
+이 unit은 말하거나 노래하는 스타일과 음조 등의 정보는 포함하지 않고, 발음과 같은 고수준 정보를 표현합니다.
+Embedding 모델
+
+생성된 unit을 Diff-SVC 모델의 입력으로 사용합니다.
+Embedding 모델은 이 unit을 기반으로:
+음성 신호를 새로운 화자 목소리로 변환.
+특정 스타일, 음조, 감정 등을 추가로 반영.
+최종 음성 생성
+
+Diff-SVC는 unit 정보를 활용하여 target 음성을 생성하며, 이 과정에서 diffusion 모델과 같은 기법을 활용해 품질을 높입니다.
+
+Unit의 본질: FC Layer의 출력
+Hubert Soft의 unit은 hidden vector를 FC Layer에 통과시켜 생성된 출력입니다.
+Hidden vector: Hubert 모델의 중간 특징 벡터(예: 768차원).
+FC Layer: 이 벡터를 특정 unit 크기(예: 클러스터 개수, 음소 수)에 맞게 압축.
+소프트맥스 적용 후, 가장 가능성이 높은 unit 또는 unit의 분포가 선택됩니다.
+ASR과의 차이
+Hubert Soft의 unit은 ASR의 중간 결과물과 유사하지만, 텍스트로 변환되지 않습니다.
+ASR: unit을 디코딩 및 언어 모델을 통해 텍스트로 변환.
+Diff-SVC: unit을 텍스트로 변환하지 않고, 음성 합성 및 변환 작업에 직접 사용.
+
+hubert soft에서 할일 원본 wav 패딩 -> hubert encode -> projection
+
+!!!!!! 중요함
+hubert는 2가지 방식의 출력이 있는데
+features_only와 일반이다
+전자는 트랜스포머 특성 벡터 그대로를, 후자는 logits를 내뱉는다
+우리가 필요한건 '특성벡터 이므로'
+
+다음의 코드로 가능하다
+from transformers import HubertModel, Wav2Vec2Processor
+import torch
+
+# 모델 로드
+model = HubertModel.from_pretrained("facebook/hubert-large-ls960")
+processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960")
+
+# 오디오 데이터
+audio_input = ds[0]["audio"]["array"]  # 예시 데이터
+input_values = processor(audio_input, return_tensors="pt").input_values
+
+# features_only=True 설정
+outputs = model(input_values, output_hidden_states=True, return_dict=True)
+hidden_states = outputs.last_hidden_state  # features only 출력
+
+저기audio_iuput 대신 [B, T(raw_wave)]를 '그대로' 입력 가능한듯하다
