@@ -16,6 +16,10 @@ class ConditionEmbedding(nn.Module):
         nn.init.normal_(self.pitch_embed.weight, mean=0, std=self.hidden_size ** -0.5)
         nn.init.constant_(self.pitch_embed.weight[self.padding_idx], 0)
 
+        # forward 함수의 전체적인 흐름과 별개로 diffusion.py에서 사용된다
+        if not self.hparams['use_hubert_soft']:
+            self.hubert_proj = nn.Linear(self.hparams['hubert_vec_dim'], 256)  # out dim과는 무슨 상관일까?
+
         # 안쓰는 코드다
         # self.mel_out = nn.Linear(self.hidden_size, self.out_dims, bias=True)
         # nn.init.xavier_uniform_(self.mel_out.weight)

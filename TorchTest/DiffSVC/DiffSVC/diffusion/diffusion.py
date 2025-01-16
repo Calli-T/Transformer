@@ -2,6 +2,7 @@ from .wavenet.net import DiffNet
 from .embedding_model.embedding_model import ConditionEmbedding
 from .conditioning.CREPE.crepe import get_pitch_crepe
 from .conditioning.HuBERT.hubertinfer import Hubertencoder
+from .conditioning.HuBERT.hubertinfer_original import HuBERTModel
 from .conditioning import get_align
 
 import math
@@ -84,7 +85,10 @@ class GuassianDiffusion:
             from .conditioning import wav2spec as w2s
             self.wav2spec = w2s
         self.crepe = get_pitch_crepe
-        self.hubert = Hubertencoder(self.hparams)
+        if self.hparams['use_hubert_soft']:
+            self.hubert = Hubertencoder(self.hparams)
+        else:
+            self.hubert = HuBERTModel(self.hparams)
         self.get_align = get_align
 
         # for loss
@@ -165,6 +169,9 @@ class GuassianDiffusion:
                 hubert_encoded_len_list.append(len(hubert_encoded))'''
             for wav in wav_list:
                 hubert_encoded = self.hubert.encode(wav=wav, sr=self.hparams['audio_sample_rate'])
+                if not self.hparams['use_hubert_soft']:
+                    hubert_encoded = self.embedding_model.hubert_proj(torch.FloatTensor(hubert_encoded).to(self.hparams['device']))
+                    hubert_encoded = hubert_encoded.detach().squeeze(0).cpu().numpy()
                 hubert_encoded_list.append(hubert_encoded)
                 hubert_encoded_len_list.append(len(hubert_encoded))
 

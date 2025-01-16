@@ -34,6 +34,8 @@ def get_units(raw_wav_path):
 
 wav = get_units("./raw/L-O-V-E.wav")
 wav = torch.Tensor(wav).to(device).unsqueeze(0)
+print(wav.shape)
+wav = torch.nn.functional.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
 output = model(wav)
 print(output.last_hidden_state.shape)
 
