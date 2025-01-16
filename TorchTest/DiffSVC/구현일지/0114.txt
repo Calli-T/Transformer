@@ -106,3 +106,6 @@ outputs = model(input_values, output_hidden_states=True, return_dict=True)
 hidden_states = outputs.last_hidden_state  # features only 출력
 
 저기audio_iuput 대신 [B, T(raw_wave)]를 '그대로' 입력 가능한듯하다
+
+현재 작업 공간은
+forASR_second_try_with_hubert
