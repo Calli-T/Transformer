@@ -5,3 +5,46 @@ Adele의 목소리가 잘 나오는 느낌은 아니다
 그리고 hubert_soft를 hubert_base + fc layer 모델로 교체하면서 생긴 문제인데,
 최대 infer길이가 30초정도로 짧아졌다
 아무래도 infer시에 좀 잘라서 하는 방식을 채택해야겠다
+
+pwg으로 변경을 위한 사용처, 스펙 변경해야할 위치 정리
+{
+    args2hparams
+    -vocoder_list를 추가할것(string)을
+    -vocoder_number를 정수로 추가하여 위 list를 index할것
+
+    diffusion.py
+    -wav2sec을 __init__의 마지막 매개변수로 받아옴
+    해당함수는 fname과 hparams를 매개변수로 받아
+    wav와 mel을 가져다준다
+    -다 똑같은 매개변수로 쓰기 때문에, vocoder에서 wav2spec만 잘만들면된다
+    그리고 instance 없이 쓰이기 때문에, static method로 제작
+    (혹은 그냥 함수로 제작해도 상관없음)
+    그래야 __init__에 넣어서 줄 수 있다
+
+    infer.py
+    -diffusion instance 선언 중 NsfHiFiGAN.wav2spec을 매개변수로줌
+    -vocoder instance로 만들어 전달해준다
+    -> 위 2개를 args2hparams에 맞춰 다르게 전달
+    train.py
+    -infer.py와 마찬가지로 선언 중 NsfHiFiGAN.wav2spec을 매개변수로줌
+    -> 위 1개를 args2hparams에 맞춰 다르게 전달
+
+    gen_sound_file.py
+    -vocoder를 받아와서 mel_pred와 f0_pred를 주어 spec2wav사용
+    -해당 vocoder는 vocoder의 instance임
+    -f0_pred는 pwg에선 안쓰는데, 그냥 함수명과 매개변수를 같게 처리한다음
+    pwg에선 받고 아무것도 안하는것으로 처리하자
+
+    전체적으로 확인해봐야할 문제
+    spec2wav에서 매개로 들어가는 mel_pred의 형식과,
+    갈아끼울 vocoder인 pwg의 입력 형식을 살펴보아야한다
+    그리고 원본의 출력(numpy인지 torch인지 등등)과
+    pwg의 출력도 살펴봐야한다
+    요약: spec2wav함수는 양쪽 모델의 입력과 출력을 모두 살펴봐야함
+
+    wav2spec에서는 fname과 hparams를 주는건 뭐 아무 문제없다
+    입력은 동일하게 세팅하고 내부 세팅이 (hop등등)이 같게 들어가게하는것과,
+    출력이 nsf와 pwg이 같게(같지않다면 타입변경)
+    요약: 양쪽 모델의 입력은 같은데, 출력은 어떨지 살펴봐야함
+}
+
