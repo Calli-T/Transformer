@@ -30,7 +30,7 @@ def get_hparams(project_name='SinChangSeop'):
         # for self_regressive_phonetic, HuBERT
         "hubert_gpu": True,
         "hubert_soft_path": 'models/HuBERT/hubert_soft.pt',
-        "use_hubert_soft": True,
+        "use_hubert_soft": False,
         "hubert_original_path": 'models/HuBERT/models--facebook--hubert-base-ls960',
         "hubert_vec_dim": 768,
 
