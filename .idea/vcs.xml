@@ -2,6 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Clone/hangul_to_ipa" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/git_clone_for_study/hangul_to_ipa" vcs="Git" />
   </component>
 </project>

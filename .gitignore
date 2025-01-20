@@ -1,7 +1,7 @@
-/chap5/corpus.txt
+/Transformer_basic/chap5/corpus.txt
 /chap6/models/*.npy
 /chap8/source/*.jpg
-/chap8/source
+/Transformer_basic/chap8/source
 
 Toys/Failed/SacredConverter/source
 Toys/Failed/SacredConverter/BiblifyCode
@@ -31,7 +31,7 @@ models/
 Toys/
 Toys/tmp/
 
-Clone/
+git_clone_for_study/
 
 TorchTest/Git_Clone/kor_diff_svc
 
