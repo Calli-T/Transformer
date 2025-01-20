@@ -83,7 +83,6 @@ def normalize(for_config, raw_path, for_stats, for_dataset=None, dump_path=None)
             )
         else:  # local이니 global이니 하는 것들은 나중에 옵션으로 추가해주자
             dataset = PipelineDataset(*for_dataset)
-            print(type(dataset))
 
     logging.info(f"The number of files_for_gen = {len(dataset)}.")
 

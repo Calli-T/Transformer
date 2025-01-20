@@ -78,5 +78,5 @@ def plot_pitch_distribution_with_notes(directory):
 
 
 # 사용 예시
-directory = "/mnt/additional/projects/Transformer/TorchTest/DiffSVC/DiffSVC/train_dataset/Adele/separated/final"# "/home/joy14479/link/dataset/Adele_raw"  # 분석할 디렉터리 경로로 바꾸세요
+directory = "/mnt/additional/projects/Transformer/TorchTest/DiffSVC/DiffSVC/raw/source" #"/home/joy14479/link/dataset/Adele_raw"  # 분석할 디렉터리 경로로 바꾸세요
 plot_pitch_distribution_with_notes(directory)
