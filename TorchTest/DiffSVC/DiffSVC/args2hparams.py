@@ -17,7 +17,8 @@ def get_hparams(project_name='SinChangSeop'):
         # for vocoder, NsfHiFiGAN
         # "vocoder": "nsf_hifigan.NsfHifiGAN",
         "device": device,
-        "vocoder_ckpt": "models/nsf_hifigan/model", #"models/nsf_hifigan_20221211/model",  # "models/nsf_hifigan/model"
+        "vocoder_ckpt": "models/nsf_hifigan/model",
+        # "models/nsf_hifigan_20221211/model",  # "models/nsf_hifigan/model"
         "audio_sample_rate": 44100,
         "audio_num_mel_bins": 128,
         "fft_size": 2048,
@@ -30,7 +31,7 @@ def get_hparams(project_name='SinChangSeop'):
         # for self_regressive_phonetic, HuBERT
         "hubert_gpu": True,
         "hubert_soft_path": 'models/HuBERT/hubert_soft.pt',
-        "use_hubert_soft": True,
+        "use_hubert_soft": False,
         "hubert_original_path": 'models/HuBERT/models--facebook--hubert-base-ls960',
         "hubert_vec_dim": 768,
 
@@ -137,7 +138,7 @@ def get_hparams(project_name='SinChangSeop'):
         "mel_vmin": -6.0,
 
         # for train & infer
-        "use_norm": True, # True일경우, infer도 norm 해주는거 잊지말 것
+        "use_norm": True,  # True일경우, infer도 norm 해주는거 잊지말 것
         # for train & dataset
         "train_dataset_path_input": f"train_dataset/{project_name}/raw",
         "train_dataset_path_output": f"train_dataset/{project_name}/separated",
@@ -159,7 +160,7 @@ def get_hparams(project_name='SinChangSeop'):
     return hparams
 
 
-hparams = get_hparams('opencpop')
+hparams = get_hparams('Adele')
 
 '''
 "spec_max": [0.37696552, 0.76111096, 0.9614745, 0.94839865, 1.0016924, 1.0556685, 0.99750626, 0.88581115, 0.8099942,

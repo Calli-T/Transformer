@@ -20,7 +20,7 @@ from audio_mel_dataset import AudioMelDataset, PipelineDataset
 from utils import read_hdf5, write_hdf5
 
 
-def normalize(for_config, raw_path, for_stats, for_dataset=None, dump_path=None):
+def normalize(for_config, for_stats, for_dataset=None, dump_path=None):
     """Run preprocessing process."""
     parser = argparse.ArgumentParser(
         description=(
@@ -45,44 +45,29 @@ def normalize(for_config, raw_path, for_stats, for_dataset=None, dump_path=None)
     else:
         config = for_config
 
-    # check model architecture
-    generator_type = config.get("generator_type", "ParallelWaveGANGenerator")
+    # # check model architecture
+    # generator_type = config.get("generator_type", "ParallelWaveGANGenerator")
+    #
+    # # get dataset
+    # if config["format"] == "hdf5":
+    #     audio_query, mel_query = "*.h5", "*.h5"
+    #     audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
+    #     mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
+    #     if config.get("use_global_condition", False):  # 일단 pwg 모델은 안쓰더라, global
+    #         global_query = "*.h5"
+    #         global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
+    # elif config["format"] == "npy":
+    #     audio_query, mel_query = "*-wave.npy", f"*-{args.target_feats}.npy"
+    #     audio_load_fn = np.load
+    #     mel_load_fn = np.load
+    #
+    #     if config.get("use_global_condition", False):
+    #         global_query = "*-global.npy"
+    #         global_load_fn = np.load
+    # else:
+    #     raise ValueError("support only hdf5 or npy format.")
 
-    # get dataset
-    if raw_path is not None:
-        global_query = None
-        global_load_fn = None
-        if config["format"] == "hdf5":
-            audio_query, mel_query = "*.h5", "*.h5"
-            audio_load_fn = lambda x: read_hdf5(x, "wave")  # NOQA
-            mel_load_fn = lambda x: read_hdf5(x, args.target_feats)  # NOQA
-            if config.get("use_global_condition", False):  # 일단 pwg 모델은 안쓰더라, global
-                global_query = "*.h5"
-                global_load_fn = lambda x: read_hdf5(x, "global")  # NOQA
-        elif config["format"] == "npy":
-            audio_query, mel_query = "*-wave.npy", f"*-{args.target_feats}.npy"
-            audio_load_fn = np.load
-            mel_load_fn = np.load
-
-            if config.get("use_global_condition", False):
-                global_query = "*-global.npy"
-                global_load_fn = np.load
-        else:
-            raise ValueError("support only hdf5 or npy format.")
-
-        if for_dataset is None:
-            dataset = AudioMelDataset(
-                root_dir=raw_path,
-                audio_query=audio_query,
-                mel_query=mel_query,
-                audio_load_fn=audio_load_fn,
-                mel_load_fn=mel_load_fn,
-                global_query=global_query,
-                global_load_fn=global_load_fn,
-                return_utt_id=True,
-            )
-        else:  # local이니 global이니 하는 것들은 나중에 옵션으로 추가해주자
-            dataset = PipelineDataset(*for_dataset)
+    dataset = PipelineDataset(*for_dataset)
 
     logging.info(f"The number of files_for_gen = {len(dataset)}.")
 

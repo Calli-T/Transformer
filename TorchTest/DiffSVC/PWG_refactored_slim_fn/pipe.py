@@ -8,8 +8,6 @@ import mel2wav_2
 
 # 또 save에는 return 없고, non-save에는 확실히 numpy array return 해주도록 분기 수정 ㄱㄱ
 params = {"origin_path": "files_for_gen/sample/",
-          "mel_path": "files_for_gen/dump/sample/raw",
-          "mel_norm_path": "files_for_gen/dump/sample/norm/",
           "output_path": "files_for_gen/outputs/",
           "model_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/checkpoint-1000000steps.pkl",
           "stats_path": "files_for_gen/pretrained_model/vctk_parallel_wavegan.v1.long/stats.h5",
@@ -18,7 +16,7 @@ params = {"origin_path": "files_for_gen/sample/",
 audio_mel = [*wav2mel.wav2mel(sample_path=params["origin_path"], for_config=params["config_path"])]
 print(len(audio_mel))
 
-mel_norm = mel2wav.normalize(raw_path=params["mel_path"], for_stats=params["stats_path"],
+mel_norm = mel2wav.normalize(for_stats=params["stats_path"],
                              for_config=params["config_path"],
                              for_dataset=audio_mel)
 print(mel_norm[0].shape)
