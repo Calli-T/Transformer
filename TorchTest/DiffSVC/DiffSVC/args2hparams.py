@@ -31,7 +31,7 @@ def get_hparams(project_name='SinChangSeop'):
         # for self_regressive_phonetic, HuBERT
         "hubert_gpu": True,
         "hubert_soft_path": 'models/HuBERT/hubert_soft.pt',
-        "use_hubert_soft": False,
+        "use_hubert_soft": True,
         "hubert_original_path": 'models/HuBERT/models--facebook--hubert-base-ls960',
         "hubert_vec_dim": 768,
 
@@ -160,7 +160,8 @@ def get_hparams(project_name='SinChangSeop'):
     return hparams
 
 
-hparams = get_hparams('Adele')
+hparams = get_hparams('opencpop')
+# opencpop쓸거면, hubert soft 쓰는것도 잊지말고
 
 '''
 "spec_max": [0.37696552, 0.76111096, 0.9614745, 0.94839865, 1.0016924, 1.0556685, 0.99750626, 0.88581115, 0.8099942,
