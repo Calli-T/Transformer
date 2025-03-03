@@ -1,0 +1,9 @@
+이 구문 torch.functional의 700줄 이상에 넣으면
+RuntimeError: stft requires the return_complex parameter be given for real inputs, and will further require that return_complex=True in a future PyTorch release. 오류 해결
+오류가 해결된다
+
+    if not return_complex:
+        return torch.view_as_real(_VF.stft(input, n_fft, hop_length, win_length, window,  # type: ignore[attr-defined]
+                                           normalized, onesided, return_complex=True))
+
+https://devohsopp.tistory.com/45 여기 나온거랑 버전이 달라서 줄도 다른듯

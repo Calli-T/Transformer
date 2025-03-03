@@ -1,0 +1,29 @@
+https://idev2580sysw.tistory.com/8
+
+세대별 설정 값
+GCN 5세대 : HSA_OVERRIDE_GFX_VERSION=9.0.0
+RDNA 1세대 : HSA_OVERRIDE_GFX_VERSION=10.1.0
+RDNA 2세대 : HSA_OVERRIDE_GFX_VERSION=10.3.0
+RDNA 3세대 : HSA_OVERRIDE_GFX_VERSION=11.0.0
+
+-----
+
+HSA_ENABLE_SDMA=0
+
+-----
+
+#Git 저장소 복제
+cd ~/ROCm
+git clone https://github.com/segurac/force-host-alloction-APU.git
+
+#컴파일
+cd force-host-allocation-APU
+CUDA_PATH=/usr/ HIP_PLATFORM="amd" hipcc forcegttalloc.c -o libforcegttalloc.so -shared -fPIC
+
+-----
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
+export HSA_ENABLE_SDMA=0
+export LD_PRELOAD=~/ROCm/force-host-allocation-APU/libforcegttalloc.so
+이를 ~/ROCm 내에 activate 파일로 저장해두고, ROCm + Pytorch 프로그램 실행 전에 아래 명령어로 활성화하면 된다.
+
+source ~/ROCm/activate
