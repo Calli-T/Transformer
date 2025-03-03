@@ -58,7 +58,7 @@ def get_default():
         "save_interval": 2000,
         "EMA": 0.999,
         # for sampling
-        "BATCH_SIZE_SAMPLE": 16,
+        "BATCH_SIZE_SAMPLE": 1,
         # for diffusion
         "schedule_name": "linear",
         "steps": 1000,
