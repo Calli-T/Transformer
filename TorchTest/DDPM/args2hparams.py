@@ -50,8 +50,8 @@ def get_default():
         # for training
         "BATCH_SIZE_TRAIN": 2,
         "DATASET_REPETITION": 1,
-        "data_path": "./datasets/mint_mini",
-        "model_path": "./models/mint_mini",
+        "data_path": "./datasets/IDDPM_LSUN",
+        "model_path": "./models/IDDPM_LSUN",
         "LEARNING_RATE": 0.0001,
         "WEIGHT_DECAY": 0.00001,
         "EPOCHS": 200000,

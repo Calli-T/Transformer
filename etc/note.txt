@@ -70,3 +70,5 @@ git rm -r --cached .
 git add .
 git commit -m "Update .gitignore"
 이러고나서 push하면된다
+
+깃테스트
