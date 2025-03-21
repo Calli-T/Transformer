@@ -1,0 +1,2 @@
+일단 중국어 데이터셋 그대로, hubert soft에서 tencentgamemate의 hubert base로 바꿔본다
+이게 잘 되면, 아델 데이터셋이나 다른 목소리가 안되는건 적어도 hubert탓은 아니다
